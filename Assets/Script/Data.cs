@@ -1,8 +1,10 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Collections.Generic;
 using System.IO;
-using UnityEngine.Networking;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Networking;
 public static class Data
 {   
     /// <summary>
@@ -130,4 +132,154 @@ public class Set
     public string settingPath => datasavePath + "/setting.json";
     public string worldPath => datasavePath + "/worlds/";
     public bool directCopyDataWhenChangeDataPath = true;
+}
+
+public static class SMesh
+{
+    public static Mesh LoadMeshFromOBJ(string objFilePath, Material material = null)
+    {
+        string fullPath = Path.Combine(Application.dataPath, objFilePath);
+        if (!File.Exists(fullPath))
+        {
+            Debug.LogError("OBJ 文件不存在: " + fullPath);
+            return null;
+        }
+
+        string[] lines = File.ReadAllLines(fullPath);
+        return LoadMeshFromOBJ(lines);
+    }
+    public static Mesh LoadMeshFromTextOBJ(string txt)
+    {
+        string[] ls = txt.Split('\n');
+        return LoadMeshFromOBJ(ls);
+    }
+    public static Mesh LoadMeshFromOBJ(string[] lines)
+    {
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> triangles = new List<int>();
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("v "))
+            {
+                // 顶点
+                string[] parts = line.Split(' ');
+                float x = float.Parse(parts[1]);
+                float y = float.Parse(parts[2]);
+                float z = float.Parse(parts[3]);
+                vertices.Add(new Vector3(x, y, z));
+            }
+            else if (line.StartsWith("f "))
+            {
+                // 面（假设三角形或多边形，做扇形三角化）
+                string[] parts = line.Split(' ');
+                int[] faceIndices = new int[parts.Length - 1];
+                for (int i = 1; i < parts.Length; i++)
+                {
+                    faceIndices[i - 1] = int.Parse(parts[i].Split('/')[0]) - 1; // 顶点索引从0开始
+                }
+
+                // 多边形三角化（扇形法）
+                for (int i = 1; i < faceIndices.Length - 1; i++)
+                {
+                    triangles.Add(faceIndices[0]);
+                    triangles.Add(faceIndices[i]);
+                    triangles.Add(faceIndices[i + 1]);
+                }
+            }
+        }
+
+        // 创建 Mesh
+        Mesh mesh = new Mesh
+        {
+            vertices = vertices.ToArray(),
+            triangles = triangles.ToArray()
+        };
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+
+
+        return mesh;
+    }
+
+    public static void AddMesh(GameObject target, Mesh mesh, Material material = null)
+    {
+        // 添加组件
+        MeshFilter mf = target.GetComponent<MeshFilter>();
+        if (mf == null) mf = target.AddComponent<MeshFilter>();
+        mf.mesh = mesh;
+
+        MeshRenderer mr = target.GetComponent<MeshRenderer>();
+        if (mr == null) mr = target.AddComponent<MeshRenderer>();
+        mr.material = material != null ? material : new Material(Shader.Find("Standard"));
+
+        MeshCollider collider = target.GetComponent<MeshCollider>();
+        if (collider == null) collider = target.AddComponent<MeshCollider>();
+        collider.sharedMesh = mesh;
+        collider.convex = false;
+    }
+
+    public static GameObject CreatePolygonMesh(List<Vector3> pts,string name = "")
+    {
+        Mesh mesh = new Mesh();
+
+        // --- 1. 将 Vector3 转成 Vector2（用于三角化） ---
+        Vector2[] pts2 = new Vector2[pts.Count];
+        for (int i = 0; i < pts.Count; i++)
+            pts2[i] = new Vector2(pts[i].x, pts[i].z); // 投影到XZ平面，可改Y轴
+
+        // --- 2. 三角化（Ear Clipping） ---
+        int[] triangles = Triangulate(pts2);
+
+        // --- 3. 设置 Mesh ---
+        mesh.vertices = pts.ToArray();
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        GameObject g = new();
+        // --- 4. 应用到 MeshFilter ---
+        MeshFilter mf = g.AddComponent<MeshFilter>();
+        mf.mesh = mesh;
+
+        // --- 5. MeshCollider ---
+        MeshCollider collider = g.AddComponent<MeshCollider>();
+        collider.sharedMesh = mesh;  // 关键！
+        collider.convex = false;     // 需要面检测必须 false
+
+        return g;
+    }
+    static int[] Triangulate(Vector2[] vertices)
+    {
+        List<int> indices = new List<int>();
+        List<int> verts = new List<int>();
+        for (int i = 0; i < vertices.Length; i++)
+            verts.Add(i);
+
+        int count = verts.Count;
+        while (count > 2)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                int i0 = verts[(i + 0) % count];
+                int i1 = verts[(i + 1) % count];
+                int i2 = verts[(i + 2) % count];
+
+                // 添加三角形
+                indices.Add(i0);
+                indices.Add(i1);
+                indices.Add(i2);
+                verts.RemoveAt((i + 1) % count);
+                break;
+            }
+            count = verts.Count;
+        }
+        return indices.ToArray();
+    }
+
+    /// <summary>
+    /// a test obj file to load a cube
+    /// </summary>
+    public static string cubeOBJ = "# Blender 4.2.1 LTS\r\n# www.blender.org\r\nmtllib testcube.mtl\r\no Cube\r\nv 1.000000 1.000000 -1.000000\r\nv 1.000000 -1.000000 -1.000000\r\nv 1.000000 1.000000 1.000000\r\nv 1.000000 -1.000000 1.000000\r\nv -1.000000 1.000000 -1.000000\r\nv -1.000000 -1.000000 -1.000000\r\nv -1.000000 1.000000 1.000000\r\nv -1.000000 -1.000000 1.000000\r\nvn -0.0000 1.0000 -0.0000\r\nvn -0.0000 -0.0000 1.0000\r\nvn -1.0000 -0.0000 -0.0000\r\nvn -0.0000 -1.0000 -0.0000\r\nvn 1.0000 -0.0000 -0.0000\r\nvn -0.0000 -0.0000 -1.0000\r\nvt 0.625000 0.500000\r\nvt 0.875000 0.500000\r\nvt 0.875000 0.750000\r\nvt 0.625000 0.750000\r\nvt 0.375000 0.750000\r\nvt 0.625000 1.000000\r\nvt 0.375000 1.000000\r\nvt 0.375000 0.000000\r\nvt 0.625000 0.000000\r\nvt 0.625000 0.250000\r\nvt 0.375000 0.250000\r\nvt 0.125000 0.500000\r\nvt 0.375000 0.500000\r\nvt 0.125000 0.750000\r\ns 0\r\nusemtl Material\r\nf 1/1/1 5/2/1 7/3/1 3/4/1\r\nf 4/5/2 3/4/2 7/6/2 8/7/2\r\nf 8/8/3 7/9/3 5/10/3 6/11/3\r\nf 6/12/4 2/13/4 4/5/4 8/14/4\r\nf 2/13/5 1/1/5 3/4/5 4/5/5\r\nf 6/11/6 5/10/6 1/1/6 2/13/6\r\n";
 }

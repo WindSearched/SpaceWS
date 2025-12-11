@@ -13,17 +13,25 @@ public static class ct
     /// </summary>
     public static Vector2 mouseDirection;
     public static bool playerCanMove = false;
+    public static bool mouseCanMove = false;
     public static float fps;
     public static float yawCamera;
     public static float pitchCamera;
+
+    public static Transform bodiesParent;
+    public static GameObject defualtBody;
     public static Vector3 pp
     {
         get => playerPosition;
         set => playerPosition = value;
     }
 
-
-
+    public static Bodies bodies = new();
+    /// <summary>
+    /// all type of mesh loaded
+    /// </summary>
+    public static Dictionary<string, Mesh> meshTypes = new();
+    public static Dictionary<string, StructData> structDatas = new();
 
 
     public static event Meth updatePerTick;
@@ -41,6 +49,12 @@ public static class ct
     public static void UpdatePerTick()
     {
         updatePerTick?.Invoke();
+    }
+
+
+    public static void InstantiaateObject(GameObject gameObject)
+    {
+        GameObject.Instantiate(gameObject);
     }
 }
 public delegate void Meth();

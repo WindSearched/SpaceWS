@@ -18,7 +18,6 @@ public class Tick : MonoBehaviour
 
         TickEv e = (TickReg reg) =>
         {
-            Debug.Log("Output tick: " + tick);
             Reg(reg);
         };
         TickReg reg = new(e,5, true);

@@ -20,13 +20,18 @@ public class CenterSystem : MonoBehaviour
                 Tick.Reg(reg);
             }
         });
+
+
+        ct.defualtBody = Resources.Load("Body") as GameObject;
+        ct.bodiesParent = GameObject.Find("Bodies").transform;
+        ct.meshTypes.Add("test/normalCube", SMesh.LoadMeshFromTextOBJ(SMesh.cubeOBJ));
     }
     private void Update()
     {
         var v = ct.act.main.mouse.ReadValue<Vector2>(); //
         ct.mouseDirection = v - ct.mousePosition;       //  Get mouse data
         ct.mousePosition = v;                           //  
-
+        ct.mouseCanMove = ct.mouseDirection != Vector2.zero;
 
     }
     private void Awake()

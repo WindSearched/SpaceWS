@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using static UnityEngine.GraphicsBuffer;
 
-public class Camera: MonoBehaviour
+public class SCamera: MonoBehaviour
 {
     public TransfEv followmode;
     public float rotateSpeed = 5f;

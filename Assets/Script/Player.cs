@@ -24,7 +24,26 @@ public class Player : MonoBehaviour
             },
             Name = "LevelMove"
         });
-        cMvMd = moveModes["LevelMove"];
+        moveModes.Add("CameraFrontDirectionMove", new() {
+            OnMove = (Vector2 dir, Rigidbody rig) =>
+            {
+
+                Debug.Log(ct.mouseCanMove);
+                if (ct.mouseCanMove)
+                {
+                    float v = dir.y;
+                    var toward = Camera.main.transform.forward;
+                    rig.linearVelocity = Vector2.zero;
+                    rig.AddForce(500 * v * toward);
+                }
+
+            },
+            OnStop = (Rigidbody rig) =>
+            {
+                rig.linearVelocity = Vector3.zero;
+            }
+        });
+        cMvMd = moveModes["CameraFrontDirectionMove"];
 
         Tick.Reg(new() { offset = 1, onTick = (TickReg reg) => {
             if(ct.playerCanMove)
@@ -33,6 +52,15 @@ public class Player : MonoBehaviour
                 OnStop(ct.wasdDirection);
             Tick.Reg(reg);
         } });
+
+        SMesh.CreatePolygonMesh(new List<Vector3>()
+        {
+            new Vector3(0,0,0),
+            new Vector3(1,0,0),
+            new Vector3(1,1,0),
+            new Vector3(0,1,0)
+        });
+        ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/normalCube" });
     }
     private void Update()
     {
@@ -68,6 +96,9 @@ public class MoveMode
     public delegate void Move(Vector2 dir, Rigidbody rig);
     public delegate void Stop(Rigidbody rig);
 
+    /// <summary>
+    /// can read every tick
+    /// </summary>
     public Move OnMove;
     public Stop OnStop;
     public string Name;
