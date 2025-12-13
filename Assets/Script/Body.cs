@@ -115,6 +115,34 @@ public struct V3
         x = 0, y = 0, z = 0
     };
 }
+
+public struct V3I
+{
+    public int x;
+    public int y;
+    public int z;
+    public V3I(Vector3Int v)
+    {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+    }
+    public V3I(int ix,int iy,int iz)
+    {
+        x = ix;
+        y = iy;
+        z = iz;
+    }
+    public Vector3Int ToVector3Int()
+    {
+        return new Vector3Int(x, y, z);
+    }
+
+    public static V3I zero = new() {
+        x = 0, y = 0, z = 0
+    };
+}
+
 public struct Quater
 {
    public float x;

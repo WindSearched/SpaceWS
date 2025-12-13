@@ -4,6 +4,7 @@ using UnityEngine;
 
 public static class ct
 {
+    public static Set setting = new();
     public static Actions act;
     public static Vector3 playerPosition;//updated every frame
     public static Vector2 wasdDirection;

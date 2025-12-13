@@ -1,10 +1,14 @@
+using K4os.Compression.LZ4;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
+using static UnityEngine.Rendering.HableCurve;
 public static class Data
 {   
     /// <summary>
@@ -113,8 +117,25 @@ public static class Data
     {
         Directory.CreateDirectory(path);
     }
+    public static void CreateFile(string path, string text, bool rewrite)
+    {
+        if (FileExists(path) && !rewrite)
+            return;
+        using StreamWriter sw = new(path);
+        var lines = text.Split('\n');
+        sw.Write(lines);
+        sw.Close();
+    }
+    public static string ReadFile(string path)
+    {
+        if (!FileExists(path))
+            return string.Empty;
+        using StreamReader sr = new(path);
+        string result = sr.ReadToEnd();
+        sr.Close();
+        return result;
+    }
 }
-
 public class Set
 {
     private string datasavePath = Application.persistentDataPath;
@@ -130,7 +151,7 @@ public class Set
         }
     }
     public string settingPath => datasavePath + "/setting.json";
-    public string worldPath => datasavePath + "/worlds/";
+    public string spacePath => datasavePath + "/spaces/";
     public bool directCopyDataWhenChangeDataPath = true;
 }
 
@@ -283,3 +304,113 @@ public static class SMesh
     /// </summary>
     public static string cubeOBJ = "# Blender 4.2.1 LTS\r\n# www.blender.org\r\nmtllib testcube.mtl\r\no Cube\r\nv 1.000000 1.000000 -1.000000\r\nv 1.000000 -1.000000 -1.000000\r\nv 1.000000 1.000000 1.000000\r\nv 1.000000 -1.000000 1.000000\r\nv -1.000000 1.000000 -1.000000\r\nv -1.000000 -1.000000 -1.000000\r\nv -1.000000 1.000000 1.000000\r\nv -1.000000 -1.000000 1.000000\r\nvn -0.0000 1.0000 -0.0000\r\nvn -0.0000 -0.0000 1.0000\r\nvn -1.0000 -0.0000 -0.0000\r\nvn -0.0000 -1.0000 -0.0000\r\nvn 1.0000 -0.0000 -0.0000\r\nvn -0.0000 -0.0000 -1.0000\r\nvt 0.625000 0.500000\r\nvt 0.875000 0.500000\r\nvt 0.875000 0.750000\r\nvt 0.625000 0.750000\r\nvt 0.375000 0.750000\r\nvt 0.625000 1.000000\r\nvt 0.375000 1.000000\r\nvt 0.375000 0.000000\r\nvt 0.625000 0.000000\r\nvt 0.625000 0.250000\r\nvt 0.375000 0.250000\r\nvt 0.125000 0.500000\r\nvt 0.375000 0.500000\r\nvt 0.125000 0.750000\r\ns 0\r\nusemtl Material\r\nf 1/1/1 5/2/1 7/3/1 3/4/1\r\nf 4/5/2 3/4/2 7/6/2 8/7/2\r\nf 8/8/3 7/9/3 5/10/3 6/11/3\r\nf 6/12/4 2/13/4 4/5/4 8/14/4\r\nf 2/13/5 1/1/5 3/4/5 4/5/5\r\nf 6/11/6 5/10/6 1/1/6 2/13/6\r\n";
 }
+
+public class StructState
+{
+    public string type;
+    public Loc location;
+    public int bodyIndex;
+
+}
+public struct Chunk
+{
+    /// <summary>
+    /// position ppf this chunk
+    /// </summary>
+    public V3I position;
+    public List<StructState> structs;
+
+    /// <summary>
+    /// get the position of chunk
+    /// </summary>
+    public Vector3 GetCP() => position.ToVector3Int();
+
+
+    /// <summary>
+    /// note: can used only in unity envirment
+    /// </summary>
+    /// <returns></returns>
+    public byte[] ToBytes()
+    {
+        using var ms = new MemoryStream();
+        using var bw = new BinaryWriter(ms, Encoding.UTF8);
+
+        // 写 V3I position
+        bw.Write(position.x);
+        bw.Write(position.y);
+        bw.Write(position.z);
+
+        // 写 structs 数量
+        int count = structs != null ? structs.Count : 0;
+        bw.Write(count);
+
+        if (structs != null)
+        {
+            foreach (var s in structs)
+            {
+                // 写 string type
+                bw.Write(s.type ?? "");
+
+                // 写 Loc
+                bw.Write(s.location.position.x);
+                bw.Write(s.location.position.y);
+                bw.Write(s.location.position.z);
+
+                bw.Write(s.location.rotation.x);
+                bw.Write(s.location.rotation.y);
+                bw.Write(s.location.rotation.z);
+                bw.Write(s.location.rotation.w);
+
+                // 写 bodyIndex
+                bw.Write(s.bodyIndex);
+            }
+        }
+
+        return ms.ToArray();
+    }
+
+    // 反序列化 Chunk
+    public static Chunk FromBytes(byte[] data)
+    {
+        Chunk chunk = new Chunk();
+        chunk.structs = new List<StructState>();
+
+        using var ms = new MemoryStream(data);
+        using var br = new BinaryReader(ms, Encoding.UTF8);
+
+        // 读取 position
+        chunk.position.x = br.ReadInt32();
+        chunk.position.y = br.ReadInt32();
+        chunk.position.z = br.ReadInt32();
+
+        // 读取 structs 数量
+        int count = br.ReadInt32();
+
+        for (int i = 0; i < count; i++)
+        {
+            StructState s = new StructState();
+
+            // 读取 string
+            s.type = br.ReadString();
+
+            // 读取 Loc
+            s.location.position.x = br.ReadSingle();
+            s.location.position.y = br.ReadSingle();
+            s.location.position.z = br.ReadSingle();
+
+            s.location.rotation.x = br.ReadSingle();
+            s.location.rotation.y = br.ReadSingle();
+            s.location.rotation.z = br.ReadSingle();
+            s.location.rotation.w = br.ReadSingle();
+
+            // 读取 bodyIndex
+            s.bodyIndex = br.ReadInt32();
+
+            chunk.structs.Add(s);
+        }
+
+        return chunk;
+    }
+
+}
+

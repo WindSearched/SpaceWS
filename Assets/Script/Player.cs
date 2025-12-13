@@ -61,6 +61,15 @@ public class Player : MonoBehaviour
             new Vector3(0,1,0)
         });
         ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/normalCube" });
+
+        //test
+        Chunk ch = new() {
+            position = V3I.zero,
+            structs = new()
+        };
+        ChunkStorage.SaveChunk("world",ch.position,ch.ToBytes());
+        var v = Chunk.FromBytes(ChunkStorage.LoadChunk("world", ch.position));
+        Debug.Log(v.position);
     }
     private void Update()
     {

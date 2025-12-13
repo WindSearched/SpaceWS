@@ -4,6 +4,18 @@ public class CenterSystem : MonoBehaviour
 {
     private void Start()
     {
+        string fp = Application.persistentDataPath + "/setpath";
+        if (!Data.FileExists(fp))
+        {
+            ct.setting = new();
+            Data.CreateFile(fp,ct.setting.settingPath,false);
+        }
+        else
+        {
+            var p = Data.ReadFile(fp);
+            ct.setting = Data.ReadJson<Set>(p);
+        }
+
         Tick.Reg(new()//update position every tick
         {
             offset = 1,
