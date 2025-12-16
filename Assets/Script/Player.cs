@@ -60,16 +60,19 @@ public class Player : MonoBehaviour
             new Vector3(1,1,0),
             new Vector3(0,1,0)
         });
-        ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/normalCube" });
+        var g1= ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/normalCube" });
+        var g2 = ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/str1" });
+        SMesh.AlignFaceToFace(g1, ct.meshFaces["test/normalCube"],4, g2, ct.meshFaces["test/str1"],6);
 
         //test
-        Chunk ch = new() {
-            position = V3I.zero,
-            structs = new()
-        };
-        ChunkStorage.SaveChunk("world",ch.position,ch.ToBytes());
-        var v = Chunk.FromBytes(ChunkStorage.LoadChunk("world", ch.position));
-        Debug.Log(v.position);
+        //Chunk ch = new() {
+        //    position = V3I.zero,
+        //    structs = new()
+        //};
+        //ChunkStorage.SaveChunk("world",ch.position,ch.ToBytes());
+        //var v = Chunk.FromBytes(ChunkStorage.LoadChunk("world", ch.position));
+        //Debug.Log(v.position.ToString());
+        //Debug.Log(Application.persistentDataPath);
     }
     private void Update()
     {

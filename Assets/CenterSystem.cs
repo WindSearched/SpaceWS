@@ -2,18 +2,20 @@ using UnityEngine;
 
 public class CenterSystem : MonoBehaviour
 {
+    public static string fp;
     private void Start()
     {
-        string fp = Application.persistentDataPath + "/setpath";
+        fp = Application.persistentDataPath + "/setpath";
         if (!Data.FileExists(fp))
         {
             ct.setting = new();
-            Data.CreateFile(fp,ct.setting.settingPath,false);
+            Data.CreateFile(fp,ct.setting.settingPath.ToString(),false);
         }
         else
         {
             var p = Data.ReadFile(fp);
             ct.setting = Data.ReadJson<Set>(p);
+
         }
 
         Tick.Reg(new()//update position every tick
@@ -36,7 +38,15 @@ public class CenterSystem : MonoBehaviour
 
         ct.defualtBody = Resources.Load("Body") as GameObject;
         ct.bodiesParent = GameObject.Find("Bodies").transform;
-        ct.meshTypes.Add("test/normalCube", SMesh.LoadMeshFromTextOBJ(SMesh.cubeOBJ));
+        ct.defaultMat = Resources.Load("DefaultMat") as Material;
+
+        var si = SMesh.LoadStructInfoOGG(SMesh.cubeOBJ);
+        ct.meshTypes.Add("test/normalCube", si.mesh);
+        ct.meshFaces.Add("test/normalCube", si.faces);
+
+        si = SMesh.LoadStructInfoOGG(SMesh.testStruct1);
+        ct.meshTypes.Add("test/str1", si.mesh);
+        ct.meshFaces.Add("test/str1", si.faces);
     }
     private void Update()
     {
@@ -57,6 +67,7 @@ public class CenterSystem : MonoBehaviour
     private void OnDisable()
     {
         ct.act.Disable();
+        Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the tetting path
+        Data.WriteJson(ct.setting, ct.setting.settingPath);
     }
-
 }

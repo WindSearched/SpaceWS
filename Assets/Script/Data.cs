@@ -1,16 +1,12 @@
-using K4os.Compression.LZ4;
-using Newtonsoft.Json;
+ï»¿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
-using static UnityEngine.Rendering.HableCurve;
 public static class Data
-{   
+{
     /// <summary>
     /// write json data to file
     /// </summary>
@@ -26,7 +22,7 @@ public static class Data
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             ContractResolver = new DefaultContractResolver
             {
-                // ºöÂÔÖ»¶ÁÊôĞÔ£¨±ÈÈç normalized£©
+                // å¿½ç•¥åªè¯»å±æ€§ï¼ˆæ¯”å¦‚ normalizedï¼‰
                 IgnoreSerializableInterface = true
             }
         };
@@ -47,9 +43,10 @@ public static class Data
         {
             return JsonConvert.DeserializeObject<T>(json);
         }
-        catch
+        catch (System.Exception e)
         {
-            Debug.Log("[Data.ReadJson] cannot deseriaize json file");
+            Debug.Log("[Data.ReadJson] cannot deseriaize json file:" +
+                e.Message);
 
             return default;
         }
@@ -58,14 +55,14 @@ public static class Data
     {
         string result = "";
 
-        // ÅĞ¶ÏÂ·¾¶ÊÇ·ñ°üº¬ "://" »ò ":///"£¬ÒÔÈ·¶¨ÊÇ·ñÔÚ Android »òÍøÂç»·¾³ÖĞ
+        // åˆ¤æ–­è·¯å¾„æ˜¯å¦åŒ…å« "://" æˆ– ":///"ï¼Œä»¥ç¡®å®šæ˜¯å¦åœ¨ Android æˆ–ç½‘ç»œç¯å¢ƒä¸­
         if (filePath.Contains("://") || filePath.Contains(":///"))
         {
-            // Android »ò Web »·¾³£¬Ê¹ÓÃ UnityWebRequest ¶ÁÈ¡ÎÄ¼ş
+            // Android æˆ– Web ç¯å¢ƒï¼Œä½¿ç”¨ UnityWebRequest è¯»å–æ–‡ä»¶
             UnityWebRequest www = UnityWebRequest.Get(filePath);
             www.SendWebRequest();
 
-            // µÈ´ıÇëÇóÍê³É
+            // ç­‰å¾…è¯·æ±‚å®Œæˆ
             while (!www.isDone) { }
 
             if (www.result == UnityWebRequest.Result.Success)
@@ -79,7 +76,7 @@ public static class Data
         }
         else
         {
-            // ÆäËûÆ½Ì¨£¬Èç Windows£¬Ö±½Ó¶ÁÈ¡ÎÄ¼ş
+            // å…¶ä»–å¹³å°ï¼Œå¦‚ Windowsï¼Œç›´æ¥è¯»å–æ–‡ä»¶
             result = File.ReadAllText(filePath);
         }
 
@@ -122,8 +119,7 @@ public static class Data
         if (FileExists(path) && !rewrite)
             return;
         using StreamWriter sw = new(path);
-        var lines = text.Split('\n');
-        sw.Write(lines);
+        sw.Write(text);
         sw.Close();
     }
     public static string ReadFile(string path)
@@ -139,22 +135,31 @@ public static class Data
 public class Set
 {
     private string datasavePath = Application.persistentDataPath;
+    [JsonIgnore]
     public string dataPath
     {
         get => datasavePath;
-        set{
-            if(directCopyDataWhenChangeDataPath)
+        set
+        {
+            if (directCopyDataWhenChangeDataPath)
                 Data.CopyAll(datasavePath, value);
             else
                 Data.CopyAll(datasavePath, value);
             datasavePath = value;
         }
     }
+    [JsonIgnore]
     public string settingPath => datasavePath + "/setting.json";
+    [JsonIgnore]
     public string spacePath => datasavePath + "/spaces/";
     public bool directCopyDataWhenChangeDataPath = true;
 }
 
+public class LogicalFace
+{
+    public Vector3[] vertices;
+    public int[] triangles; // 0-based ç´¢å¼•
+}
 public static class SMesh
 {
     public static Mesh LoadMeshFromOBJ(string objFilePath, Material material = null)
@@ -162,7 +167,7 @@ public static class SMesh
         string fullPath = Path.Combine(Application.dataPath, objFilePath);
         if (!File.Exists(fullPath))
         {
-            Debug.LogError("OBJ ÎÄ¼ş²»´æÔÚ: " + fullPath);
+            Debug.LogError("OBJ æ–‡ä»¶ä¸å­˜åœ¨: " + fullPath);
             return null;
         }
 
@@ -183,7 +188,7 @@ public static class SMesh
         {
             if (line.StartsWith("v "))
             {
-                // ¶¥µã
+                // é¡¶ç‚¹
                 string[] parts = line.Split(' ');
                 float x = float.Parse(parts[1]);
                 float y = float.Parse(parts[2]);
@@ -192,15 +197,15 @@ public static class SMesh
             }
             else if (line.StartsWith("f "))
             {
-                // Ãæ£¨¼ÙÉèÈı½ÇĞÎ»ò¶à±ßĞÎ£¬×öÉÈĞÎÈı½Ç»¯£©
+                // é¢ï¼ˆå‡è®¾ä¸‰è§’å½¢æˆ–å¤šè¾¹å½¢ï¼Œåšæ‰‡å½¢ä¸‰è§’åŒ–ï¼‰
                 string[] parts = line.Split(' ');
                 int[] faceIndices = new int[parts.Length - 1];
                 for (int i = 1; i < parts.Length; i++)
                 {
-                    faceIndices[i - 1] = int.Parse(parts[i].Split('/')[0]) - 1; // ¶¥µãË÷Òı´Ó0¿ªÊ¼
+                    faceIndices[i - 1] = int.Parse(parts[i].Split('/')[0]) - 1; // é¡¶ç‚¹ç´¢å¼•ä»0å¼€å§‹
                 }
 
-                // ¶à±ßĞÎÈı½Ç»¯£¨ÉÈĞÎ·¨£©
+                // å¤šè¾¹å½¢ä¸‰è§’åŒ–ï¼ˆæ‰‡å½¢æ³•ï¼‰
                 for (int i = 1; i < faceIndices.Length - 1; i++)
                 {
                     triangles.Add(faceIndices[0]);
@@ -210,7 +215,7 @@ public static class SMesh
             }
         }
 
-        // ´´½¨ Mesh
+        // åˆ›å»º Mesh
         Mesh mesh = new Mesh
         {
             vertices = vertices.ToArray(),
@@ -223,17 +228,141 @@ public static class SMesh
 
         return mesh;
     }
+    /// <summary>
+    /// load faces by ogg file path
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    public static LogicalFace[] LoadFacesOGG(string path)
+    {
+        if (!File.Exists(path))
+        {
+            Debug.LogError("OBJ æ–‡ä»¶ä¸å­˜åœ¨: " + path);
+            return null;
+        }
+        return GetFacesOGG(File.ReadAllLines(path));
+    }
+    /// <summary>
+    /// get faces from ogg file lines
+    /// </summary>
+    /// <param name="lines"></param>
+    /// <returns></returns>
+    public static LogicalFace[] GetFacesOGG(string[] lines)
+    {
+        List<Vector3> vertexList = new List<Vector3>();
+        List<LogicalFace> faceList = new List<LogicalFace>();
 
+        foreach (string line in lines)
+        {
+            if (line.StartsWith("v "))
+            {
+                string[] parts = line.Split(' ');
+                float x = float.Parse(parts[1]);
+                float y = float.Parse(parts[2]);
+                float z = float.Parse(parts[3]);
+                vertexList.Add(new Vector3(x, y, z));
+            }
+            else if (line.StartsWith("f "))
+            {
+                string[] parts = line.Substring(2).Split(' ');
+                int[] indices = new int[parts.Length];
+                Vector3[] faceVerts = new Vector3[parts.Length];
+
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    string s = parts[i].Split('/')[0]; // å–é¡¶ç‚¹ç´¢å¼•
+                    int idx = int.Parse(s) - 1; // OBJ ç´¢å¼•ä»1å¼€å§‹
+                    indices[i] = i;             // ä¸‰è§’åŒ–ç”¨æœ¬åœ°ç´¢å¼•
+                    faceVerts[i] = vertexList[idx];
+                }
+
+                // ä¸‰è§’åŒ–ï¼ˆå¦‚æœæ˜¯å››è¾¹å½¢æˆ–æ›´å¤šé¡¶ç‚¹ï¼‰
+                List<int> tris = new List<int>();
+                for (int i = 1; i < faceVerts.Length - 1; i++)
+                {
+                    tris.Add(0);
+                    tris.Add(i);
+                    tris.Add(i + 1);
+                }
+
+                faceList.Add(new LogicalFace()
+                {
+                    vertices = faceVerts,
+                    triangles = tris.ToArray()
+                });
+            }
+        }
+
+        return faceList.ToArray();
+    }
+    /// <summary>
+    /// get faces from ogg file text
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public static LogicalFace[] GetFacesOGG(string text) => GetFacesOGG(text.Split('\n'));
+    /// <summary>
+    /// get mesh from logical faces
+    /// </summary>
+    /// <param name="faces"></param>
+    /// <returns></returns>
+    public static Mesh GetMesh(LogicalFace[] faces)
+    {
+        Mesh mesh = new Mesh();
+        List<Vector3> verts = new List<Vector3>();
+        List<int> tris = new List<int>();
+
+        int vertOffset = 0;
+        foreach (var face in faces)
+        {
+            verts.AddRange(face.vertices);
+            for (int i = 0; i < face.triangles.Length; i++)
+            {
+                tris.Add(face.triangles[i] + vertOffset);
+            }
+            vertOffset += face.vertices.Length;
+        }
+
+        mesh.vertices = verts.ToArray();
+        mesh.triangles = tris.ToArray();
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        return mesh;
+    }
+    public static (Mesh mesh, LogicalFace[] faces) LoadStructInfoOGG(string[] lines)
+    {
+        LogicalFace[] faces = GetFacesOGG(lines);
+        Mesh mesh = GetMesh(faces);
+        return (mesh, faces);
+    }
+    public static(Mesh mesh, LogicalFace[] faces) LoadStructInfoOGG(string text) => LoadStructInfoOGG(text.Split('\n'));
+    public static (Mesh mesh, LogicalFace[] faces) GetStructInfoOGG(string path)
+    {
+        if (!File.Exists(path))
+        {
+            Debug.LogError("OBJ æ–‡ä»¶ä¸å­˜åœ¨: " + path);
+            return default;
+        }
+        return LoadStructInfoOGG(File.ReadAllLines(path));
+    }
+
+    /// <summary>
+    /// add mesh to target gameobject
+    /// </summary>
+    /// <param name="target"></param>
+    /// <param name="mesh"></param>
+    /// <param name="material"></param>
     public static void AddMesh(GameObject target, Mesh mesh, Material material = null)
     {
-        // Ìí¼Ó×é¼ş
+        // æ·»åŠ ç»„ä»¶
         MeshFilter mf = target.GetComponent<MeshFilter>();
         if (mf == null) mf = target.AddComponent<MeshFilter>();
         mf.mesh = mesh;
 
         MeshRenderer mr = target.GetComponent<MeshRenderer>();
         if (mr == null) mr = target.AddComponent<MeshRenderer>();
-        mr.material = material != null ? material : new Material(Shader.Find("Standard"));
+        mr.material = material == null ? ct.defaultMat : material;
 
         MeshCollider collider = target.GetComponent<MeshCollider>();
         if (collider == null) collider = target.AddComponent<MeshCollider>();
@@ -241,33 +370,39 @@ public static class SMesh
         collider.convex = false;
     }
 
-    public static GameObject CreatePolygonMesh(List<Vector3> pts,string name = "")
+    /// <summary>
+    /// create a 2d mesh
+    /// </summary>
+    /// <param name="pts"></param>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public static GameObject CreatePolygonMesh(List<Vector3> pts, string name = "")
     {
         Mesh mesh = new Mesh();
 
-        // --- 1. ½« Vector3 ×ª³É Vector2£¨ÓÃÓÚÈı½Ç»¯£© ---
+        // --- 1. å°† Vector3 è½¬æˆ Vector2ï¼ˆç”¨äºä¸‰è§’åŒ–ï¼‰ ---
         Vector2[] pts2 = new Vector2[pts.Count];
         for (int i = 0; i < pts.Count; i++)
-            pts2[i] = new Vector2(pts[i].x, pts[i].z); // Í¶Ó°µ½XZÆ½Ãæ£¬¿É¸ÄYÖá
+            pts2[i] = new Vector2(pts[i].x, pts[i].z); // æŠ•å½±åˆ°XZå¹³é¢ï¼Œå¯æ”¹Yè½´
 
-        // --- 2. Èı½Ç»¯£¨Ear Clipping£© ---
+        // --- 2. ä¸‰è§’åŒ–ï¼ˆEar Clippingï¼‰ ---
         int[] triangles = Triangulate(pts2);
 
-        // --- 3. ÉèÖÃ Mesh ---
+        // --- 3. è®¾ç½® Mesh ---
         mesh.vertices = pts.ToArray();
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
         GameObject g = new();
-        // --- 4. Ó¦ÓÃµ½ MeshFilter ---
+        // --- 4. åº”ç”¨åˆ° MeshFilter ---
         MeshFilter mf = g.AddComponent<MeshFilter>();
         mf.mesh = mesh;
 
         // --- 5. MeshCollider ---
         MeshCollider collider = g.AddComponent<MeshCollider>();
-        collider.sharedMesh = mesh;  // ¹Ø¼ü£¡
-        collider.convex = false;     // ĞèÒªÃæ¼ì²â±ØĞë false
+        collider.sharedMesh = mesh;  // å…³é”®ï¼
+        collider.convex = false;     // éœ€è¦é¢æ£€æµ‹å¿…é¡» false
 
         return g;
     }
@@ -287,7 +422,7 @@ public static class SMesh
                 int i1 = verts[(i + 1) % count];
                 int i2 = verts[(i + 2) % count];
 
-                // Ìí¼ÓÈı½ÇĞÎ
+                // æ·»åŠ ä¸‰è§’å½¢
                 indices.Add(i0);
                 indices.Add(i1);
                 indices.Add(i2);
@@ -300,9 +435,102 @@ public static class SMesh
     }
 
     /// <summary>
+    /// å°† objectA çš„é€»è¾‘é¢ faceIndexA å®Œå…¨å¯¹é½åˆ° objectB çš„é€»è¾‘é¢ faceIndexB
+    /// æ³•çº¿å®Œå…¨ç›¸åï¼Œé¢ä¸­å¿ƒç²¾ç¡®å¯¹é½
+    /// </summary>
+    public static bool AlignFaceToFace(
+        GameObject objectA,
+        LogicalFace[] facesA,
+        int faceIndexA,
+
+        GameObject objectB,
+        LogicalFace[] facesB,
+        int faceIndexB
+    )
+    {
+        //ç´¢å¼•åˆæ³•æ€§æ£€æŸ¥
+        if (objectA == null || objectB == null) return false;
+        if (facesA == null || facesB == null) return false;
+        if (faceIndexA < 0 || faceIndexA >= facesA.Length) return false;
+        if (faceIndexB < 0 || faceIndexB >= facesB.Length) return false;
+
+        LogicalFace faceA = facesA[faceIndexA];
+        LogicalFace faceB = facesB[faceIndexB];
+
+        Transform tA = objectA.transform;
+        Transform tB = objectB.transform;
+
+        //å½“å‰ä¸–ç•Œé¢é¡¶ç‚¹
+        Vector3[] wA = GetWorldFaceVertices(tA, faceA);
+        Vector3[] wB = GetWorldFaceVertices(tB, faceB);
+
+        //é¢ä¸­å¿ƒ
+        Vector3 centerB = GetFaceCenter(wB);
+
+        //é¢æ—‹è½¬ï¼ˆå…¨éƒ¨ç”¨æ­£æ³•çº¿ï¼‰
+        Quaternion rotA = GetFaceRotation(wA);
+        Quaternion rotB = GetFaceRotation(wB);
+
+        //ç›®æ ‡æ—‹è½¬ï¼šA çš„é¢ â†’ B é¢çš„åæ–¹å‘
+        Quaternion targetFaceRot =
+            Quaternion.LookRotation(
+                 rotB * -Vector3.forward,
+                 rotB * Vector3.up
+            );
+
+        Quaternion deltaRot = targetFaceRot * Quaternion.Inverse(rotA);
+
+        //æ—‹è½¬ç‰©ä½“ A
+        tA.rotation = deltaRot * tA.rotation;
+
+        //æ—‹è½¬åé‡æ–°è®¡ç®— A é¢ä¸­å¿ƒï¼ˆâ€¼ï¸å…³é”®ï¼‰
+        Vector3[] wA2 = GetWorldFaceVertices(tA, faceA);
+        Vector3 rotatedCenterA = GetFaceCenter(wA2);
+
+        //å¹³ç§»å¯¹é½ä¸­å¿ƒ
+        Vector3 offset = centerB - rotatedCenterA;
+        tA.position += offset;
+
+        return true;
+    }
+
+    static Vector3 GetFaceCenter(Vector3[] verts)
+    {
+        Vector3 sum = Vector3.zero;
+        foreach (var v in verts) sum += v;
+        return sum / verts.Length;
+    }
+
+    static Vector3 GetFaceNormal(Vector3[] verts)
+    {
+        return Vector3.Normalize(
+            Vector3.Cross(verts[1] - verts[0], verts[2] - verts[0])
+        );
+    }
+    static Quaternion GetFaceRotation(Vector3[] verts)
+    {
+        Vector3 normal = GetFaceNormal(verts);
+        Vector3 tangent = Vector3.Normalize(verts[1] - verts[0]);
+        Vector3 bitangent = Vector3.Cross(normal, tangent);
+        return Quaternion.LookRotation(normal, bitangent);
+    }
+    static Vector3[] GetWorldFaceVertices(Transform t, LogicalFace face)
+    {
+        Vector3[] world = new Vector3[face.triangles.Length];
+        for (int i = 0; i < face.triangles.Length; i++)
+        {
+            world[i] = t.TransformPoint(face.vertices[face.triangles[i]]);
+        }
+        return world;
+    }
+
+
+
+    /// <summary>
     /// a test obj file to load a cube
     /// </summary>
     public static string cubeOBJ = "# Blender 4.2.1 LTS\r\n# www.blender.org\r\nmtllib testcube.mtl\r\no Cube\r\nv 1.000000 1.000000 -1.000000\r\nv 1.000000 -1.000000 -1.000000\r\nv 1.000000 1.000000 1.000000\r\nv 1.000000 -1.000000 1.000000\r\nv -1.000000 1.000000 -1.000000\r\nv -1.000000 -1.000000 -1.000000\r\nv -1.000000 1.000000 1.000000\r\nv -1.000000 -1.000000 1.000000\r\nvn -0.0000 1.0000 -0.0000\r\nvn -0.0000 -0.0000 1.0000\r\nvn -1.0000 -0.0000 -0.0000\r\nvn -0.0000 -1.0000 -0.0000\r\nvn 1.0000 -0.0000 -0.0000\r\nvn -0.0000 -0.0000 -1.0000\r\nvt 0.625000 0.500000\r\nvt 0.875000 0.500000\r\nvt 0.875000 0.750000\r\nvt 0.625000 0.750000\r\nvt 0.375000 0.750000\r\nvt 0.625000 1.000000\r\nvt 0.375000 1.000000\r\nvt 0.375000 0.000000\r\nvt 0.625000 0.000000\r\nvt 0.625000 0.250000\r\nvt 0.375000 0.250000\r\nvt 0.125000 0.500000\r\nvt 0.375000 0.500000\r\nvt 0.125000 0.750000\r\ns 0\r\nusemtl Material\r\nf 1/1/1 5/2/1 7/3/1 3/4/1\r\nf 4/5/2 3/4/2 7/6/2 8/7/2\r\nf 8/8/3 7/9/3 5/10/3 6/11/3\r\nf 6/12/4 2/13/4 4/5/4 8/14/4\r\nf 2/13/5 1/1/5 3/4/5 4/5/5\r\nf 6/11/6 5/10/6 1/1/6 2/13/6\r\n";
+    public static string testStruct1 = "# Blender 4.2.1 LTS\r\n# www.blender.org\r\nmtllib teststruct1.mtl\r\no Cube\r\nv 1.000000 1.000000 -1.000000\r\nv 1.000000 -1.000000 -1.000000\r\nv 1.000000 1.000000 1.000000\r\nv 1.000000 -1.000000 1.000000\r\nv -1.000000 1.000000 -1.000000\r\nv -1.000000 -1.000000 -1.000000\r\nv -1.000000 1.000000 1.000000\r\nv -1.000000 -1.000000 1.000000\r\nv 2.301636 1.000000 -1.000000\r\nv 2.301636 -1.000000 -1.000000\r\nv 2.301636 1.000000 1.000000\r\nv 2.301636 -1.000000 1.000000\r\nv 1.000000 1.000000 -2.137064\r\nv 1.000000 -1.000000 -2.137064\r\nv 2.301636 1.000000 -2.137064\r\nv 2.301636 -1.000000 -2.137064\r\nv 1.000000 4.225416 -1.000000\r\nv 2.301636 4.225416 -1.000000\r\nv 1.000000 4.225416 -2.137064\r\nv 2.301636 4.225416 -2.137064\r\nvn -0.0000 1.0000 -0.0000\r\nvn -0.0000 -0.0000 1.0000\r\nvn -1.0000 -0.0000 -0.0000\r\nvn -0.0000 -1.0000 -0.0000\r\nvn -0.0000 -0.0000 -1.0000\r\nvn 1.0000 -0.0000 -0.0000\r\nvt 0.625000 0.500000\r\nvt 0.875000 0.500000\r\nvt 0.875000 0.750000\r\nvt 0.625000 0.750000\r\nvt 0.375000 0.750000\r\nvt 0.625000 1.000000\r\nvt 0.375000 1.000000\r\nvt 0.375000 0.000000\r\nvt 0.625000 0.000000\r\nvt 0.625000 0.250000\r\nvt 0.375000 0.250000\r\nvt 0.125000 0.500000\r\nvt 0.375000 0.500000\r\nvt 0.125000 0.750000\r\ns 0\r\nusemtl Material\r\nf 1/1/1 5/2/1 7/3/1 3/4/1\r\nf 4/5/2 3/4/2 7/6/2 8/7/2\r\nf 8/8/3 7/9/3 5/10/3 6/11/3\r\nf 6/12/4 2/13/4 4/5/4 8/14/4\r\nf 3/4/2 4/5/2 12/5/2 11/4/2\r\nf 6/11/5 5/10/5 1/1/5 2/13/5\r\nf 10/13/6 9/1/6 11/4/6 12/5/6\r\nf 9/1/6 10/13/6 16/13/6 15/1/6\r\nf 4/5/4 2/13/4 10/13/4 12/5/4\r\nf 1/1/1 3/4/1 11/4/1 9/1/1\r\nf 14/13/5 13/1/5 15/1/5 16/13/5\r\nf 10/13/4 2/13/4 14/13/4 16/13/4\r\nf 2/13/3 1/1/3 13/1/3 14/13/3\r\nf 15/1/5 13/1/5 19/1/5 20/1/5\r\nf 17/1/1 18/1/1 20/1/1 19/1/1\r\nf 1/1/2 9/1/2 18/1/2 17/1/2\r\nf 13/1/3 1/1/3 17/1/3 19/1/3\r\nf 9/1/6 15/1/6 20/1/6 18/1/6\r\n";
 }
 
 public class StructState
@@ -335,12 +563,12 @@ public struct Chunk
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms, Encoding.UTF8);
 
-        // Ğ´ V3I position
+        // å†™ V3I position
         bw.Write(position.x);
         bw.Write(position.y);
         bw.Write(position.z);
 
-        // Ğ´ structs ÊıÁ¿
+        // å†™ structs æ•°é‡
         int count = structs != null ? structs.Count : 0;
         bw.Write(count);
 
@@ -348,10 +576,10 @@ public struct Chunk
         {
             foreach (var s in structs)
             {
-                // Ğ´ string type
+                // å†™ string type
                 bw.Write(s.type ?? "");
 
-                // Ğ´ Loc
+                // å†™ Loc
                 bw.Write(s.location.position.x);
                 bw.Write(s.location.position.y);
                 bw.Write(s.location.position.z);
@@ -361,7 +589,7 @@ public struct Chunk
                 bw.Write(s.location.rotation.z);
                 bw.Write(s.location.rotation.w);
 
-                // Ğ´ bodyIndex
+                // å†™ bodyIndex
                 bw.Write(s.bodyIndex);
             }
         }
@@ -369,7 +597,7 @@ public struct Chunk
         return ms.ToArray();
     }
 
-    // ·´ĞòÁĞ»¯ Chunk
+    // ååºåˆ—åŒ– Chunk
     public static Chunk FromBytes(byte[] data)
     {
         Chunk chunk = new Chunk();
@@ -378,22 +606,22 @@ public struct Chunk
         using var ms = new MemoryStream(data);
         using var br = new BinaryReader(ms, Encoding.UTF8);
 
-        // ¶ÁÈ¡ position
+        // è¯»å– position
         chunk.position.x = br.ReadInt32();
         chunk.position.y = br.ReadInt32();
         chunk.position.z = br.ReadInt32();
 
-        // ¶ÁÈ¡ structs ÊıÁ¿
+        // è¯»å– structs æ•°é‡
         int count = br.ReadInt32();
 
         for (int i = 0; i < count; i++)
         {
             StructState s = new StructState();
 
-            // ¶ÁÈ¡ string
+            // è¯»å– string
             s.type = br.ReadString();
 
-            // ¶ÁÈ¡ Loc
+            // è¯»å– Loc
             s.location.position.x = br.ReadSingle();
             s.location.position.y = br.ReadSingle();
             s.location.position.z = br.ReadSingle();
@@ -403,7 +631,7 @@ public struct Chunk
             s.location.rotation.z = br.ReadSingle();
             s.location.rotation.w = br.ReadSingle();
 
-            // ¶ÁÈ¡ bodyIndex
+            // è¯»å– bodyIndex
             s.bodyIndex = br.ReadInt32();
 
             chunk.structs.Add(s);
@@ -411,6 +639,5 @@ public struct Chunk
 
         return chunk;
     }
-
 }
 

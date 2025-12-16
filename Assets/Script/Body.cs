@@ -65,7 +65,7 @@ public class Bodies
             faces = new()
         });
     }
-    public void LoadStruct(Struct strct)
+    public GameObject LoadStruct(Struct strct, Material material = null)
     {
         if (!datas.ContainsKey(strct.bodyIndex))
         {
@@ -79,6 +79,7 @@ public class Bodies
         objects[strct.bodyIndex].structs.Add(g);
 
         strct.location.LocateHere(g);
+        return g;
     }
 }
 
@@ -141,6 +142,8 @@ public struct V3I
     public static V3I zero = new() {
         x = 0, y = 0, z = 0
     };
+
+    public override string ToString() => $"({x},{y},{z})";
 }
 
 public struct Quater

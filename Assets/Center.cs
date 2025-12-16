@@ -32,8 +32,10 @@ public static class ct
     /// all type of mesh loaded
     /// </summary>
     public static Dictionary<string, Mesh> meshTypes = new();
+    public static Dictionary<string, LogicalFace[]> meshFaces = new();
     public static Dictionary<string, StructData> structDatas = new();
 
+    public static Material defaultMat;
 
     public static event Meth updatePerTick;
     //
