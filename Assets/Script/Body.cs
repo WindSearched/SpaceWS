@@ -49,6 +49,9 @@ public class Bodies
         public List<GameObject> faces;
     }
     public Dictionary<int,body> datas = new();
+    /// <summary>
+    /// body
+    /// </summary>
     public Dictionary<int, obj> objects = new();
 
     public void LoadVoidBody(int index)

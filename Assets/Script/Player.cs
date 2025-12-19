@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
@@ -64,6 +65,7 @@ public class Player : MonoBehaviour
         var g2 = ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/str1" });
         SMesh.AlignFaceToFace(g1, ct.meshFaces["test/normalCube"],4, g2, ct.meshFaces["test/str1"],6);
 
+        ct.AddAction("move",ct.keyTable["a"],InputActionType.Value);
         //test
         //Chunk ch = new() {
         //    position = V3I.zero,
@@ -98,7 +100,7 @@ public class Player : MonoBehaviour
 
     /// <summary>
     /// All registered move modes.
-    /// ËùÓÐÒÑ×¢²áµÄÒÆ¶¯Ä£Ê½¡£
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¢ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½Ä£Ê½ï¿½ï¿½
     /// </summary>
     public static Dictionary<string,MoveMode> moveModes = new();
 

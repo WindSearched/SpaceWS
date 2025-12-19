@@ -5,6 +5,8 @@ public class CenterSystem : MonoBehaviour
     public static string fp;
     private void Start()
     {
+        ct.log.Write("Center","Starts to load the center");
+        
         fp = Application.persistentDataPath + "/setpath";
         if (!Data.FileExists(fp))
         {
@@ -34,7 +36,7 @@ public class CenterSystem : MonoBehaviour
                 Tick.Reg(reg);
             }
         });
-
+        
 
         ct.defualtBody = Resources.Load("Body") as GameObject;
         ct.bodiesParent = GameObject.Find("Bodies").transform;
@@ -47,6 +49,9 @@ public class CenterSystem : MonoBehaviour
         si = SMesh.LoadStructInfoOGG(SMesh.testStruct1);
         ct.meshTypes.Add("test/str1", si.mesh);
         ct.meshFaces.Add("test/str1", si.faces);
+        
+        ct.log.Write("Center","Finishes to load the center");
+        
     }
     private void Update()
     {
@@ -69,5 +74,11 @@ public class CenterSystem : MonoBehaviour
         ct.act.Disable();
         Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the tetting path
         Data.WriteJson(ct.setting, ct.setting.settingPath);
+        
+        foreach (var si in ct.acts.Values)//disable all actions
+            si.Dispose();
+
+        ct.log.Write("Finish logging");
+        ct.log.Stop();
     }
 }

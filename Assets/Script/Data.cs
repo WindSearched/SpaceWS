@@ -152,7 +152,11 @@ public class Set
     public string settingPath => datasavePath + "/setting.json";
     [JsonIgnore]
     public string spacePath => datasavePath + "/spaces/";
+    [JsonIgnore]
+    public string logPath => datasavePath + "/logs/";
+    
     public bool directCopyDataWhenChangeDataPath = true;
+    public bool toLog = true;
 }
 
 public class LogicalFace
@@ -500,7 +504,6 @@ public static class SMesh
         foreach (var v in verts) sum += v;
         return sum / verts.Length;
     }
-
     static Vector3 GetFaceNormal(Vector3[] verts)
     {
         return Vector3.Normalize(
@@ -524,6 +527,76 @@ public static class SMesh
         return world;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="sourceMesh"></param>
+    /// <param name="logicalFaces"></param>
+    /// <param name="baseSubMeshIndex">usually is 0</param>
+    /// <returns></returns>
+    public static Mesh ToSubmesh(
+    Mesh sourceMesh,
+    List<int[]> logicalFaces,
+    out int baseSubMeshIndex
+)
+    {
+        //复制 Mesh（关键：不破坏原始资源）
+        Mesh mesh = Object.Instantiate(sourceMesh);
+
+        int[] allTriangles = mesh.triangles;
+        int triangleCount = allTriangles.Length / 3;
+
+        // SubMesh 0：未被逻辑面使用的三角形
+        // SubMesh 1..n：每个逻辑面
+        mesh.subMeshCount = logicalFaces.Count + 1;
+        baseSubMeshIndex = 0;
+
+        // 收集被逻辑面占用的 triangleIndex
+        HashSet<int> usedTriangleSet = new HashSet<int>();
+        foreach (var face in logicalFaces)
+        {
+            foreach (int tri in face)
+            {
+                usedTriangleSet.Add(tri);
+            }
+        }
+
+        // 构建 SubMesh 0（剩余部分）
+        List<int> restTriangles = new List<int>();
+
+        for (int i = 0; i < triangleCount; i++)
+        {
+            if (!usedTriangleSet.Contains(i))
+            {
+                restTriangles.Add(allTriangles[i * 3 + 0]);
+                restTriangles.Add(allTriangles[i * 3 + 1]);
+                restTriangles.Add(allTriangles[i * 3 + 2]);
+            }
+        }
+
+        mesh.SetTriangles(restTriangles, 0);
+
+        //为每个逻辑面生成一个 SubMesh
+        for (int faceIndex = 0; faceIndex < logicalFaces.Count; faceIndex++)
+        {
+            List<int> faceTriangles = new List<int>();
+
+            foreach (int tri in logicalFaces[faceIndex])
+            {
+                faceTriangles.Add(allTriangles[tri * 3 + 0]);
+                faceTriangles.Add(allTriangles[tri * 3 + 1]);
+                faceTriangles.Add(allTriangles[tri * 3 + 2]);
+            }
+
+            mesh.SetTriangles(faceTriangles, faceIndex + 1);
+        }
+
+        // 可选：重新计算（视情况）
+        mesh.RecalculateBounds();
+        // mesh.RecalculateNormals(); // 若未修改顶点，一般不需要
+
+        return mesh;
+    }
 
 
     /// <summary>
