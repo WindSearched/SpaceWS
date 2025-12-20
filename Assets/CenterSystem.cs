@@ -6,6 +6,7 @@ public class CenterSystem : MonoBehaviour
     private void Start()
     {
         ct.log.Write("Center","Starts to load the center");
+        ct.mousecast = new();
         
         fp = Application.persistentDataPath + "/setpath";
         if (!Data.FileExists(fp))
@@ -59,7 +60,8 @@ public class CenterSystem : MonoBehaviour
         ct.mouseDirection = v - ct.mousePosition;       //  Get mouse data
         ct.mousePosition = v;                           //  
         ct.mouseCanMove = ct.mouseDirection != Vector2.zero;
-
+    
+        ct.mousecast.Casting();
     }
     private void Awake()
     {

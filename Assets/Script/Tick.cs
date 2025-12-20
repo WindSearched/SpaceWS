@@ -20,10 +20,11 @@ public class Tick : MonoBehaviour
         {
             Reg(reg);
         };
-        TickReg reg = new(e,5, true);
+        TickReg reg = new(e,5, 0);
         Reg(reg);
     }
 
+    // ReSharper disable Unity.PerformanceAnalysis
     IEnumerator TickRoutine()
     {
         while (true)
@@ -32,9 +33,14 @@ public class Tick : MonoBehaviour
 
             if(tickEvents.TryGetValue(tick, out List<TickReg> regs))//try get tick events
             {
-                for (int i = 0; i < regs.Count; i++)
+                foreach (var t in regs)
                 {
-                    regs[i].onTick.Invoke(regs[i]);
+                    var reg = t;
+                    reg.onTick.Invoke(reg);
+
+                    reg.repeattime--;
+                    if (reg.repeattime < 1) continue;
+                    Reg(reg);
                 }
             }
 
@@ -73,13 +79,13 @@ public struct TickReg
 {
     public TickEv onTick;
     public int offset;
-    public bool repeat;
+    public int repeattime;
 
-    public TickReg(TickEv onTick, int offset, bool repeat)
+    public TickReg(TickEv onTick, int offset, int repeat = 0)
     {
         this.onTick = onTick;
         this.offset = offset;
-        this.repeat = repeat;
+        this.repeattime = repeat;
     }
 }
 

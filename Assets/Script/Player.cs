@@ -66,6 +66,18 @@ public class Player : MonoBehaviour
         SMesh.AlignFaceToFace(g1, ct.meshFaces["test/normalCube"],4, g2, ct.meshFaces["test/str1"],6);
 
         ct.AddAction("move",ct.keyTable["a"],InputActionType.Value);
+
+        ct.mousecast.InCast += (GameObject o) =>
+        {
+            Debug.Log(o.name);
+        };
+
+        // TickReg tr = new((tr) =>
+        // {
+        //     Debug.Log($"log{tr.repeattime+1}");
+        // }, 5, 5);
+        // Tick.Reg(tr);
+
         //test
         //Chunk ch = new() {
         //    position = V3I.zero,

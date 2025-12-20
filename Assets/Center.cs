@@ -31,6 +31,7 @@ public static class ct
     }
 
     public static Bodies bodies = new();
+    public static MouseRaycast mousecast;
     /// <summary>
     /// all type of mesh loaded
     /// </summary>
