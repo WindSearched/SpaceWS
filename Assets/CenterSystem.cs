@@ -5,7 +5,7 @@ public class CenterSystem : MonoBehaviour
 {
     public static string fp;
     public static InputAction move;
-    public static InputAction mouse;
+    public static InputAction mouseD;
     private void Start()
     {
         ct.log.Write("Center","Starts to load the center");
@@ -13,8 +13,8 @@ public class CenterSystem : MonoBehaviour
 
         move = ct.action.Add("move",InputActionType.Value);
         ct.action.AddVector2(move);
-        mouse = ct.action.Add("mouse",InputActionType.Value);
-        ct.action.AddBiding(mouse,Action.keyTable["mouse"]);
+        mouseD = ct.action.Add("mouseDelta",InputActionType.Value);
+        ct.action.AddBiding(mouseD,Action.keyTable["mouseDelta"]);
 
         fp = Application.persistentDataPath + "/setpath";
         if (!Data.FileExists(fp))
@@ -64,12 +64,15 @@ public class CenterSystem : MonoBehaviour
     }
     private void Update()
     {
-        var v = mouse.ReadValue<Vector2>();             //
-        ct.mouseDirection = v - ct.mousePosition;       //  Get mouse data
-        ct.mousePosition = v;                           //  
-        ct.mouseCanMove = ct.mouseDirection != Vector2.zero;
+        var v = mouseD.ReadValue<Vector2>();             //get mouse position delta
+        ct.mouseDirection = v;       //  Get mouse data
+       //ct.mousePosition += v;                           //
+        ct.mouseCanMove = v != Vector2.zero;
 
-        ct.mousecast.Casting();
+        if (ct.mouseCanMove)
+        {
+            ct.mousecast.Casting();
+        }
     }
     private void Awake()
     {
@@ -78,10 +81,13 @@ public class CenterSystem : MonoBehaviour
     private void OnEnable()
     {
         //ct.act.Enable();
+        ct.LockMouse();
     }
     private void OnDisable()
     {
         //ct.act.Disable();
+        ct.UnlockMouse();
+
         Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the tetting path
         Data.WriteJson(ct.setting, ct.setting.settingPath);
         
@@ -90,5 +96,6 @@ public class CenterSystem : MonoBehaviour
 
         ct.log.Write("Finish logging");
         ct.log.Stop();
+
     }
 }

@@ -65,6 +65,21 @@ public static class ct
         GameObject.Instantiate(gameObject);
     }
 
+    public static void LockMouse()
+    {
+        // 锁定鼠标到屏幕中心
+        Cursor.lockState = CursorLockMode.Locked;
+
+        // 可见性控制
+        Cursor.visible = false;
+    }
+
+    public static void  UnlockMouse()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
 }
 public delegate void Meth();
 

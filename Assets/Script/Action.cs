@@ -87,6 +87,7 @@ public class Action
             {"1DAxis","Positive / Negative"},
             {"ButtonWithOneModifier","Modifier / Button"},
             {"ButtonWithOneModifiers","Modifier1 / Modifier2 / Button"},
+            {"mouseDelta","<Mouse>/delta"},
         };
     public Dictionary<string,InputAction> acts = new();
 
