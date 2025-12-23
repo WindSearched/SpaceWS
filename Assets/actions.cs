@@ -140,7 +140,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""name"": ""Jump"",
                     ""type"": ""Button"",
                     ""id"": ""f1ba0d36-48eb-4cd5-b651-1c94a6531f70"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -167,7 +167,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""name"": ""Sprint"",
                     ""type"": ""Button"",
                     ""id"": ""641cd816-40e6-41b4-8c3d-04687c349290"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1098,6 +1098,15 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""enter"",
+                    ""type"": ""Value"",
+                    ""id"": ""fad342a1-16b3-447e-93a8-9397641174b0"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -1166,6 +1175,72 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""action"": ""mouse"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bc01c516-2655-48e6-a735-a0ec0bb2f12b"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""enter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""7761613b-1fbe-454c-adb9-6992f4d7a285"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""enter"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""449f3d13-2826-4364-ad48-5a027dc1a82d"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""enter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""7c81e844-7081-4d39-ab87-85f795f592d3"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""enter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""f89d5e3d-2164-43f9-a304-9d5b1cb36f27"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""enter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""da6dad90-5d9c-4727-a471-d1f2630b70b4"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""enter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -1260,6 +1335,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         m_main = asset.FindActionMap("main", throwIfNotFound: true);
         m_main_move = m_main.FindAction("move", throwIfNotFound: true);
         m_main_mouse = m_main.FindAction("mouse", throwIfNotFound: true);
+        m_main_enter = m_main.FindAction("enter", throwIfNotFound: true);
     }
 
     ~@Actions()
@@ -1723,6 +1799,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
     private List<IMainActions> m_MainActionsCallbackInterfaces = new List<IMainActions>();
     private readonly InputAction m_main_move;
     private readonly InputAction m_main_mouse;
+    private readonly InputAction m_main_enter;
     /// <summary>
     /// Provides access to input actions defined in input action map "main".
     /// </summary>
@@ -1742,6 +1819,10 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "main/mouse".
         /// </summary>
         public InputAction @mouse => m_Wrapper.m_main_mouse;
+        /// <summary>
+        /// Provides access to the underlying input action "main/enter".
+        /// </summary>
+        public InputAction @enter => m_Wrapper.m_main_enter;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1774,6 +1855,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @mouse.started += instance.OnMouse;
             @mouse.performed += instance.OnMouse;
             @mouse.canceled += instance.OnMouse;
+            @enter.started += instance.OnEnter;
+            @enter.performed += instance.OnEnter;
+            @enter.canceled += instance.OnEnter;
         }
 
         /// <summary>
@@ -1791,6 +1875,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @mouse.started -= instance.OnMouse;
             @mouse.performed -= instance.OnMouse;
             @mouse.canceled -= instance.OnMouse;
+            @enter.started -= instance.OnEnter;
+            @enter.performed -= instance.OnEnter;
+            @enter.canceled -= instance.OnEnter;
         }
 
         /// <summary>
@@ -2059,5 +2146,12 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMouse(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "enter" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnEnter(InputAction.CallbackContext context);
     }
 }

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
@@ -14,7 +13,7 @@ public class Player : MonoBehaviour
     {
         entity = GetComponent<Entity>();
         
-        moveModes.Add("LevelMove",new() { 
+        moveModes.Add("LevelMove",new() {
             OnMove = (Vector2 dir, Rigidbody rig) =>
             {
                 rig.AddForce(dir * 10);
@@ -65,7 +64,6 @@ public class Player : MonoBehaviour
         var g2 = ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/str1" });
         SMesh.AlignFaceToFace(g1, ct.meshFaces["test/normalCube"],4, g2, ct.meshFaces["test/str1"],6);
 
-        ct.AddAction("move",ct.keyTable["a"],InputActionType.Value);
 
         ct.mousecast.InCast += (GameObject o) =>
         {
