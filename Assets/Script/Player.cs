@@ -27,8 +27,6 @@ public class Player : MonoBehaviour
         moveModes.Add("CameraFrontDirectionMove", new() {
             OnMove = (Vector2 dir, Rigidbody rig) =>
             {
-
-                Debug.Log(ct.mouseCanMove);
                 if (ct.mouseCanMove)
                 {
                     float v = dir.y;

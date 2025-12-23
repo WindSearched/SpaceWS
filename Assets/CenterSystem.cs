@@ -1,13 +1,21 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CenterSystem : MonoBehaviour
 {
     public static string fp;
+    public static InputAction move;
+    public static InputAction mouse;
     private void Start()
     {
         ct.log.Write("Center","Starts to load the center");
         ct.mousecast = new();
-        
+
+        move = ct.action.Add("move",InputActionType.Value);
+        ct.action.AddVector2(move);
+        mouse = ct.action.Add("mouse",InputActionType.Value);
+        ct.action.AddBiding(mouse,Action.keyTable["mouse"]);
+
         fp = Application.persistentDataPath + "/setpath";
         if (!Data.FileExists(fp))
         {
@@ -28,7 +36,7 @@ public class CenterSystem : MonoBehaviour
             {
                 ct.UpdatePerTick();
 
-                var p = ct.act.main.move.ReadValue<Vector2>();// player position
+                var p = move.ReadValue<Vector2>();// player move diretion
                 ct.playerCanMove = p != Vector2.zero;
                 ct.wasdDirection = p;
 
@@ -56,24 +64,24 @@ public class CenterSystem : MonoBehaviour
     }
     private void Update()
     {
-        var v = ct.act.main.mouse.ReadValue<Vector2>(); //
+        var v = mouse.ReadValue<Vector2>();             //
         ct.mouseDirection = v - ct.mousePosition;       //  Get mouse data
         ct.mousePosition = v;                           //  
         ct.mouseCanMove = ct.mouseDirection != Vector2.zero;
-    
+
         ct.mousecast.Casting();
     }
     private void Awake()
     {
-        ct.act = new Actions();
+        //ct.act = new Actions();
     }
     private void OnEnable()
     {
-        ct.act.Enable();
+        //ct.act.Enable();
     }
     private void OnDisable()
     {
-        ct.act.Disable();
+        //ct.act.Disable();
         Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the tetting path
         Data.WriteJson(ct.setting, ct.setting.settingPath);
         

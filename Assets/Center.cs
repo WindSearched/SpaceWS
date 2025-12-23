@@ -7,7 +7,6 @@ public static class ct
 {
     public static Set setting = new();
     public static Log log = new();
-    public static Actions act;
     public static Action action = new();
     public static Dictionary<string,InputAction> acts = new();
     public static Vector3 playerPosition;//updated every frame

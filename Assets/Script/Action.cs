@@ -82,7 +82,11 @@ public class Action
             { "f11", "<Keyboard>/f11" },
             { "f12", "<Keyboard>/f12" },
 
-            {"v2","2DVector"}
+            {"v2","2DVector"},
+            {"mouse","<Mouse>/position"},
+            {"1DAxis","Positive / Negative"},
+            {"ButtonWithOneModifier","Modifier / Button"},
+            {"ButtonWithOneModifiers","Modifier1 / Modifier2 / Button"},
         };
     public Dictionary<string,InputAction> acts = new();
 
@@ -92,7 +96,7 @@ public class Action
     /// <param name="key"></param>
     /// <param name="biding"></param>
     /// <param name="type"></param>
-    public InputAction Add(string key,string biding,InputActionType type)
+    public InputAction Add(string key,InputActionType type,string biding = null)
     {
         if (biding == "")
             return null;
@@ -115,6 +119,14 @@ public class Action
         ia.AddBinding(biding, interactions, processors, groups);
     }
 
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="ia"></param>
+    /// <param name="composite">composite type</param>
+    /// <param name="paths"></param>
+    /// <param name="interactions"></param>
+    /// <param name="processors"></param>
     public void AddComposite(InputAction ia, string composite,List<(string path,string part)> paths,
         string interactions = null, string processors = null)
     {
