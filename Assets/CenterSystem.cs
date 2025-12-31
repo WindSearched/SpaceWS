@@ -14,7 +14,7 @@ public class CenterSystem : MonoBehaviour
         move = ct.action.Add("move",InputActionType.Value);
         ct.action.AddVector2(move);
         mouseD = ct.action.Add("mouseDelta",InputActionType.Value);
-        ct.action.AddBiding(mouseD,Action.keyTable["mouseDelta"]);
+        ct.action.AddBiding(mouseD,SAction.keyTable["mouseDelta"]);
 
         fp = Application.persistentDataPath + "/setpath";
         if (!Data.FileExists(fp))
@@ -60,7 +60,8 @@ public class CenterSystem : MonoBehaviour
         ct.meshFaces.Add("test/str1", si.faces);
         
         ct.log.Write("Center","Finishes to load the center");
-        
+
+        ct.mod.OnStart();
     }
     private void Update()
     {

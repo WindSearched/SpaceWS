@@ -135,6 +135,7 @@ public static class Data
 public class Set
 {
     private string datasavePath = Application.persistentDataPath;
+    public string modPath = Application.persistentDataPath + "/mod/";
     [JsonIgnore]
     public string dataPath
     {
@@ -538,7 +539,7 @@ public static class SMesh
     Mesh sourceMesh,
     List<int[]> logicalFaces,
     out int baseSubMeshIndex
-)
+    )
     {
         //复制 Mesh（关键：不破坏原始资源）
         Mesh mesh = Object.Instantiate(sourceMesh);
@@ -604,6 +605,169 @@ public static class SMesh
     /// </summary>
     public static string cubeOBJ = "# Blender 4.2.1 LTS\r\n# www.blender.org\r\nmtllib testcube.mtl\r\no Cube\r\nv 1.000000 1.000000 -1.000000\r\nv 1.000000 -1.000000 -1.000000\r\nv 1.000000 1.000000 1.000000\r\nv 1.000000 -1.000000 1.000000\r\nv -1.000000 1.000000 -1.000000\r\nv -1.000000 -1.000000 -1.000000\r\nv -1.000000 1.000000 1.000000\r\nv -1.000000 -1.000000 1.000000\r\nvn -0.0000 1.0000 -0.0000\r\nvn -0.0000 -0.0000 1.0000\r\nvn -1.0000 -0.0000 -0.0000\r\nvn -0.0000 -1.0000 -0.0000\r\nvn 1.0000 -0.0000 -0.0000\r\nvn -0.0000 -0.0000 -1.0000\r\nvt 0.625000 0.500000\r\nvt 0.875000 0.500000\r\nvt 0.875000 0.750000\r\nvt 0.625000 0.750000\r\nvt 0.375000 0.750000\r\nvt 0.625000 1.000000\r\nvt 0.375000 1.000000\r\nvt 0.375000 0.000000\r\nvt 0.625000 0.000000\r\nvt 0.625000 0.250000\r\nvt 0.375000 0.250000\r\nvt 0.125000 0.500000\r\nvt 0.375000 0.500000\r\nvt 0.125000 0.750000\r\ns 0\r\nusemtl Material\r\nf 1/1/1 5/2/1 7/3/1 3/4/1\r\nf 4/5/2 3/4/2 7/6/2 8/7/2\r\nf 8/8/3 7/9/3 5/10/3 6/11/3\r\nf 6/12/4 2/13/4 4/5/4 8/14/4\r\nf 2/13/5 1/1/5 3/4/5 4/5/5\r\nf 6/11/6 5/10/6 1/1/6 2/13/6\r\n";
     public static string testStruct1 = "# Blender 4.2.1 LTS\r\n# www.blender.org\r\nmtllib teststruct1.mtl\r\no Cube\r\nv 1.000000 1.000000 -1.000000\r\nv 1.000000 -1.000000 -1.000000\r\nv 1.000000 1.000000 1.000000\r\nv 1.000000 -1.000000 1.000000\r\nv -1.000000 1.000000 -1.000000\r\nv -1.000000 -1.000000 -1.000000\r\nv -1.000000 1.000000 1.000000\r\nv -1.000000 -1.000000 1.000000\r\nv 2.301636 1.000000 -1.000000\r\nv 2.301636 -1.000000 -1.000000\r\nv 2.301636 1.000000 1.000000\r\nv 2.301636 -1.000000 1.000000\r\nv 1.000000 1.000000 -2.137064\r\nv 1.000000 -1.000000 -2.137064\r\nv 2.301636 1.000000 -2.137064\r\nv 2.301636 -1.000000 -2.137064\r\nv 1.000000 4.225416 -1.000000\r\nv 2.301636 4.225416 -1.000000\r\nv 1.000000 4.225416 -2.137064\r\nv 2.301636 4.225416 -2.137064\r\nvn -0.0000 1.0000 -0.0000\r\nvn -0.0000 -0.0000 1.0000\r\nvn -1.0000 -0.0000 -0.0000\r\nvn -0.0000 -1.0000 -0.0000\r\nvn -0.0000 -0.0000 -1.0000\r\nvn 1.0000 -0.0000 -0.0000\r\nvt 0.625000 0.500000\r\nvt 0.875000 0.500000\r\nvt 0.875000 0.750000\r\nvt 0.625000 0.750000\r\nvt 0.375000 0.750000\r\nvt 0.625000 1.000000\r\nvt 0.375000 1.000000\r\nvt 0.375000 0.000000\r\nvt 0.625000 0.000000\r\nvt 0.625000 0.250000\r\nvt 0.375000 0.250000\r\nvt 0.125000 0.500000\r\nvt 0.375000 0.500000\r\nvt 0.125000 0.750000\r\ns 0\r\nusemtl Material\r\nf 1/1/1 5/2/1 7/3/1 3/4/1\r\nf 4/5/2 3/4/2 7/6/2 8/7/2\r\nf 8/8/3 7/9/3 5/10/3 6/11/3\r\nf 6/12/4 2/13/4 4/5/4 8/14/4\r\nf 3/4/2 4/5/2 12/5/2 11/4/2\r\nf 6/11/5 5/10/5 1/1/5 2/13/5\r\nf 10/13/6 9/1/6 11/4/6 12/5/6\r\nf 9/1/6 10/13/6 16/13/6 15/1/6\r\nf 4/5/4 2/13/4 10/13/4 12/5/4\r\nf 1/1/1 3/4/1 11/4/1 9/1/1\r\nf 14/13/5 13/1/5 15/1/5 16/13/5\r\nf 10/13/4 2/13/4 14/13/4 16/13/4\r\nf 2/13/3 1/1/3 13/1/3 14/13/3\r\nf 15/1/5 13/1/5 19/1/5 20/1/5\r\nf 17/1/1 18/1/1 20/1/1 19/1/1\r\nf 1/1/2 9/1/2 18/1/2 17/1/2\r\nf 13/1/3 1/1/3 17/1/3 19/1/3\r\nf 9/1/6 15/1/6 20/1/6 18/1/6\r\n";
+
+
+public static class LogicalFaceVoxelizer
+{
+    public static List<VoxelBox> GenerateFilledVoxels(
+        LogicalFace[] logicalFaces,
+        Transform parent,
+        float voxelSize
+    )
+    {
+        List<VoxelBox> result = new List<VoxelBox>();
+
+        Bounds bounds = CalculateBounds(logicalFaces);
+
+        int xCount = Mathf.CeilToInt(bounds.size.x / voxelSize);
+        int yCount = Mathf.CeilToInt(bounds.size.y / voxelSize);
+        int zCount = Mathf.CeilToInt(bounds.size.z / voxelSize);
+
+        Vector3 min = bounds.min;
+
+        for (int x = 0; x < xCount; x++)
+        for (int y = 0; y < yCount; y++)
+        for (int z = 0; z < zCount; z++)
+        {
+            Vector3 centerLocal = min + new Vector3(
+                (x + 0.5f) * voxelSize,
+                (y + 0.5f) * voxelSize,
+                (z + 0.5f) * voxelSize
+            );
+
+            Bounds voxelBounds = new Bounds(centerLocal, Vector3.one * voxelSize);
+
+            List<int> hitFaces = GetIntersectedLogicalFaces(
+                voxelBounds,
+                logicalFaces
+            );
+
+            bool inside = hitFaces.Count > 0 || PointInsideSolid(centerLocal, logicalFaces);
+
+            if (!inside)
+                continue;
+
+            // === 创建 BoxCollider ===
+            GameObject go = new GameObject($"Voxel_{x}_{y}_{z}");
+            go.transform.parent = parent;
+            go.transform.localPosition = centerLocal;
+            go.transform.localScale = Vector3.one * voxelSize;
+
+            BoxCollider bc = go.AddComponent<BoxCollider>();
+            bc.size = Vector3.one;
+
+            result.Add(new VoxelBox
+            {
+                collider = bc,
+                logicalFaceIds = hitFaces
+            });
+        }
+
+        return result;
+    }
+
+    // ------------------ 工具方法 ------------------
+
+    private static Bounds CalculateBounds(LogicalFace[] faces)
+    {
+        Bounds b = new Bounds(faces[0].vertices[0], Vector3.zero);
+        foreach (var f in faces)
+            foreach (var v in f.vertices)
+                b.Encapsulate(v);
+        return b;
+    }
+
+    private static List<int> GetIntersectedLogicalFaces(
+        Bounds voxel,
+        LogicalFace[] faces
+    )
+    {
+        List<int> result = new List<int>();
+
+        for (int i = 0; i < faces.Length; i++)
+        {
+            if (LogicalFaceIntersectsBox(faces[i], voxel))
+                result.Add(i);
+        }
+
+        return result;
+    }
+
+    private static bool LogicalFaceIntersectsBox(LogicalFace face, Bounds box)
+    {
+        var verts = face.vertices;
+        var tris = face.triangles;
+
+        for (int i = 0; i < tris.Length; i += 3)
+        {
+            Vector3 v0 = verts[tris[i]];
+            Vector3 v1 = verts[tris[i + 1]];
+            Vector3 v2 = verts[tris[i + 2]];
+
+            Vector3 center = (v0 + v1 + v2) / 3f;
+
+            if (box.Contains(v0) || box.Contains(v1) || box.Contains(v2) || box.Contains(center))
+                return true;
+        }
+
+        return false;
+    }
+
+    // 射线法判断体素中心是否在封闭体内
+    private static bool PointInsideSolid(Vector3 point, LogicalFace[] faces)
+    {
+        int hitCount = 0;
+        Vector3 dir = Vector3.right;
+
+        foreach (var face in faces)
+        {
+            var v = face.vertices;
+            var t = face.triangles;
+
+            for (int i = 0; i < t.Length; i += 3)
+            {
+                if (RayIntersectsTriangle(point, dir, v[t[i]], v[t[i + 1]], v[t[i + 2]]))
+                    hitCount++;
+            }
+        }
+
+        return (hitCount & 1) == 1;
+    }
+
+    private static bool RayIntersectsTriangle(
+        Vector3 origin,
+        Vector3 dir,
+        Vector3 v0,
+        Vector3 v1,
+        Vector3 v2
+    )
+    {
+        Vector3 e1 = v1 - v0;
+        Vector3 e2 = v2 - v0;
+        Vector3 h = Vector3.Cross(dir, e2);
+        float a = Vector3.Dot(e1, h);
+        if (Mathf.Abs(a) < 1e-6f) return false;
+
+        float f = 1f / a;
+        Vector3 s = origin - v0;
+        float u = f * Vector3.Dot(s, h);
+        if (u < 0 || u > 1) return false;
+
+        Vector3 q = Vector3.Cross(s, e1);
+        float v = f * Vector3.Dot(dir, q);
+        if (v < 0 || u + v > 1) return false;
+
+        float t = f * Vector3.Dot(e2, q);
+        return t > 1e-6f;
+    }
+}
+
+
+    public class VoxelBox
+    {
+        public BoxCollider collider;
+        public List<int> logicalFaceIds;
+    }
 }
 
 public class StructState

@@ -60,7 +60,7 @@ public class Player : MonoBehaviour
         });
         var g1= ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/normalCube" });
         var g2 = ct.bodies.LoadStruct(new() {location = Loc.zero,type = "test/str1" });
-        SMesh.AlignFaceToFace(g1, ct.meshFaces["test/normalCube"],4, g2, ct.meshFaces["test/str1"],6);
+        var v= SMesh.LogicalFaceVoxelizer.GenerateFilledVoxels(ct.meshFaces["test/str1"],g2.transform,1f);
 
 
         ct.mousecast.InCast += (GameObject o) =>

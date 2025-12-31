@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Action
+public class SAction
 {
     /// <summary>
     /// The correspondence table from key general name to name can load
