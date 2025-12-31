@@ -284,8 +284,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6200fb66ff31a1f48ae3517fb2b2ec20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  outlineMat: {fileID: 2100000, guid: ea355bc52aad8024791a1298bc4a5cde, type: 2}
-  maskCameraScript: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,6 +524,7 @@ GameObject:
   - component: {fileID: 553812670}
   - component: {fileID: 553812669}
   - component: {fileID: 553812671}
+  - component: {fileID: 553812672}
   m_Layer: 0
   m_Name: TickSystem
   m_TagString: Untagged
@@ -573,6 +572,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b175d8849d0a194f92f60c795a6590b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &553812672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 553812668}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce9cf8214b233c24797535b0ac96db85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &832575517
