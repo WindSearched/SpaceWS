@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 [Serializable]
 public class Body
@@ -70,6 +71,8 @@ public class Bodies
     }
     public GameObject LoadStruct(Struct strct, Material material = null)
     {
+        Debug.Log($"{strct.type},{ct.meshTypes.Count},{ct.meshFaces.ContainsKey(strct.type)}");
+
         if (!datas.ContainsKey(strct.bodyIndex))
         {
             LoadVoidBody(strct.bodyIndex);
@@ -83,6 +86,24 @@ public class Bodies
 
         strct.location.LocateHere(g);
         return g;
+    }
+
+    public GameObject LoadStruct(float px, float py, float pz, float rx, float ry, float rz,string type)
+    {
+        Loc loc = new Loc()
+        {
+            position = new V3(px, py, pz),
+            rotation = new Quater(Quaternion.Euler(rx, ry, rz))
+        };
+        return LoadStruct(new Struct { location = loc, type = type });
+    }
+
+    public void AddFromOGG(string oggPath,string name)
+    {
+        string ogg = Data.ReadFile(oggPath);
+        var si = SMesh.LoadStructInfoOGG(ogg);
+        ct.meshTypes.Add(name, si.mesh);
+        ct.meshFaces.Add(name, si.faces);
     }
 }
 
@@ -109,6 +130,13 @@ public struct V3
         x = v.x;
         y = v.y;
         z = v.z;
+    }
+
+    public V3(float x, float y, float z)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
     public Vector3 ToVector3()
     {

@@ -95,6 +95,8 @@ public class CenterSystem : MonoBehaviour
         foreach (var si in ct.acts.Values)//disable all actions
             si.Dispose();
 
+        ct.mod.OnFinish();
+
         ct.log.Write("Finish logging");
         ct.log.Stop();
 

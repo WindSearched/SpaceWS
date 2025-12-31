@@ -31,8 +31,21 @@ public class Mod
         env.Global.Set("Log",(Action<string,string>)ct.log.Write);
         env.Global.Set("Register",(Action<string,LuaTable>)RegistMod);
         env.Global.Set("dLog",(Action<object>)Debug.Log);
+        env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
+        env.Global.Set("AddStructOGG",(Action<string,string>)AddStructFromOBJ);
+        env.Global.Set("LoadStruct",(Func<float,float,float,float,float,float,string,GameObject>)ct.bodies.LoadStruct);
 
         LoadMod();
+    }
+
+
+    public void OnFinish()
+    {
+        foreach (var mod in mods.Values)
+        {
+            mod.Get<Action>("OnExit")?.Invoke();
+            mod.Dispose();
+        }
     }
 
     void LoadMod()
@@ -63,6 +76,19 @@ public class Mod
         {
             table.Get<Action>(funcName)?.Invoke();
         }
+    }
+
+    /// <summary>
+    /// get file from this mod
+    /// </summary>
+    /// <param name="modName">mod to get file</param>
+    /// <param name="filepath">the relative path</param>
+    public string ModGetFile(string modName, string filepath) => Data.ReadFile(ct.mod.path + "/" + modName + "/" + filepath);
+
+    public void AddStructFromOBJ(string mod, string modPath)
+    {
+        Debug.Log(mod + "/" + Path.GetFileName(modPath));
+        ct.bodies.AddFromOGG(ct.mod.path + "/" + mod + "/" + modPath + ".obj",mod + "/" + Path.GetFileName(modPath));
     }
 }
 
