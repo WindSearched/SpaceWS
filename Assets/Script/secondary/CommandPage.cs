@@ -33,6 +33,8 @@ public class CommandPage : MonoBehaviour
         b.performed += c => ct.pages.Swap(ct.pages.IsPage("command") ? "main" : "command");
 
         button.onClick.AddListener(ToCommand);
+
+        ct.command.Add("debug", (l) => { Debug.Log(l.Load()); });
     }
 
     void ToCommand(InputAction.CallbackContext context) => ToCommand();
