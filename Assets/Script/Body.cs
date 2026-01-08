@@ -46,6 +46,8 @@ public class Bodies
     public struct obj
     {
         public GameObject self;
+        public GameObject str;
+        public GameObject fc;
         public List<GameObject> structs;
         public List<GameObject> faces;
     }
@@ -62,11 +64,15 @@ public class Bodies
             structs = new(),
             faces = new()
         });
+        var g = GameObject.Instantiate(ct.defualtBody, ct.bodiesParent);
+        g.name = index.ToString();
         objects.Add(index, new obj()
         {
-            self = GameObject.Instantiate(ct.defualtBody,ct.bodiesParent),
+            self = g,
             structs = new(),
-            faces = new()
+            faces = new(),
+            str = g.transform.GetChild(1).gameObject,
+            fc = g.transform.GetChild(0).gameObject,
         });
     }
     public GameObject LoadStruct(Struct strct, Material material = null)
@@ -81,29 +87,46 @@ public class Bodies
 
         var g = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());
         SMesh.AddMesh(g, ct.meshTypes[strct.type]);//it is test just
-        g.transform.SetParent(objects[strct.bodyIndex].self.transform);
+        g.transform.SetParent(objects[strct.bodyIndex].str.transform);
         objects[strct.bodyIndex].structs.Add(g);
 
         strct.location.LocateHere(g);
         return g;
     }
 
-    public GameObject LoadStruct(float px, float py, float pz, float rx, float ry, float rz,string type)
+    public GameObject LoadStruct(float px, float py, float pz, float rx, float ry, float rz,string type) => LoadStruct(new V3(px,py,pz),new V3(rx,ry,rz),type);
+
+    public GameObject LoadStruct(V3 pos, V3 rot, string type)
     {
-        Loc loc = new Loc()
+        Loc loc = new Loc
         {
-            position = new V3(px, py, pz),
-            rotation = new Quater(Quaternion.Euler(rx, ry, rz))
+            position = pos,
+            rotation = new Quater(Quaternion.Euler(rot.x, rot.y, rot.z))
         };
         return LoadStruct(new Struct { location = loc, type = type });
     }
 
-    public void AddFromOGG(string oggPath,string name)
+    public void AddFromOBJ(string oggPath,string name)
     {
         string ogg = Data.ReadFile(oggPath);
         var si = SMesh.LoadStructInfoOGG(ogg);
         ct.meshTypes.Add(name, si.mesh);
         ct.meshFaces.Add(name, si.faces);
+    }
+
+
+
+    public Bodies()
+    {
+        ct.command.Add("struct", (l) =>
+        {
+            var a1 = l.Load();
+            if (a1 == "load")
+            {
+                var a2 = l.Load();//is the name
+                LoadStruct(l.LoadV3(), l.LoadV3(), a2);
+            }
+        });
     }
 }
 
@@ -168,6 +191,20 @@ public struct V3I
     public Vector3Int ToVector3Int()
     {
         return new Vector3Int(x, y, z);
+    }
+
+    public void Set(Vector3 p)
+    {
+        x = SMath.Floor(p.x);
+        y = SMath.Floor(p.y);
+        z = SMath.Floor(p.z);
+    }
+
+    public void Set(Vector3Int p)
+    {
+        x = p.x;
+        y = p.y;
+        z = p.z;
     }
 
     public static V3I zero = new() {

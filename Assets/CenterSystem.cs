@@ -16,6 +16,7 @@ public class CenterSystem : MonoBehaviour
         mouseD = ct.action.Add("mouseDelta",InputActionType.Value);
         ct.action.AddBiding(mouseD,SAction.keyTable["mouseDelta"]);
 
+        //load setting data
         fp = Application.persistentDataPath + "/setpath";
         if (!Data.FileExists(fp))
         {
@@ -26,8 +27,10 @@ public class CenterSystem : MonoBehaviour
         {
             var p = Data.ReadFile(fp);
             ct.setting = Data.ReadJson<Set>(p);
-
         }
+        //
+
+        ct.curWorldRule.JsonGet(ct.setting.exRulePath);
 
         Tick.Reg(new()//update position every tick
         {

@@ -88,7 +88,7 @@ public class Mod
     public void AddStructFromOBJ(string mod, string modPath)
     {
         Debug.Log(mod + "/" + Path.GetFileName(modPath));
-        ct.bodies.AddFromOGG(ct.mod.path + "/" + mod + "/" + modPath + ".obj",mod + "/" + Path.GetFileName(modPath));
+        ct.bodies.AddFromOBJ(ct.mod.path + "/" + mod + "/" + modPath + ".obj",mod + "/" + Path.GetFileName(modPath));
     }
 }
 

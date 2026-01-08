@@ -154,10 +154,18 @@ public class Set
     [JsonIgnore]
     public string spacePath => datasavePath + "/spaces/";
     [JsonIgnore]
+    public string exSpacePath => spacePath + exSpaceName;
+    [JsonIgnore]
+    public string exRulePath => exSpacePath + "/rule.json";
+    [JsonIgnore]
     public string logPath => datasavePath + "/logs/";
     
     public bool directCopyDataWhenChangeDataPath = true;
     public bool toLog = true;
+
+    public string exSpaceName = "main";
+    public string defaultName = "wsspace";
+    public int objectpPoolSize = 8192;
 }
 
 public class LogicalFace
@@ -878,3 +886,15 @@ public struct Chunk
     }
 }
 
+/// <summary>
+/// setting for single world
+/// </summary>
+public class Rule
+{
+    public int chunk_unit = 32;
+    public string name = "space";
+
+
+    public Rule JsonGet(string path) => Data.FileExists(path) ? Data.ReadJson<Rule>(path) : new Rule();
+    public void SetJson(string path, Rule rule) => Data.WriteJson(rule, path);
+}

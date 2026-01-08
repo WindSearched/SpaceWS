@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public class Command
@@ -51,6 +53,31 @@ public class Command
             var line = args[0];
             args.RemoveAt(0);
             return line;
+        }
+
+        public float LoadFloat()
+        {
+            var l = Load();
+            if (float.TryParse(l, out float result))
+            {
+                return result;
+            }
+            return 0f;
+        }
+
+        /// <returns>remove three arg at list and ret. a V3 value</returns>
+        public V3 LoadV3() => new(LoadFloat(),LoadFloat(),LoadFloat());
+
+        public bool TryLoad([CanBeNull] out string arg)
+        {
+            arg = null;
+            if (args.Count <= 0)
+                return false;
+            else
+            {
+                arg = Load();
+                return true;
+            }
         }
 
         public void RemoveUntil(int index)
