@@ -6,13 +6,17 @@ using UnityEngine.InputSystem;
 public static class ct
 {
     public static Set setting = new();
+    public static Rule curWorldRule = new();
     public static Log log = new();
     public static Mod mod = new();
     public static Command command = new();
     public static SAction action = new();
     public static PageStm pages = new();
+    public static ModeStm modes = new();
     public static Dictionary<string,InputAction> acts = new();
     public static Vector3 playerPosition;//updated every frame
+    public static V3I intPlayerPosition;
+    public static V3I playerchunkPosition;
     public static Vector2 wasdDirection;
     public static Vector2 mousePosition;
     /// <summary>
@@ -31,6 +35,17 @@ public static class ct
     {
         get => playerPosition;
         set => playerPosition = value;
+    }
+
+    public static V3I ppi
+    {
+        get => intPlayerPosition;
+        set => intPlayerPosition = value;
+    }
+    public static V3I ppc
+    {
+        get => playerchunkPosition;
+        set => playerchunkPosition = value;
     }
     
     public static Bodies bodies = new();

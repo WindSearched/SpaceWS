@@ -77,5 +77,7 @@ public class PageStm
     {
         current = "main";
         Register("main",new (null));
+
+        ct.command.Add("page", (l) => Swap(l.Load()));
     }
 }

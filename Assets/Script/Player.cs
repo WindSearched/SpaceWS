@@ -86,7 +86,8 @@ public class Player : MonoBehaviour
     }
     private void Update()
     {
-        ct.pp = transform.position;// update player position
+        var p =ct.pp = transform.position;// update player position
+        ct.ppi.Set(p);
     }
 
     public void OnMove(Vector2 dir)
