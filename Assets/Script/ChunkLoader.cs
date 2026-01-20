@@ -13,16 +13,23 @@ public class ChunkLoader
     /// the center chunk's absolutely chunk position
     /// </summary>
     public V3I center;
+    public Bodies bodies;
 
-    public ChunkLoader()
+    public ChunkLoader(Bodies bodies)
     {
         ct.log.Write("ChunkLoader","Load a chunk loader");
         structPool = new SPool<GameObject>(ct.setting.objectpPoolSize);
+
+        this.bodies = bodies;
     }
 
     public void LoadChunk(Chunk chunk)
     {
-
+        var cp = chunk.position;
+        foreach (var state in chunk.structs)
+        {
+            bodies.LoadStruct(state);
+        }
     }
 
     public void LoadChunk(V3I cp) => LoadChunk(GetChunk(cp));

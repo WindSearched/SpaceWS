@@ -96,15 +96,20 @@ public class Bodies
 
     public GameObject LoadStruct(float px, float py, float pz, float rx, float ry, float rz,string type) => LoadStruct(new V3(px,py,pz),new V3(rx,ry,rz),type);
 
-    public GameObject LoadStruct(V3 pos, V3 rot, string type)
+    public GameObject LoadStruct(V3 pos, V3 rot, string type) =>
+        LoadStruct(pos, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), type);
+    public GameObject LoadStruct(V3 pos, Quater rot, string type)
     {
         Loc loc = new Loc
         {
             position = pos,
-            rotation = new Quater(Quaternion.Euler(rot.x, rot.y, rot.z))
+            rotation = rot
         };
-        return LoadStruct(new Struct { location = loc, type = type });
+        return LoadStruct(loc,type);
     }
+
+    public GameObject LoadStruct(Loc loc, string type) => LoadStruct(new Struct { location = loc, type = type });
+    public GameObject LoadStruct(StructState state) => LoadStruct(state.location,state.type);
 
     public void AddFromOBJ(string oggPath,string name)
     {
