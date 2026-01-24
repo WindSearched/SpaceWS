@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -220,6 +222,15 @@ public static class SMath
         List<float> v = new(list);
         v.Insert(low, inserted);
         return v;
+    }
+    public static List<List<T>> SliptList<T>(List <T> list, int size=30)
+    {
+        var result = list
+            .Select((item, index) => new { item, index })
+            .GroupBy(x => x.index / size)
+            .Select(g => g.Select(x => x.item).ToList())
+            .ToList();
+        return result;
     }
 
     public static class V3

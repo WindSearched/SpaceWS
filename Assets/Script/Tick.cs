@@ -62,6 +62,27 @@ public class Tick : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// register batch with a interval
+    /// </summary>
+    /// <param name="regs"></param>
+    /// <param name="interval"></param>
+    public static void Reg(List<TickReg> regs, int interval)
+    {
+        int curoffset = 0;
+        foreach (var reg in regs)
+        {
+            Reg(new ()
+            {
+                onTick =  reg.onTick,
+                repeattime = reg.repeattime,
+                offset = reg.offset + curoffset
+            });
+            curoffset += interval;
+        }
+    }
+
     public static Coroutine Cor(IEnumerator routine)
     {
         return ticksym.StartCoroutine(routine);

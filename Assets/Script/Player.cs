@@ -58,8 +58,8 @@ public class Player : MonoBehaviour
             new Vector3(1,1,0),
             new Vector3(0,1,0)
         });
-        var g1= ct.bodies.LoadStruct(new Struct() {location = Loc.zero,type = "test/normalCube" });
-        var g2 = ct.bodies.LoadStruct(new Struct() {location = Loc.zero,type = "test/str1" });
+        var g1= ct.bodies.LoadStruct(new () {location = Loc.zero,type = "test/normalCube" });
+        var g2 = ct.bodies.LoadStruct(new () {location = Loc.zero,type = "test/str1" });
         var v= SMesh.LogicalFaceVoxelizer.GenerateFilledVoxels(ct.meshFaces["test/str1"],g2.transform,1f);
 
 

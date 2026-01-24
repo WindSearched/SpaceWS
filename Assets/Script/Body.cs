@@ -11,15 +11,19 @@ public class Body
     public List<V3> points;
 
 }
-
-public class Element
+/// <summary>
+/// generic state
+/// </summary>
+[Serializable]
+public class State
 {
     public string type = "";
     public int bodyIndex;
     public bool isStruct;
 
 }
-public class Struct :Element
+[Serializable]
+public class StructState : State
 {
     public Loc location;
 }
@@ -30,7 +34,8 @@ public class StructData
     public string meshType;
 
 }
-public class Face :Element
+[Serializable]
+public class FaceState :State
 {
     public int points;
     public List<int> pointIndexs;
@@ -40,8 +45,8 @@ public class Bodies
 {
     public struct body
     {
-        public List<Struct> structs;
-        public List<Face> faces;
+        public List<StructState> structs;
+        public List<FaceState> faces;
     }
     public struct obj
     {
@@ -56,7 +61,6 @@ public class Bodies
     /// body
     /// </summary>
     public Dictionary<int, obj> objects = new();
-
     public void LoadVoidBody(int index)
     {
         datas.Add(index, new body()
@@ -75,7 +79,7 @@ public class Bodies
             fc = g.transform.GetChild(0).gameObject,
         });
     }
-    public GameObject LoadStruct(Struct strct, Material material = null)
+    public GameObject LoadStruct(StructState strct, Material material = null, GameObject strobj = null)
     {
         Debug.Log($"{strct.type},{ct.meshTypes.Count},{ct.meshFaces.ContainsKey(strct.type)}");
 
@@ -85,13 +89,17 @@ public class Bodies
         }
         datas[strct.bodyIndex].structs.Add(strct);
 
-        var g = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());
-        SMesh.AddMesh(g, ct.meshTypes[strct.type]);//it is test just
-        g.transform.SetParent(objects[strct.bodyIndex].str.transform);
-        objects[strct.bodyIndex].structs.Add(g);
+        if (strobj == null)
+        {
+            strobj = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());
+        }
 
-        strct.location.LocateHere(g);
-        return g;
+        SMesh.AddMesh(strobj, ct.meshTypes[strct.type]);//it is test just
+        strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
+        objects[strct.bodyIndex].structs.Add(strobj);
+
+        strct.location.LocateHere(strobj);
+        return strobj;
     }
 
     public GameObject LoadStruct(float px, float py, float pz, float rx, float ry, float rz,string type) => LoadStruct(new V3(px,py,pz),new V3(rx,ry,rz),type);
@@ -108,8 +116,15 @@ public class Bodies
         return LoadStruct(loc,type);
     }
 
-    public GameObject LoadStruct(Loc loc, string type) => LoadStruct(new Struct { location = loc, type = type });
-    public GameObject LoadStruct(StructState state) => LoadStruct(state.location,state.type);
+    public GameObject LoadStruct(Loc loc, string type) => LoadStruct(new StructState { location = loc, type = type });
+
+
+    public GameObject RemoveStruct(int body, int index)
+    {
+        var g = objects[body].structs[index];
+        objects[body].structs[index] = null;
+        return g;
+    }
 
     public void AddFromOBJ(string oggPath,string name)
     {
@@ -118,6 +133,7 @@ public class Bodies
         ct.meshTypes.Add(name, si.mesh);
         ct.meshFaces.Add(name, si.faces);
     }
+
 
 
 
@@ -210,6 +226,18 @@ public struct V3I
         x = p.x;
         y = p.y;
         z = p.z;
+    }
+
+    public void Add(int x, int y, int z)
+    {
+        this.x += x;
+        this.y += y;
+        this.z += z;
+    }
+
+    public V3I Addition(int x, int y, int z)
+    {
+        return new V3I(this.x + x, this.x + y, this.x + z);
     }
 
     public static V3I zero = new() {

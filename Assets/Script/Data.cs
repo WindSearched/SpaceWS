@@ -166,6 +166,10 @@ public class Set
     public string exSpaceName = "main";
     public string defaultName = "wsspace";
     public int objectpPoolSize = 8192;
+    /// <summary>
+    /// Amount to load when chunkloader load per tick
+    /// </summary>
+    public int loadobjectsPerTick = 64;
 }
 
 public class LogicalFace
@@ -778,15 +782,9 @@ public static class LogicalFaceVoxelizer
     }
 }
 
-public class StructState
-{
-    public string type;
-    public Loc location;
-    public int bodyIndex;
-
-}
 public struct Chunk
 {
+    public bool isNull;
     /// <summary>
     /// position ppf this chunk
     /// </summary>
@@ -846,6 +844,13 @@ public struct Chunk
     public static Chunk FromBytes(byte[] data)
     {
         Chunk chunk = new Chunk();
+        if (data == null)
+        {
+            chunk.isNull = true;
+            return chunk;
+        }
+
+        chunk.isNull = false;
         chunk.structs = new List<StructState>();
 
         using var ms = new MemoryStream(data);

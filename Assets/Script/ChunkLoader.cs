@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ChunkLoader
@@ -8,32 +9,80 @@ public class ChunkLoader
     /// info of loaded chunk
     /// </summary>
     public Dictionary<V3I, Chunk> loaded = new();
+    public List<ChunkGenerator> generators = new();
     public int loadradius;
     /// <summary>
     /// the center chunk's absolutely chunk position
     /// </summary>
     public V3I center;
     public Bodies bodies;
+    public Tick tickstm;
 
     public ChunkLoader(Bodies bodies)
     {
         ct.log.Write("ChunkLoader","Load a chunk loader");
         structPool = new SPool<GameObject>(ct.setting.objectpPoolSize);
+        structPool.CreateNew = () => null;//can be create before, in bodies.LoadStruct
+        structPool.OnInPool = o => { o.SetActive(false); };
+        structPool.OnOutPool = o => { o.SetActive(true); };
 
         this.bodies = bodies;
     }
 
     public void LoadChunk(Chunk chunk)
     {
-        var cp = chunk.position;
-        foreach (var state in chunk.structs)
+        var pertick = SMath.SliptList(chunk.structs,ct.setting.loadobjectsPerTick);
+
+        foreach (var list in pertick)
         {
-            bodies.LoadStruct(state);
+            TickReg reg = new TickReg()
+            {
+                onTick = (TickReg _) =>
+                {
+                    foreach (var state in list)
+                    {
+                        bodies.LoadStruct(state,strobj:structPool. Get());
+                    }
+                }
+            };
+            Tick.Reg(reg);
         }
     }
-
     public void LoadChunk(V3I cp) => LoadChunk(GetChunk(cp));
 
+    public Chunk GenerateChunk(Chunk chunk)
+    {
+        return generators.Aggregate(chunk, (current, gt) => gt.Invoke(current));
+    }
+
+    /// <summary>
+    /// load chunks in scene and remove other that out the range
+    /// </summary>
+    public void Loader(V3I center, int radius)
+    {
+        for (int ocx = -radius; ocx <= radius; ocx++)//offset chunk x
+        {
+            for (int ocy = -radius; ocy <= radius; ocy++)//offset chunk y
+            {
+                for (int ocz = -radius; ocy <= radius; ocy++)//offset chunk z
+                {
+                    var cur = center.Addition(ocx, ocy, ocz);//get offset
+
+                    if (loaded.ContainsKey(cur))
+                    {
+                        return;
+                    }
+                    var ch = GetChunk(cur);
+                    if (ch.isNull)//when does not exist chunk data
+                    {
+                        ch = GenerateChunk(ch);
+                    }
+                    loaded.Add(cur, ch);
+                    LoadChunk(ch);
+                }
+            }
+        }
+    }
 
 
     public Chunk GetChunk(V3I cp)
@@ -75,3 +124,4 @@ public class SPool<T>
 
 public delegate void PoolMeth<in T>(T obj);
 public delegate T PoolMethR<T>();
+public delegate Chunk ChunkGenerator(Chunk chunk);
