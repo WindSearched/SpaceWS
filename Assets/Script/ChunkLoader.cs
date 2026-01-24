@@ -60,6 +60,8 @@ public class ChunkLoader
     /// </summary>
     public void Loader(V3I center, int radius)
     {
+        var removed = loaded.Keys;
+
         for (int ocx = -radius; ocx <= radius; ocx++)//offset chunk x
         {
             for (int ocy = -radius; ocy <= radius; ocy++)//offset chunk y
