@@ -132,6 +132,7 @@ public class Bodies
         var si = SMesh.LoadStructInfoOGG(ogg);
         ct.meshTypes.Add(name, si.mesh);
         ct.meshFaces.Add(name, si.faces);
+        ct.structTypes.Add(name);
     }
 
 
@@ -260,6 +261,16 @@ public struct Quater
         z = q.z;
         w = q.w;
     }
+
+    public Quater(V3 rot)
+    {
+        var q = Quaternion.Euler(rot.x, rot.y, rot.z);
+        x = q.x;
+        y = q.y;
+        z = q.z;
+        w = q.w;
+    }
+
     public Quaternion ToQuaternion()
     {
         return new Quaternion(x, y, z, w);
@@ -283,6 +294,13 @@ public struct Loc
         position = new V3(loc.position);
         rotation = new Quater(loc.rotation);
     }
+
+    public Loc(V3 pos, V3 rot)
+    {
+        position = pos;
+        rotation = new Quater(rot);
+    }
+
     public Location ToLocation()
     {
         Location loc = new Location();

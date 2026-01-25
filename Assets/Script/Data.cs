@@ -1,10 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using Object = UnityEngine.Object;
+
 public static class Data
 {
     /// <summary>
@@ -894,12 +897,30 @@ public struct Chunk
 /// <summary>
 /// setting for single world
 /// </summary>
+[Serializable]
 public class Rule
 {
     public int chunk_unit = 32;
     public string name = "space";
+    public string seed = "";
 
 
     public Rule JsonGet(string path) => Data.FileExists(path) ? Data.ReadJson<Rule>(path) : new Rule();
     public void SetJson(string path, Rule rule) => Data.WriteJson(rule, path);
+
+    public int _seedInt = -114514;
+    public int seedInt
+    {
+        get
+        {
+            if (_seedInt == -114514) _seedInt = seed.GetHashCode() + 6;
+            return _seedInt;
+        }
+    }
+
+    public int newerBodyIndex = 0;
+    public int distribuiteBodyIndex => newerBodyIndex++;
+
+    public int RandInt(int seed, int max, int min) => SMath.Random(seed.GetHashCode() + seedInt, max, min);
+    public float RandFlt (int seed, float max, float min) => SMath.Random(seed.GetHashCode() - seedInt, max, min);
 }

@@ -10,13 +10,10 @@ public class ChunkLoader
     /// </summary>
     public Dictionary<V3I, Chunk> loaded = new();
     public List<ChunkGenerator> generators = new();
-    public int loadradius;
     /// <summary>
     /// the center chunk's absolutely chunk position
     /// </summary>
-    public V3I center;
     public Bodies bodies;
-    public Tick tickstm;
 
     public ChunkLoader(Bodies bodies)
     {

@@ -48,7 +48,34 @@ public class CenterSystem : MonoBehaviour
                 Tick.Reg(reg);
             }
         });
-        
+
+        ct.chunkLoader = new(ct.bodies);
+        ct.chunkLoader.generators.Add(chunk =>
+        {
+            var cp = chunk.position;
+            var cunit = ct.curWorldRule.chunk_unit;
+
+            V3 p = new(
+                ct.curWorldRule.RandFlt(cp.x + cp.y - cp.z,cunit, 0),
+                ct.curWorldRule.RandFlt(cp.x - cp.y - cp.z,cunit, 0),
+                ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,cunit, 0)
+                );
+            V3 r = new(
+                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,cunit, 0),
+                ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,cunit, 0),
+                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,cunit, 0)
+            );
+
+            chunk.structs.Add(new()
+            {
+                isStruct =  true,
+                location = new(p,r),
+                bodyIndex = ct.curWorldRule.distribuiteBodyIndex,
+                type = ct.structTypes[ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0)]
+            });
+
+            return chunk;
+        });
 
         ct.defualtBody = Resources.Load("Body") as GameObject;
         ct.bodiesParent = GameObject.Find("Bodies").transform;

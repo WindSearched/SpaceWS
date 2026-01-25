@@ -12,6 +12,7 @@ public static class ct
     public static Log log = new();
     public static Mod mod = new();
     public static Command command = new();
+    public static ChunkLoader chunkLoader;
     public static SAction action = new();
     public static PageStm pages = new();
     public static ModeStm modes = new();
@@ -58,7 +59,7 @@ public static class ct
     public static Dictionary<string, Mesh> meshTypes = new();
     public static Dictionary<string, LogicalFace[]> meshFaces = new();
     public static Dictionary<string, StructData> structDatas = new();
-
+    public static List<string> structTypes = new();
 
     public static Material defaultMat;
 
