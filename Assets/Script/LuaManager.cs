@@ -31,8 +31,12 @@ public class Mod
         env.Global.Set("Log",(Action<string,string>)ct.log.Write);
         env.Global.Set("Register",(Action<string,LuaTable>)RegistMod);
         env.Global.Set("dLog",(Action<object>)Debug.Log);
-        env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
+        env.Global.Set("Command",(Action<string>)ct.command.Load);
+        env.Global.Set("swapPage",(Action<string>)ct.pages.Swap);
         env.Global.Set("AddStructOGG",(Action<string,string>)AddStructFromOBJ);
+        env.Global.Set("AddStructOBJ",(Action<string,string>)AddStructFromOBJ);
+
+        env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
         env.Global.Set("LoadStruct",(Func<float,float,float,float,float,float,string,GameObject>)ct.bodies.LoadStruct);
 
         LoadMod();
