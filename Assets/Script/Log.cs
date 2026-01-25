@@ -11,6 +11,7 @@ public class Log
 
     public Log()
     {
+        if(!ct.setting.canLog) return;
         Start();
     }
     private void Start()
@@ -29,7 +30,7 @@ public class Log
 
     public void Write(string text)
     {
-        if (file == null) return;
+        if (ct.setting.canLog && file == null) return;
 
         lock (lockObj) // 保证多线程安全
         {

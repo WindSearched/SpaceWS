@@ -46,7 +46,7 @@ public static class Data
         {
             return JsonConvert.DeserializeObject<T>(json);
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Debug.Log("[Data.ReadJson] cannot deseriaize json file:" +
                 e.Message);
@@ -173,6 +173,10 @@ public class Set
     /// Amount to load when chunkloader load per tick
     /// </summary>
     public int loadobjectsPerTick = 64;
+    /// <summary>
+    /// if it is null, do not log
+    /// </summary>
+    public bool canLog = true;
 }
 
 public class LogicalFace
