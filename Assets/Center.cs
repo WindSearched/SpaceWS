@@ -48,9 +48,14 @@ public static class ct
     public static V3I ppc
     {
         get => playerchunkPosition;
-        set => playerchunkPosition = value;
+        set
+        {
+            if (playerchunkPosition == value) return;
+            onChunkPositionChange?.Invoke();
+            playerchunkPosition = value;
+        }
     }
-    
+
     public static Bodies bodies = new();
     public static MouseRaycast mousecast;
     /// <summary>
@@ -64,6 +69,12 @@ public static class ct
     public static Material defaultMat;
 
     public static event Meth updatePerTick;
+    /// <summary>
+    /// invoke when chunk position of player change and a time when game start
+    /// </summary>
+    public static event Meth onChunkPositionChange;
+
+    public static void OnChunkPositionChange() => onChunkPositionChange?.Invoke();
     //
     //  Methods
     //
@@ -226,8 +237,7 @@ public static class SMath
     }
     public static List<List<T>> SliptList<T>(List <T> list, int size=30)
     {
-        var result = list
-            .Select((item, index) => new { item, index })
+        var result = list?.Select((item, index) => new { item, index })
             .GroupBy(x => x.index / size)
             .Select(g => g.Select(x => x.item).ToList())
             .ToList();
@@ -411,14 +421,33 @@ public static class SMath
     }
 }
 
-public class STable<TKey, TValue>
+public class STable<TLin, TCol, TVal>
 {
-    public Dictionary<TKey,Dictionary<string, TValue>> table = new();
+    public Dictionary<TLin, Dictionary<TCol, TVal>> table = new();
 
-    public void Reg(TKey key, TValue value, string tclass = "")
+    public void AddLine(TLin line)
     {
-        if (tclass == "") tclass = ct.setting.defaultName;
+        table.Add(line, new Dictionary<TCol, TVal>());
+    }
 
+    public bool ExistsLine(TLin line)
+    {
+        return table.ContainsKey(line);
+    }
 
+    public bool TryAddLine(TLin line)
+    {
+        bool b = ExistsLine(line);
+        if (!b)
+        {
+            AddLine(line);
+        }
+
+        return b;
+    }
+
+    public bool ExistsColumn(TLin lin,TCol col)
+    {
+        return table[lin].ContainsKey(col);
     }
 }

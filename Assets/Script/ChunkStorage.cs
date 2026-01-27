@@ -7,14 +7,15 @@ using UnityEngine;
 public static class ChunkStorage
 {
     // =========================
-    // ÅäÖÃ
+    // ï¿½ï¿½ï¿½ï¿½
     // =========================
 
-    public const int REGION_SIZE = 16;     // 16x16x16 chunks
-    public const int PAGE_SIZE = 4096;     // segment Ò³´óÐ¡
+    public static int REGION_SIZE => ct.setting.regionSize;     // 16x16x16 chunks
+
+    public const int PAGE_SIZE = 4096;     // segment Ò³ï¿½ï¿½Ð¡
 
     // =========================
-    // ÄÚ²¿½á¹¹
+    // ï¿½Ú²ï¿½ï¿½á¹¹
     // =========================
 
     struct Entry
@@ -124,13 +125,13 @@ public static class ChunkStorage
     }
 
     // =========================
-    // Region »º´æ
+    // Region ï¿½ï¿½ï¿½ï¿½
     // =========================
 
     static readonly Dictionary<string, Region> regions = new();
 
     // =========================
-    // ¶ÔÍâ API
+    // ï¿½ï¿½ï¿½ï¿½ API
     // =========================
 
     public static void SaveChunk(string world, int cx, int cy, int cz, byte[] data)
@@ -161,7 +162,7 @@ public static class ChunkStorage
     }
 
     // =========================
-    // ×ø±ê & Region ½âÎö
+    // ï¿½ï¿½ï¿½ï¿½ & Region ï¿½ï¿½ï¿½ï¿½
     // =========================
 
     static (Region region, int index) GetRegionAndIndex(string world, int cx, int cy, int cz)
@@ -203,7 +204,7 @@ public static class ChunkStorage
 
 public static class ChunkCompressor
 {
-    // Ñ¹Ëõ¸ñÊ½£º
+    // Ñ¹ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½
     // [int rawSize][int compressedSize][compressedBytes...]
 
     public static byte[] Compress(byte[] raw)
@@ -211,7 +212,7 @@ public static class ChunkCompressor
         int max = LZ4Codec.MaximumOutputSize(raw.Length);
         byte[] buffer = new byte[8 + max];
 
-        // Ð´Ô­Ê¼´óÐ¡
+        // Ð´Ô­Ê¼ï¿½ï¿½Ð¡
         BitConverter.GetBytes(raw.Length).CopyTo(buffer, 0);
 
         int compSize = LZ4Codec.Encode(
@@ -219,7 +220,7 @@ public static class ChunkCompressor
             buffer, 8, max
         );
 
-        // Ð´Ñ¹Ëõºó´óÐ¡
+        // Ð´Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡
         BitConverter.GetBytes(compSize).CopyTo(buffer, 4);
 
         Array.Resize(ref buffer, 8 + compSize);

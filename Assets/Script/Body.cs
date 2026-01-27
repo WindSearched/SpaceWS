@@ -81,7 +81,7 @@ public class Bodies
     }
     public GameObject LoadStruct(StructState strct, Material material = null, GameObject strobj = null)
     {
-        Debug.Log($"{strct.type},{ct.meshTypes.Count},{ct.meshFaces.ContainsKey(strct.type)}");
+        Debug.Log($"{strct.type},{strct.location.ToString()},{ct.meshFaces.ContainsKey(strct.type)}");
 
         if (!datas.ContainsKey(strct.bodyIndex))
         {
@@ -191,6 +191,11 @@ public struct V3
     public static V3 zero = new() {
         x = 0, y = 0, z = 0
     };
+
+    public override string ToString()
+    {
+        return $"({x},{y},{z})";
+    }
 }
 
 public struct V3I
@@ -246,6 +251,23 @@ public struct V3I
     };
 
     public override string ToString() => $"({x},{y},{z})";
+
+    public static V3I operator +(V3I a, V3I b)
+    {
+        return new V3I(a.x + b.x, a.y + b.y, a.z + b.z);
+    }
+    public static V3I operator /(V3I a, int b)
+    {
+        return new V3I(a.x / b, a.y / b, a.z / b);
+    }
+    public static V3I operator -(V3I a, V3I b)
+    {
+        return new V3I(a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+
+    public static bool operator ==(V3I a, V3I b) => a.x == b.x && a.y == b.y && a.z == b.z;
+    public static bool operator !=(V3I a, V3I b) => !(a == b);
+
 }
 
 public struct Quater
@@ -280,6 +302,11 @@ public struct Quater
     {
         x = 0, y = 0,z = 0,w = 0
     };
+
+    public override string ToString()
+    {
+        return $"({x},{y},{z},{w})";
+    }
 }
 /// <summary>
 /// location to save
@@ -317,4 +344,8 @@ public struct Loc
 
 
     public static Loc zero = new() { position = V3.zero,rotation=Quater.zero};
+    public override string ToString()
+    {
+        return $"({position}, {rotation})";
+    }
 }

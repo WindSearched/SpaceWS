@@ -68,6 +68,8 @@ public class Player : MonoBehaviour
             Debug.Log(o.name);
         };
 
+
+
         // TickReg tr = new((tr) =>
         // {
         //     Debug.Log($"log{tr.repeattime+1}");
@@ -84,10 +86,11 @@ public class Player : MonoBehaviour
         //Debug.Log(v.position.ToString());
         //Debug.Log(Application.persistentDataPath);
     }
-    private void Update()
+    private void FixedUpdate()
     {
         var p =ct.pp = transform.position;// update player position
         ct.ppi.Set(p);
+        ct.ppc = ct.ppi / ct.setting.chunkUnit;
     }
 
     public void OnMove(Vector2 dir)

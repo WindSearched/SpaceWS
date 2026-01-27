@@ -5,6 +5,7 @@ using UnityEngine;
 public class ChunkLoader
 {
     public SPool<GameObject> structPool;
+    public GameObject poolParent;
     /// <summary>
     /// info of loaded chunk
     /// </summary>
@@ -18,9 +19,14 @@ public class ChunkLoader
     public ChunkLoader(Bodies bodies)
     {
         ct.log.Write("ChunkLoader","Load a chunk loader");
+        poolParent = new GameObject("structpool");
         structPool = new SPool<GameObject>(ct.setting.objectpPoolSize);
         structPool.CreateNew = () => null;//can be create before, in bodies.LoadStruct
-        structPool.OnInPool = o => { o.SetActive(false); };
+        structPool.OnInPool = o =>
+        {
+            o.SetActive(false);
+            o.transform.SetParent(poolParent.transform);
+        };
         structPool.OnOutPool = o => { o.SetActive(true); };
 
         this.bodies = bodies;
@@ -47,9 +53,24 @@ public class ChunkLoader
     }
     public void LoadChunk(V3I cp) => LoadChunk(GetChunk(cp));
 
-    public Chunk GenerateChunk(Chunk chunk)
+    public Chunk GenerateChunk()
     {
-        return generators.Aggregate(chunk, (current, gt) => gt.Invoke(current));
+        Chunk c = new();
+        foreach (var g in generators)
+        {
+            g?.Invoke(c);
+        }
+        return c;
+    }
+
+    public void RemoveChunk(Chunk chunk)
+    {
+        foreach (var s in chunk.structs)//remove structs of chunk
+        {
+            var idx = s.bodyIndex;
+            var g = bodies.objects[idx];
+            structPool.Put(g.self);
+        }
     }
 
     /// <summary>
@@ -57,7 +78,7 @@ public class ChunkLoader
     /// </summary>
     public void Loader(V3I center, int radius)
     {
-        var removed = loaded.Keys;
+        var removed = loaded.Keys.ToList();
 
         for (int ocx = -radius; ocx <= radius; ocx++)//offset chunk x
         {
@@ -69,17 +90,25 @@ public class ChunkLoader
 
                     if (loaded.ContainsKey(cur))
                     {
-                        return;
+                        Debug.Log("existed");
+                        removed.Remove(cur);
+                        continue;
                     }
                     var ch = GetChunk(cur);
-                    if (ch.isNull)//when does not exist chunk data
+                    if (ch == null)//when does not exist chunk data
                     {
-                        ch = GenerateChunk(ch);
+                        Debug.Log("null");
+                        ch = GenerateChunk();
                     }
                     loaded.Add(cur, ch);
                     LoadChunk(ch);
                 }
             }
+        }
+
+        foreach (var r in removed)
+        {
+            RemoveChunk(loaded[r]);
         }
     }
 
@@ -107,8 +136,16 @@ public class SPool<T>
     T New() => CreateNew();
     public T Get()
     {
-        T obj = pool.Count == 0 ? CreateNew() : pool.Dequeue();
-        OnOutPool?.Invoke(obj);
+        T obj;
+        if (pool.Count == 0)
+        {
+            obj = CreateNew();
+        }
+        else
+        {
+            obj = pool.Dequeue();
+            OnOutPool?.Invoke(obj);
+        }
         return obj;
     }
 
@@ -123,4 +160,4 @@ public class SPool<T>
 
 public delegate void PoolMeth<in T>(T obj);
 public delegate T PoolMethR<T>();
-public delegate Chunk ChunkGenerator(Chunk chunk);
+public delegate void ChunkGenerator(Chunk chunk);

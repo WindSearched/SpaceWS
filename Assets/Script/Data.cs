@@ -177,6 +177,12 @@ public class Set
     /// if it is null, do not log
     /// </summary>
     public bool canLog = true;
+
+    public int chunkUnit = 32;
+    /// <summary>
+    /// region is composited from 16*16 chunk
+    /// </summary>
+    public int regionSize = 16;
 }
 
 public class LogicalFace
@@ -789,14 +795,13 @@ public static class LogicalFaceVoxelizer
     }
 }
 
-public struct Chunk
+public class Chunk
 {
-    public bool isNull;
     /// <summary>
     /// position ppf this chunk
     /// </summary>
     public V3I position;
-    public List<StructState> structs;
+    public List<StructState> structs = new();
 
     /// <summary>
     /// get the position of chunk
@@ -850,14 +855,11 @@ public struct Chunk
     // 反序列化 Chunk
     public static Chunk FromBytes(byte[] data)
     {
-        Chunk chunk = new Chunk();
         if (data == null)
         {
-            chunk.isNull = true;
-            return chunk;
+            return null;
         }
-
-        chunk.isNull = false;
+        Chunk chunk = new Chunk();
         chunk.structs = new List<StructState>();
 
         using var ms = new MemoryStream(data);
@@ -907,7 +909,10 @@ public class Rule
     public int chunk_unit = 32;
     public string name = "space";
     public string seed = "";
-
+    /// <summary>
+    /// chunck radius to load
+    /// </summary>
+    public int loadRadius = 8;
 
     public Rule JsonGet(string path) => Data.FileExists(path) ? Data.ReadJson<Rule>(path) : new Rule();
     public void SetJson(string path, Rule rule) => Data.WriteJson(rule, path);

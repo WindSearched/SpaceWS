@@ -73,8 +73,6 @@ public class CenterSystem : MonoBehaviour
                 bodyIndex = ct.curWorldRule.distribuiteBodyIndex,
                 type = ct.structTypes[ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0)]
             });
-
-            return chunk;
         });
 
         ct.defualtBody = Resources.Load("Body") as GameObject;
@@ -92,6 +90,10 @@ public class CenterSystem : MonoBehaviour
         ct.log.Write("Center","Finishes to load the center");
 
         ct.mod.OnStart();
+
+        ct.onChunkPositionChange += () => ct.chunkLoader.Loader(ct.ppc,ct.curWorldRule.loadRadius);
+        //load a time
+        ct.OnChunkPositionChange();
     }
     private void Update()
     {
