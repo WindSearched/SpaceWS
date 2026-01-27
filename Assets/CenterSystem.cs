@@ -66,10 +66,16 @@ public class CenterSystem : MonoBehaviour
                 ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,cunit, 0)
             );
 
+            int id = ct.curWorldRule.distribuiteBodyIndex;
+            chunk.bodies.Add(new()
+            {
+                index = id,
+                location = new(p,r)
+            });
             chunk.structs.Add(new()
             {
                 isStruct =  true,
-                location = new(p,r),
+                location = Loc.zero,
                 bodyIndex = ct.curWorldRule.distribuiteBodyIndex,
                 type = ct.structTypes[ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0)]
             });

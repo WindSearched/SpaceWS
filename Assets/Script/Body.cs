@@ -22,6 +22,13 @@ public class State
     public bool isStruct;
 
 }
+
+[Serializable]
+public class BodyState
+{
+    public int index;
+    public Loc location;
+}
 [Serializable]
 public class StructState : State
 {
@@ -61,7 +68,7 @@ public class Bodies
     /// body
     /// </summary>
     public Dictionary<int, obj> objects = new();
-    public void LoadVoidBody(int index)
+    public void LoadVoidBody(int index, Loc loc)
     {
         datas.Add(index, new body()
         {
@@ -70,6 +77,7 @@ public class Bodies
         });
         var g = GameObject.Instantiate(ct.defualtBody, ct.bodiesParent);
         g.name = index.ToString();
+        loc.LocateHere(g);
         objects.Add(index, new obj()
         {
             self = g,
@@ -85,7 +93,8 @@ public class Bodies
 
         if (!datas.ContainsKey(strct.bodyIndex))
         {
-            LoadVoidBody(strct.bodyIndex);
+            return null;
+            //LoadVoidBody(strct.bodyIndex);
         }
         datas[strct.bodyIndex].structs.Add(strct);
 
@@ -341,7 +350,6 @@ public struct Loc
         Location l = ToLocation();
         t.SetPositionAndRotation(l.position, l.rotation);
     }
-
 
     public static Loc zero = new() { position = V3.zero,rotation=Quater.zero};
     public override string ToString()

@@ -802,6 +802,7 @@ public class Chunk
     /// </summary>
     public V3I position;
     public List<StructState> structs = new();
+    public List<BodyState> bodies = new();
 
     /// <summary>
     /// get the position of chunk
