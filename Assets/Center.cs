@@ -40,12 +40,15 @@ public static class ct
         set => playerPosition = value;
     }
 
-    public static V3I ppi
+    public static V3I pip
     {
         get => intPlayerPosition;
         set => intPlayerPosition = value;
     }
-    public static V3I ppc
+    /// <summary>
+    /// player chunk position
+    /// </summary>
+    public static V3I pcp
     {
         get => playerchunkPosition;
         set

@@ -797,6 +797,10 @@ public static class LogicalFaceVoxelizer
 
 public class Chunk
 {
+    public Chunk(V3I cp)
+    {
+        position = cp;
+    }
     /// <summary>
     /// position ppf this chunk
     /// </summary>
@@ -860,16 +864,18 @@ public class Chunk
         {
             return null;
         }
-        Chunk chunk = new Chunk();
-        chunk.structs = new List<StructState>();
 
         using var ms = new MemoryStream(data);
         using var br = new BinaryReader(ms, Encoding.UTF8);
 
         // 读取 position
-        chunk.position.x = br.ReadInt32();
-        chunk.position.y = br.ReadInt32();
-        chunk.position.z = br.ReadInt32();
+        V3I pos;
+        pos.x = br.ReadInt32();
+        pos.y = br.ReadInt32();
+        pos.z = br.ReadInt32();
+
+        Chunk chunk = new Chunk(pos);
+        chunk.structs = new List<StructState>();
 
         // 读取 structs 数量
         int count = br.ReadInt32();

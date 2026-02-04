@@ -58,8 +58,8 @@ public class Player : MonoBehaviour
             new Vector3(1,1,0),
             new Vector3(0,1,0)
         });
-        var g1= ct.bodies.LoadStruct(new () {location = Loc.zero,type = "test/normalCube" });
-        var g2 = ct.bodies.LoadStruct(new () {location = Loc.zero,type = "test/str1" });
+        var g1= ct.bodies.LoadStruct(new () {location = Loc.zero,type = "test/normalCube" },ct.pcp);
+        var g2 = ct.bodies.LoadStruct(new () {location = Loc.zero,type = "test/str1" }, ct.pcp);
         var v= SMesh.LogicalFaceVoxelizer.GenerateFilledVoxels(ct.meshFaces["test/str1"],g2.transform,1f);
 
 
@@ -89,8 +89,8 @@ public class Player : MonoBehaviour
     private void FixedUpdate()
     {
         var p =ct.pp = transform.position;// update player position
-        ct.ppi.Set(p);
-        ct.ppc = ct.ppi / ct.setting.chunkUnit;
+        ct.pip.Set(p);
+        ct.pcp = ct.pip / ct.setting.chunkUnit;
     }
 
     public void OnMove(Vector2 dir)

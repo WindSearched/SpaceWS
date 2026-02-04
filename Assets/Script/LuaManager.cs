@@ -37,7 +37,7 @@ public class Mod
         env.Global.Set("AddStructOBJ",(Action<string,string>)AddStructFromOBJ);
 
         env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
-        env.Global.Set("LoadStruct",(Func<float,float,float,float,float,float,string,GameObject>)ct.bodies.LoadStruct);
+        env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,string,GameObject>)ct.bodies.LoadStruct);
 
         LoadMod();
     }

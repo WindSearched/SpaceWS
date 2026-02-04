@@ -68,7 +68,11 @@ public class Bodies
     /// body
     /// </summary>
     public Dictionary<int, obj> objects = new();
-    public void LoadVoidBody(int index, Loc loc)
+
+    /// <param name="index"></param>
+    /// <param name="loc">relative location</param>
+    /// <param name="cp"></param>
+    public void LoadVoidBody(int index, Loc loc, V3I cp)
     {
         datas.Add(index, new body()
         {
@@ -77,7 +81,7 @@ public class Bodies
         });
         var g = GameObject.Instantiate(ct.defualtBody, ct.bodiesParent);
         g.name = index.ToString();
-        loc.LocateHere(g);
+        loc.LocateHere(g,cp);
         objects.Add(index, new obj()
         {
             self = g,
@@ -87,7 +91,9 @@ public class Bodies
             fc = g.transform.GetChild(0).gameObject,
         });
     }
-    public GameObject LoadStruct(StructState strct, Material material = null, GameObject strobj = null)
+
+    /// <param name="cp">relative location</param>
+    public GameObject LoadStruct(StructState strct, V3I cp, Material material = null, GameObject strobj = null)
     {
         Debug.Log($"{strct.type},{strct.location.ToString()},{ct.meshFaces.ContainsKey(strct.type)}");
 
@@ -100,32 +106,34 @@ public class Bodies
 
         if (strobj == null)
         {
-            strobj = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());
+            strobj = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());//be fix
         }
 
         SMesh.AddMesh(strobj, ct.meshTypes[strct.type]);//it is test just
         strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
         objects[strct.bodyIndex].structs.Add(strobj);
 
-        strct.location.LocateHere(strobj);
+        strct.location.LocateHere(strobj, cp);
         return strobj;
     }
 
-    public GameObject LoadStruct(float px, float py, float pz, float rx, float ry, float rz,string type) => LoadStruct(new V3(px,py,pz),new V3(rx,ry,rz),type);
+    public GameObject LoadStruct(float px, float py, float pz,
+        int cx, int cy, int cz,
+        float rx, float ry, float rz,string type) => LoadStruct(new V3(px,py,pz),new V3I(cx,cy,cz),new V3(rx,ry,rz),type);
 
-    public GameObject LoadStruct(V3 pos, V3 rot, string type) =>
-        LoadStruct(pos, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), type);
-    public GameObject LoadStruct(V3 pos, Quater rot, string type)
+    public GameObject LoadStruct(V3 pos, V3I cp, V3 rot, string type) =>
+        LoadStruct(pos, cp, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), type);
+    public GameObject LoadStruct(V3 pos, V3I cp, Quater rot, string type)
     {
         Loc loc = new Loc
         {
             position = pos,
             rotation = rot
         };
-        return LoadStruct(loc,type);
+        return LoadStruct(loc, cp,type);
     }
 
-    public GameObject LoadStruct(Loc loc, string type) => LoadStruct(new StructState { location = loc, type = type });
+    public GameObject LoadStruct(Loc loc, V3I cp, string type) => LoadStruct(new StructState { location = loc, type = type },cp);
 
 
     public GameObject RemoveStruct(int body, int index)
@@ -155,7 +163,10 @@ public class Bodies
             if (a1 == "load")
             {
                 var a2 = l.Load();//is the name
-                LoadStruct(l.LoadV3(), l.LoadV3(), a2);
+                var rp = l.LoadV3();
+                var rr = l.LoadV3();
+                var cp = l.LoadV3I();
+                LoadStruct(rp,cp, Quater.Parse(rr), a2);
             }
         });
     }
@@ -204,6 +215,11 @@ public struct V3
     public override string ToString()
     {
         return $"({x},{y},{z})";
+    }
+
+    public static V3 operator +(V3 p, V3I ip)
+    {
+        return new(p.x + ip.x, p.y + ip.y, p.z + ip.z);
     }
 }
 
@@ -273,10 +289,12 @@ public struct V3I
     {
         return new V3I(a.x - b.x, a.y - b.y, a.z - b.z);
     }
-
+    public static V3I operator *(V3I a, int i)
+    {
+        return new V3I(a.x * i, a.y * i, a.z * i);
+    }
     public static bool operator ==(V3I a, V3I b) => a.x == b.x && a.y == b.y && a.z == b.z;
     public static bool operator !=(V3I a, V3I b) => !(a == b);
-
 }
 
 public struct Quater
@@ -312,6 +330,8 @@ public struct Quater
         x = 0, y = 0,z = 0,w = 0
     };
 
+    public static Quater Parse(V3 rot) => new(rot);
+
     public override string ToString()
     {
         return $"({x},{y},{z},{w})";
@@ -344,11 +364,26 @@ public struct Loc
         loc.rotation = rotation.ToQuaternion();
         return loc;
     }
-    public void LocateHere(GameObject target)
+    /// <summary>
+    /// locate here with relative position
+    /// </summary>
+    /// <param name="target"></param>
+    /// <param name="cp">chunk position</param>
+    public void LocateHere(GameObject target, V3I cp)
     {
         var t = target.transform;
-        Location l = ToLocation();
-        t.SetPositionAndRotation(l.position, l.rotation);
+        var p = position + cp * ct.setting.chunkUnit;
+        t.SetLocalPositionAndRotation(p.ToVector3(), rotation.ToQuaternion());
+    }
+
+    /// <summary>
+    /// locate here with absolutely position
+    /// </summary>
+    /// <param name="target"></param>
+    public void LocateHereAbs(GameObject target)
+    {
+        var t = target.transform;
+        t.SetLocalPositionAndRotation(position.ToVector3(), rotation.ToQuaternion());
     }
 
     public static Loc zero = new() { position = V3.zero,rotation=Quater.zero};

@@ -65,8 +65,19 @@ public class Command
             return 0f;
         }
 
+        public int LoadInt()
+        {
+            var l = Load();
+            if (int.TryParse(l, out int result))
+            {
+                return result;
+            }
+            return 0;
+        }
+
         /// <returns>remove three arg at list and ret. a V3 value</returns>
         public V3 LoadV3() => new(LoadFloat(),LoadFloat(),LoadFloat());
+        public V3I LoadV3I() => new(LoadInt(),LoadInt(),LoadInt());
 
         public bool TryLoad([CanBeNull] out string arg)
         {

@@ -76,7 +76,7 @@ public class CenterSystem : MonoBehaviour
             {
                 isStruct =  true,
                 location = Loc.zero,
-                bodyIndex = ct.curWorldRule.distribuiteBodyIndex,
+                bodyIndex = id,
                 type = ct.structTypes[ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0)]
             });
         });
@@ -97,7 +97,7 @@ public class CenterSystem : MonoBehaviour
 
         ct.mod.OnStart();
 
-        ct.onChunkPositionChange += () => ct.chunkLoader.Loader(ct.ppc,ct.curWorldRule.loadRadius);
+        ct.onChunkPositionChange += () => ct.chunkLoader.Loader(ct.pcp,ct.curWorldRule.loadRadius);
         //load a time
         ct.OnChunkPositionChange();
     }

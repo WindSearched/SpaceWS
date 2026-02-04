@@ -43,7 +43,7 @@ public class ChunkLoader
                 {
                     foreach (var s in list)
                     {
-                        bodies.LoadVoidBody(s.index,s.location);
+                        bodies.LoadVoidBody(s.index,s.location,chunk.position);
                     }
                 },
                 of++
@@ -59,7 +59,7 @@ public class ChunkLoader
                 {
                     foreach (var state in list)
                     {
-                        bodies.LoadStruct(state,strobj:structPool. Get());
+                        bodies.LoadStruct(state, chunk.position ,strobj:structPool. Get());
                     }
                 },
                 offset = of++
@@ -69,9 +69,9 @@ public class ChunkLoader
     }
     public void LoadChunk(V3I cp) => LoadChunk(GetChunk(cp));
 
-    public Chunk GenerateChunk()
+    public Chunk GenerateChunk(V3I cp)
     {
-        Chunk c = new();
+        Chunk c = new(cp);
         foreach (var g in generators)
         {
             g?.Invoke(c);
@@ -114,7 +114,7 @@ public class ChunkLoader
                     if (ch == null)//when does not exist chunk data
                     {
                         Debug.Log("null");
-                        ch = GenerateChunk();
+                        ch = GenerateChunk(cur);
                     }
                     loaded.Add(cur, ch);
                     LoadChunk(ch);
