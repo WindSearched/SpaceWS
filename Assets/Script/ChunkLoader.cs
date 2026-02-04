@@ -100,7 +100,7 @@ public class ChunkLoader
         {
             for (int ocy = -radius; ocy <= radius; ocy++)//offset chunk y
             {
-                for (int ocz = -radius; ocy <= radius; ocy++)//offset chunk z
+                for (int ocz = -radius; ocz <= radius; ocz++)//offset chunk z
                 {
                     var cur = center.Addition(ocx, ocy, ocz);//get offset
 

@@ -373,7 +373,7 @@ public struct Loc
     {
         var t = target.transform;
         var p = position + cp * ct.setting.chunkUnit;
-        t.SetLocalPositionAndRotation(p.ToVector3(), rotation.ToQuaternion());
+        t.SetPositionAndRotation(p.ToVector3(), rotation.ToQuaternion());
     }
 
     /// <summary>
@@ -383,7 +383,7 @@ public struct Loc
     public void LocateHereAbs(GameObject target)
     {
         var t = target.transform;
-        t.SetLocalPositionAndRotation(position.ToVector3(), rotation.ToQuaternion());
+        t.SetPositionAndRotation(position.ToVector3(), rotation.ToQuaternion());
     }
 
     public static Loc zero = new() { position = V3.zero,rotation=Quater.zero};

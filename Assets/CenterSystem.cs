@@ -61,9 +61,9 @@ public class CenterSystem : MonoBehaviour
                 ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,cunit, 0)
                 );
             V3 r = new(
-                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,cunit, 0),
-                ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,cunit, 0),
-                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,cunit, 0)
+                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0),
+                ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,360, 0),
+                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0)
             );
 
             int id = ct.curWorldRule.distribuiteBodyIndex;

@@ -919,7 +919,7 @@ public class Rule
     /// <summary>
     /// chunck radius to load
     /// </summary>
-    public int loadRadius = 8;
+    public int loadRadius = 4;
 
     public Rule JsonGet(string path) => Data.FileExists(path) ? Data.ReadJson<Rule>(path) : new Rule();
     public void SetJson(string path, Rule rule) => Data.WriteJson(rule, path);
