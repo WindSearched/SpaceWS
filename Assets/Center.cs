@@ -77,6 +77,8 @@ public static class ct
     /// </summary>
     public static event Meth onChunkPositionChange;
 
+    public static CommandPage cmdPg;
+
     public static void OnChunkPositionChange() => onChunkPositionChange?.Invoke();
     //
     //  Methods
