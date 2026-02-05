@@ -97,8 +97,10 @@ public class CenterSystem : MonoBehaviour
 
         ct.mod.OnStart();
 
-
-        ct.onChunkPositionChange += () => ct.chunkLoader.Loader(ct.pcp,ct.curWorldRule.loadRadius);
+        if (ct.curWorldRule.chunkload)
+        {
+            ct.onChunkPositionChange += () => ct.chunkLoader.Loader(ct.pcp,ct.curWorldRule.loadRadius);
+        }
         //load a time
         ct.OnChunkPositionChange();
     }

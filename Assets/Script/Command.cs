@@ -38,7 +38,7 @@ public class Command
                 valuemethod[name] = meth;
             else
             {
-                Debug.LogWarning("Duplicate command name: " + name);
+                Debug.LogWarning("Duplicate method value name: " + name);
             }
         }
         else
@@ -75,6 +75,10 @@ public class Command
         public bool LoadValMeth(string methName, out object obj)
         {
             bool b = command.valuemethod.TryGetValue(methName, out var meth);
+            foreach (var c in command.valuemethod.Keys)
+            {
+                Debug.Log(c.Length);
+            }
             obj = b ? meth?.Invoke() : null;
             return b;
         }
@@ -88,13 +92,21 @@ public class Command
             args.RemoveAt(0);
             if (line.StartsWith("@"))
             {
-                if (!LoadValMeth(line.TrimStart("@"), out object obj))
+                string s = line
+                    .TrimStart('@')
+                    .Replace("\u200B", "");;
+                if (!LoadValMeth(s, out object obj))
                 {
-                    string m =$"The method value {line} is not exists!";
+                    string m =$"The method value {s} is not exists!";
                     ct.log.Write("Command", m);
                     Debug.Log(m);
+                    Debug.Log(s.Length);
+                    return null;
                 }
-                line = (string)obj;
+
+                if (obj is float f) line = f.ToString();
+                else if (obj is int i) line = i.ToString();
+                else line = (string)obj;
             }
             return line;
         }

@@ -934,6 +934,12 @@ public class Rule
         }
     }
 
+    public bool chunkload = false;//
+
+
+
+
+
     public int newerBodyIndex = 0;
     public int distribuiteBodyIndex => newerBodyIndex++;
 

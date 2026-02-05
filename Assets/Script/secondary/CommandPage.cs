@@ -50,7 +50,9 @@ public class CommandPage : MonoBehaviour
         });
 
         ct.command.AddValueMethod("rand", () =>//@rand
-            SMath.Random(int.MaxValue,int.MinValue));
+        {
+            return SMath.Random(int.MaxValue, int.MinValue);
+        });
 
         Message("test");
     }
