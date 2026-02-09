@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 
 public static class ct
 {
+    public static CenterSystem ctsym;
     public static Set setting = new();
     public static Rule curWorldRule = new();
     public static Log log = new();
@@ -70,6 +71,7 @@ public static class ct
     public static List<string> structTypes = new();
 
     public static Material defaultMat;
+    public static Material outlineMat => ctsym.m_outline;
 
     public static event Meth updatePerTick;
     /// <summary>

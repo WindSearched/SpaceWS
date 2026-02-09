@@ -7,8 +7,12 @@ public class CenterSystem : MonoBehaviour
     public static string fp;
     public static InputAction move;
     public static InputAction mouseD;
+
+    public Material m_outline;
     private void Start()
     {
+        ct.ctsym = this;
+
         ct.log.Write("Center","Starts to load the center");
         ct.mousecast = new();
 
