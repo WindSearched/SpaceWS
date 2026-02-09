@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -128,10 +129,6 @@ public class CenterSystem : MonoBehaviour
     private void OnDisable()
     {
         //ct.act.Disable();
-        ct.UnlockMouse();
-
-        Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the tetting path
-        Data.WriteJson(ct.setting, ct.setting.settingPath);
         
         foreach (var si in ct.acts.Values)//disable all actions
             si.Dispose();
@@ -141,5 +138,14 @@ public class CenterSystem : MonoBehaviour
         ct.log.Write("Finish logging");
         ct.log.Stop();
 
+    }
+
+    private void OnApplicationQuit()
+    {
+        ct.UnlockMouse();
+
+        Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the setting path
+        Data.WriteJson(ct.setting, ct.setting.settingPath);
+        ct.curWorldRule.SetJson(ct.setting.exRulePath);
     }
 }

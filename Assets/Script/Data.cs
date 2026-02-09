@@ -922,7 +922,7 @@ public class Rule
     public int loadRadius = 4;
 
     public Rule JsonGet(string path) => Data.FileExists(path) ? Data.ReadJson<Rule>(path) : new Rule();
-    public void SetJson(string path, Rule rule) => Data.WriteJson(rule, path);
+    public void SetJson(string path) => Data.WriteJson(this, path);
 
     public int _seedInt = -114514;
     public int seedInt
