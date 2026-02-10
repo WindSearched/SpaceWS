@@ -938,7 +938,7 @@ public class Rule
 		}
 	}
 
-	public bool chunkload = false;//
+	public bool chunkload = true;//
 
 
 

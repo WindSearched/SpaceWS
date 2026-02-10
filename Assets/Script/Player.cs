@@ -27,7 +27,7 @@ public class Player : MonoBehaviour
         moveModes.Add("CameraFrontDirectionMove", new() {
             OnMove = (Vector2 dir, Rigidbody rig) =>
             {
-                if (ct.mouseCanMove)
+                if (ct.playerCanMove)
                 {
                     float v = dir.y;
                     var toward = Camera.main.transform.forward;
@@ -61,7 +61,13 @@ public class Player : MonoBehaviour
 
         ct.mousecast.InCast += (GameObject o) =>
         {
-            Debug.Log(o.name);
+            if(o.CompareTag("struct"))
+                Bodies.OutlineObj(o, true);
+        };
+        ct.mousecast.OutCast += o =>
+        {
+            if(o.CompareTag("struct"))
+                Bodies.OutlineObj(o, false);
         };
 
 

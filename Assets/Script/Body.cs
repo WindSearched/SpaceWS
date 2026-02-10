@@ -108,6 +108,7 @@ public class Bodies
         {
             strobj = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());//be fix
         }
+        strobj.tag = "struct";
 
         SMesh.AddMesh(strobj, ct.meshTypes[strct.type]);//it is test just
         strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
@@ -153,7 +154,22 @@ public class Bodies
     }
 
 
-
+    /// <summary>
+    /// Render for gameobject its outline
+    /// </summary>
+    /// <param name="g"></param>
+    public static void OutlineObj(GameObject g, bool active)
+    {
+        if (g.TryGetComponent<MeshRenderer>(out var mr))
+        {
+            if(active)
+                mr.renderingLayerMask = 3;//00000011
+            else
+            {
+                mr.renderingLayerMask = 1;//00000001
+            }
+        }
+    }
 
     public Bodies()
     {
