@@ -31,9 +31,11 @@ public class CenterSystem : MonoBehaviour
         else
         {
             var p = Data.ReadFile(fp);
-            ct.setting = Data.ReadJson<Set>(p);
+            ct.setting = Data.FileExists(p) ? Data.ReadJson<Set>(p) : new();
         }
         //
+        if(!Data.FileExists(ct.setting.exSpacePath))
+            Data.DirectoryCreate(ct.setting.exSpacePath);
 
         ct.curWorldRule.JsonGet(ct.setting.exRulePath);
 
@@ -85,7 +87,12 @@ public class CenterSystem : MonoBehaviour
                 type = ct.structTypes[ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0)]
             });
         });
+        //needed load
+        m_outline.SetColor("_OutlineColour", ct.setting.outlineColor.ToColor());
+        m_outline.SetFloat("_Intensity", ct.setting.outlineColorIntensity);
+        m_outline.SetFloat("_OutlineWidth", ct.setting.outlineWidth);
 
+        //default data load
         ct.defualtBody = Resources.Load("Body") as GameObject;
         ct.bodiesParent = GameObject.Find("Bodies").transform;
         ct.defaultMat = Resources.Load("DefaultMat") as Material;
@@ -147,6 +154,12 @@ public class CenterSystem : MonoBehaviour
     private void OnApplicationQuit()
     {
         ct.UnlockMouse();
+
+        if (ct.setting == null)
+        {
+            Debug.LogWarning("CenterSystem: setting == null");
+            return;
+        }
 
         Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the setting path
         Data.WriteJson(ct.setting, ct.setting.settingPath);
