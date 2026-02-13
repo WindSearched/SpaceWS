@@ -134,7 +134,18 @@ public class Bodies
         return LoadStruct(loc, cp,type);
     }
 
-    public GameObject LoadStruct(Loc loc, V3I cp, string type) => LoadStruct(new StructState { location = loc, type = type },cp);
+    /// <summary>
+    /// auto detect if the struct has the material
+    /// </summary>
+    /// <param name="loc"></param>
+    /// <param name="cp"></param>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public GameObject LoadStruct(Loc loc, V3I cp, string type)
+    {
+        Material mat = ct.materials.GetValueOrDefault(type);
+        return LoadStruct(new StructState { location = loc, type = type }, cp, mat);
+    }
 
 
     public GameObject RemoveStruct(int body, int index)

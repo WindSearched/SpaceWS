@@ -68,6 +68,7 @@ public static class ct
     public static Dictionary<string, Mesh> meshTypes = new();
     public static Dictionary<string, LogicalFace[]> meshFaces = new();
     public static Dictionary<string, StructData> structDatas = new();
+    public static Dictionary<string, Material>  materials = new();
     public static List<string> structTypes = new();
 
     public static Material defaultMat;
