@@ -91,8 +91,16 @@ public class Mod
 
     public void AddStructFromOBJ(string mod, string modPath)
     {
-        Debug.Log(mod + "/" + Path.GetFileName(modPath));
-        ct.bodies.AddFromOBJ(ct.mod.path + "/" + mod + "/" + modPath + ".obj",mod + "/" + Path.GetFileName(modPath));
+        string name = mod + "/" + Path.GetFileName(modPath);
+        Debug.Log(name);
+        string p = ct.mod.path + "/" + mod + "/" + modPath;
+        string pp;
+        // load struct
+        ct.bodies.AddFromOBJ( p + ".obj",name);
+        // load materials
+        pp = p + ".mtl";
+        if (Data.FileExists(pp))
+            ct.bodies.AddMaterial(SMesh.Mtl.Load(pp, Path.GetDirectoryName(pp)),name);
     }
 }
 

@@ -612,7 +612,7 @@ public static class SMesh
 	    /// </summary>
 	    /// <param name="mtlPath">.mtl 文件路径（绝对或相对）</param>
 	    /// <param name="textureRoot">纹理查找根目录（通常是 mtl 文件所在目录）</param>
-	    public static Dictionary<string, Material> LoadFromMtl(string mtlPath, string textureRoot)
+	    public static Dictionary<string, Material> Load(string mtlPath, string textureRoot)
 	    {
 	        var materials = new Dictionary<string, Material>();
 
@@ -764,6 +764,231 @@ public static class SMesh
 	        return tex;
 	    }
 	}
+
+
+	/// <summary>
+	/// 纯运行时 OBJ + MTL 加载器
+	/// - 支持 usemtl / 多 SubMesh
+	/// - 支持三角面 / 四边面 / N 边面（扇形三角化）
+	/// - 不依赖 Editor / AssetDatabase
+	/// - 生成 SetActive(false) 的运行时“物体模板”，可 Instantiate 复用
+	/// </summary>
+	public static class ObjTemplate
+	{
+	    // =========================
+	    // 对外入口
+	    // =========================
+	    public static GameObject CreateTemplate(string objPath, string mtlPath, string textureRoot)
+	    {
+	        // 1. 解析 MTL
+	        Dictionary<string, Material> materialDict = LoadMtl(mtlPath, textureRoot);
+
+	        // 2. 解析 OBJ
+	        BuildMeshFromObj(objPath, out Mesh mesh, out List<string> subMeshMatNames);
+
+	        // 3. 构建材质数组（按 SubMesh 顺序）
+	        Material[] mats = new Material[subMeshMatNames.Count];
+	        for (int i = 0; i < subMeshMatNames.Count; i++)
+	        {
+	            if (!materialDict.TryGetValue(subMeshMatNames[i], out mats[i]))
+	                mats[i] = new Material(Shader.Find("Standard"));
+	        }
+
+	        // 4. 创建运行时模板 GameObject
+	        GameObject go = new GameObject("__RT_Template_" + Path.GetFileNameWithoutExtension(objPath));
+	        var mf = go.AddComponent<MeshFilter>();
+	        var mr = go.AddComponent<MeshRenderer>();
+
+	        mf.sharedMesh = mesh;
+	        mr.sharedMaterials = mats;
+
+	        go.SetActive(false);
+	        AttachRuntimeRoot(go);
+	        return go;
+	    }
+
+	    // =========================
+	    // OBJ 解析（完整、安全）
+	    // =========================
+	    static void BuildMeshFromObj(string path, out Mesh mesh, out List<string> subMeshMatNames)
+	    {
+	        var verts = new List<Vector3>();
+	        var uvs   = new List<Vector2>();
+	        var norms = new List<Vector3>();
+
+	        var finalVerts = new List<Vector3>();
+	        var finalUVs   = new List<Vector2>();
+	        var finalNorms = new List<Vector3>();
+
+	        var trisByMat = new Dictionary<string, List<int>>();
+	        subMeshMatNames = new List<string>();
+
+	        string currentMat = "__default";
+	        trisByMat[currentMat] = new List<int>();
+	        subMeshMatNames.Add(currentMat);
+
+	        // 局部结构与函数（作用域正确）
+	        FaceVert ParseFace(string token)
+	        {
+	            var idx = token.Split('/');
+	            int v  = int.Parse(idx[0]) - 1;
+	            int vt = idx.Length > 1 && idx[1] != "" ? int.Parse(idx[1]) - 1 : -1;
+	            int vn = idx.Length > 2 && idx[2] != "" ? int.Parse(idx[2]) - 1 : -1;
+
+	            return new FaceVert
+	            {
+	                v  = verts[v],
+	                uv = vt >= 0 && vt < uvs.Count ? uvs[vt] : Vector2.zero,
+	                n  = vn >= 0 && vn < norms.Count ? norms[vn] : Vector3.up
+	            };
+	        }
+
+	        foreach (var raw in File.ReadAllLines(path))
+	        {
+	            var line = raw.Trim();
+	            if (line.Length == 0 || line.StartsWith("#")) continue;
+
+	            var p = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+	            switch (p[0])
+	            {
+	                case "v":
+	                    verts.Add(ParseVec3(p));
+	                    break;
+
+	                case "vt":
+	                    uvs.Add(new Vector2(Parse(p[1]), Parse(p[2])));
+	                    break;
+
+	                case "vn":
+	                    norms.Add(ParseVec3(p));
+	                    break;
+
+	                case "usemtl":
+	                    currentMat = p[1];
+	                    if (!trisByMat.ContainsKey(currentMat))
+	                    {
+	                        trisByMat[currentMat] = new List<int>();
+	                        subMeshMatNames.Add(currentMat);
+	                    }
+	                    break;
+
+	                case "f":
+	                    int faceCount = p.Length - 1;
+	                    if (faceCount < 3) break;
+
+	                    var v0 = ParseFace(p[1]);
+	                    for (int i = 2; i < faceCount; i++)
+	                    {
+	                        var v1 = ParseFace(p[i]);
+	                        var v2 = ParseFace(p[i + 1]);
+
+	                        finalVerts.Add(v0.v);
+	                        finalUVs.Add(v0.uv);
+	                        finalNorms.Add(v0.n);
+	                        trisByMat[currentMat].Add(finalVerts.Count - 1);
+
+	                        finalVerts.Add(v1.v);
+	                        finalUVs.Add(v1.uv);
+	                        finalNorms.Add(v1.n);
+	                        trisByMat[currentMat].Add(finalVerts.Count - 1);
+
+	                        finalVerts.Add(v2.v);
+	                        finalUVs.Add(v2.uv);
+	                        finalNorms.Add(v2.n);
+	                        trisByMat[currentMat].Add(finalVerts.Count - 1);
+	                    }
+	                    break;
+	            }
+	        }
+
+	        mesh = new Mesh();
+	        mesh.SetVertices(finalVerts);
+	        mesh.SetUVs(0, finalUVs);
+	        mesh.SetNormals(finalNorms);
+
+	        mesh.subMeshCount = subMeshMatNames.Count;
+	        for (int i = 0; i < subMeshMatNames.Count; i++)
+	            mesh.SetTriangles(trisByMat[subMeshMatNames[i]], i);
+
+	        mesh.RecalculateBounds();
+	    }
+
+	    // =========================
+	    // MTL 解析（最小可用）
+	    // =========================
+	    static Dictionary<string, Material> LoadMtl(string path, string texRoot)
+	    {
+	        var dict = new Dictionary<string, Material>();
+	        Material cur = null;
+
+	        foreach (var raw in File.ReadAllLines(path))
+	        {
+	            var line = raw.Trim();
+	            if (line.Length == 0 || line.StartsWith("#")) continue;
+	            var p = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+	            switch (p[0])
+	            {
+	                case "newmtl":
+	                    cur = new Material(Shader.Find("Standard"));
+	                    cur.name = p[1];
+	                    dict[p[1]] = cur;
+	                    break;
+
+	                case "Kd":
+	                    if (cur != null)
+	                        cur.color = new Color(Parse(p[1]), Parse(p[2]), Parse(p[3]));
+	                    break;
+
+	                case "map_Kd":
+	                    if (cur != null)
+	                    {
+	                        string texPath = Path.Combine(texRoot, p[1]);
+	                        if (File.Exists(texPath))
+	                        {
+	                            var data = File.ReadAllBytes(texPath);
+	                            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, true);
+	                            tex.LoadImage(data);
+	                            cur.mainTexture = tex;
+	                        }
+	                    }
+	                    break;
+	            }
+	        }
+	        return dict;
+	    }
+
+	    // =========================
+	    // 工具
+	    // =========================
+	    struct FaceVert
+	    {
+	        public Vector3 v;
+	        public Vector2 uv;
+	        public Vector3 n;
+	    }
+
+	    static float Parse(string s) => float.Parse(s, CultureInfo.InvariantCulture);
+
+	    static Vector3 ParseVec3(string[] p) =>
+	        new Vector3(Parse(p[1]), Parse(p[2]), Parse(p[3]));
+
+	    static Transform _root;
+	    static void AttachRuntimeRoot(GameObject go)
+	    {
+	        if (_root == null)
+	        {
+	            var r = new GameObject("__RuntimeTemplates__");
+	            UnityEngine.Object.DontDestroyOnLoad(r);
+	            _root = r.transform;
+	        }
+	        go.transform.SetParent(_root);
+	    }
+	}
+
+
+
 
 	public class VoxelBox
 	{

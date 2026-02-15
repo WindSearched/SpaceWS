@@ -62,13 +62,15 @@ public static class ct
 
     public static Bodies bodies = new();
     public static MouseRaycast mousecast;
+
     /// <summary>
     /// all type of mesh loaded
     /// </summary>
-    public static Dictionary<string, Mesh> meshTypes = new();
-    public static Dictionary<string, LogicalFace[]> meshFaces = new();
-    public static Dictionary<string, StructData> structDatas = new();
-    public static Dictionary<string, Material>  materials = new();
+    // public static Dictionary<string, Mesh> meshTypes = new();
+    // public static Dictionary<string, LogicalFace[]> meshFaces = new();
+    // public static Dictionary<string, StructData> structDatas = new();
+    // public static Dictionary<string, Dictionary<string, Material>>  materials = new();
+    public static Dictionary<string, GameObject> structTemplate = new();
     public static List<string> structTypes = new();
 
     public static Material defaultMat;

@@ -48,6 +48,17 @@ public class CommandPage : MonoBehaviour
             Debug.Log(s);
             Message(s);
         });
+        ct.command.Add("load", l => // /load meteorite 0 0 0 0 0 0
+        {
+            var cu = ct.setting.chunkUnit;
+
+            var type = l.Load();
+            var pos = l.LoadV3();
+            var rot = l.LoadV3();
+            var cp = pos.intDivision(cu);
+            pos %= cu;
+            ct.bodies.LoadStruct(pos, cp, rot, type);
+        });
 
         ct.command.AddValueMethod("rand", () =>//@rand
         {
