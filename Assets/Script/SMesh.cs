@@ -328,7 +328,7 @@ public static class SMesh
 		//旋转物体 A
 		tA.rotation = deltaRot * tA.rotation;
 
-		//旋转后重新计算 A 面中心（‼️关键）
+		//旋转后重新计算 A 面中心（‼关键）
 		Vector3[] wA2 = GetWorldFaceVertices(tA, faceA);
 		Vector3 rotatedCenterA = GetFaceCenter(wA2);
 
@@ -778,32 +778,48 @@ public static class SMesh
 	    // =========================
 	    // 对外入口
 	    // =========================
-	    public static GameObject CreateTemplate(string objPath, string mtlPath, string textureRoot)
+	    public static GameObject CreateTemplate(string objPath, string mtlPath, string textureRoot, string name)
 	    {
-	        // 1. 解析 MTL
-	        Dictionary<string, Material> materialDict = LoadMtl(mtlPath, textureRoot);
+
 
 	        // 2. 解析 OBJ
 	        BuildMeshFromObj(objPath, out Mesh mesh, out List<string> subMeshMatNames);
 
-	        // 3. 构建材质数组（按 SubMesh 顺序）
-	        Material[] mats = new Material[subMeshMatNames.Count];
-	        for (int i = 0; i < subMeshMatNames.Count; i++)
-	        {
-	            if (!materialDict.TryGetValue(subMeshMatNames[i], out mats[i]))
-	                mats[i] = new Material(Shader.Find("Standard"));
-	        }
-
 	        // 4. 创建运行时模板 GameObject
-	        GameObject go = new GameObject("__RT_Template_" + Path.GetFileNameWithoutExtension(objPath));
+	        GameObject go = new GameObject(name);
 	        var mf = go.AddComponent<MeshFilter>();
 	        var mr = go.AddComponent<MeshRenderer>();
 
+	        Material[] mats = new Material[subMeshMatNames.Count];
+	        if (Data.FileExists(mtlPath))
+	        {
+		        // 1. 解析 MTL
+		        Dictionary<string, Material> materialDict = LoadMtl(mtlPath, textureRoot);
+		        // 3. 构建材质数组（按 SubMesh 顺序）
+		        for (int i = 0; i < subMeshMatNames.Count; i++)
+		        {
+			        if (!materialDict.TryGetValue(subMeshMatNames[i], out mats[i]))
+				        mats[i] = ct.defaultMat;
+		        }
+	        }
+	        else
+	        {
+		        for (int i = 0; i < subMeshMatNames.Count; i++)
+		        {
+			        mats[i] = ct.defaultMat;
+		        }
+	        }
+		    mr.sharedMaterials = mats;
+
 	        mf.sharedMesh = mesh;
-	        mr.sharedMaterials = mats;
+
+	        // 添加 MeshCollider（模板也具备碰撞能力）
+	        var mc = go.AddComponent<MeshCollider>();
+	        mc.sharedMesh = mesh;
+	        mc.convex = false; // 若需要 Rigidbody 请改为 true
 
 	        go.SetActive(false);
-	        AttachRuntimeRoot(go);
+	        go.transform.SetParent(ct.templateParent);
 	        return go;
 	    }
 
@@ -931,7 +947,7 @@ public static class SMesh
 	            switch (p[0])
 	            {
 	                case "newmtl":
-	                    cur = new Material(Shader.Find("Standard"));
+	                    cur = new Material(ct.defaultMat);
 	                    cur.name = p[1];
 	                    dict[p[1]] = cur;
 	                    break;
@@ -986,6 +1002,7 @@ public static class SMesh
 	        go.transform.SetParent(_root);
 	    }
 	}
+
 
 
 

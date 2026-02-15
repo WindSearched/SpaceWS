@@ -33,11 +33,10 @@ public class Mod
         env.Global.Set("dLog",(Action<object>)Debug.Log);
         env.Global.Set("Command",(Action<string>)ct.command.Load);
         env.Global.Set("swapPage",(Action<string>)ct.pages.Swap);
-        env.Global.Set("AddStructOGG",(Action<string,string>)AddStructFromOBJ);
         env.Global.Set("AddStructOBJ",(Action<string,string>)AddStructFromOBJ);
 
         env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
-        env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,string,GameObject>)ct.bodies.LoadStruct);
+        env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,int,string,GameObject>)ct.bodies.LoadStruct);
 
         LoadMod();
     }
@@ -91,16 +90,19 @@ public class Mod
 
     public void AddStructFromOBJ(string mod, string modPath)
     {
-        string name = mod + "/" + Path.GetFileName(modPath);
-        Debug.Log(name);
-        string p = ct.mod.path + "/" + mod + "/" + modPath;
-        string pp;
-        // load struct
-        ct.bodies.AddFromOBJ( p + ".obj",name);
-        // load materials
-        pp = p + ".mtl";
-        if (Data.FileExists(pp))
-            ct.bodies.AddMaterial(SMesh.Mtl.Load(pp, Path.GetDirectoryName(pp)),name);
+         string name = mod + "/" + Path.GetFileName(modPath);
+         Debug.Log(name);
+         string p = ct.mod.path + "/" + mod + "/" + modPath;
+        // string pp;
+        // // load struct
+        // ct.bodies.AddFromOBJ( p + ".obj",name);
+        // // load materials
+        // pp = p + ".mtl";
+        // if (Data.FileExists(pp))
+        //     ct.bodies.AddMaterial(SMesh.Mtl.Load(pp, Path.GetDirectoryName(pp)),name);
+
+        ct.structTypes.Add(name);
+        ct.structTemplate.Add(name, SMesh.ObjTemplate.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p),name));
     }
 }
 

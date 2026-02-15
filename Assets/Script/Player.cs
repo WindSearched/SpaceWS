@@ -91,7 +91,7 @@ public class Player : MonoBehaviour
     private void FixedUpdate()
     {
         var p =ct.pp = transform.position;// update player position
-        ct.pip.Set(p);
+        ct.intPlayerPosition.Set(p);
         ct.pcp = ct.pip / ct.setting.chunkUnit;
     }
 

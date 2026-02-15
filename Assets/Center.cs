@@ -71,6 +71,7 @@ public static class ct
     // public static Dictionary<string, StructData> structDatas = new();
     // public static Dictionary<string, Dictionary<string, Material>>  materials = new();
     public static Dictionary<string, GameObject> structTemplate = new();
+    public static Transform templateParent => ctsym.templateParent;
     public static List<string> structTypes = new();
 
     public static Material defaultMat;

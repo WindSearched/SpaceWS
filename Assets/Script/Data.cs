@@ -33,10 +33,10 @@ public static class Data
 		sw.Close();
 
 	}
-	public static T ReadJson<T>(string path)
+	public static T ReadJson<T>(string path) where T : new()
 	{
 		if (!FileExists(path))
-			return default;
+			return new T();
 
 		string json = ReadTextFile(path);
 
@@ -319,8 +319,6 @@ public class Rule
 	/// chunck radius to load
 	/// </summary>
 	public int loadRadius = 4;
-
-	public Rule JsonGet(string path) => Data.FileExists(path) ? Data.ReadJson<Rule>(path) : new Rule();
 
 	public void SetJson(string path) =>Data.WriteJson(this, path);
 

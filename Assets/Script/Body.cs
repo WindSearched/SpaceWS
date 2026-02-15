@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 [Serializable]
 public class Body
@@ -95,43 +96,68 @@ public class Bodies
 	/// <param name="cp">relative location</param>
 	public GameObject LoadStruct(StructState strct, V3I cp, Material material = null, GameObject strobj = null)
 	{
-		Debug.Log($"{strct.type},{strct.location.ToString()},{ct.meshFaces.ContainsKey(strct.type)}");
+		// Debug.Log($"{strct.type},{strct.location.ToString()},{ct.meshFaces.ContainsKey(strct.type)}");
+		//
+		// if (!datas.ContainsKey(strct.bodyIndex))
+		// {
+		// 	return null;
+		// 	//LoadVoidBody(strct.bodyIndex);
+		// }
+		// datas[strct.bodyIndex].structs.Add(strct);
+		//
+		// if (strobj == null)
+		// {
+		// 	strobj = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());//be fix
+		// }
+		// strobj.tag = "struct";
+		//
+		// SMesh.AddMesh(strobj, ct.meshTypes[strct.type]);//it is test just
+		// strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
+		// objects[strct.bodyIndex].structs.Add(strobj);
+		//
+		// strct.location.LocateHere(strobj, cp);
+		// return strobj;
 
-		if (!datas.ContainsKey(strct.bodyIndex))
+		if (!strobj)
 		{
-			return null;
-			//LoadVoidBody(strct.bodyIndex);
+			if(ct.structTemplate.TryGetValue(strct.type, out var ob))
+				strobj = Object.Instantiate(ob, objects[strct.bodyIndex].str.transform, true);
+			else
+			{
+				ct.log.Write("Bodies", $"the struct {strct.type} doesn't exist");
+				return null;
+			}
 		}
-		datas[strct.bodyIndex].structs.Add(strct);
 
-		if (strobj == null)
-		{
-			strobj = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());//be fix
-		}
 		strobj.tag = "struct";
-
-		SMesh.AddMesh(strobj, ct.meshTypes[strct.type]);//it is test just
-		strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
-		objects[strct.bodyIndex].structs.Add(strobj);
+		strobj.name = datas[strct.bodyIndex].structs.Count.ToString();
 
 		strct.location.LocateHere(strobj, cp);
+		objects[strct.bodyIndex].structs.Add(strobj);
+		strobj.SetActive(true);
 		return strobj;
 	}
 
 	public GameObject LoadStruct(float px, float py, float pz,
 		int cx, int cy, int cz,
-		float rx, float ry, float rz,string type) => LoadStruct(new V3(px,py,pz),new V3I(cx,cy,cz),new V3(rx,ry,rz),type);
+		float rx, float ry, float rz, int index, string type) =>
+		LoadStruct(new V3(px, py, pz), new V3I(cx, cy, cz),new V3(rx, ry, rz), index, type);
 
-	public GameObject LoadStruct(V3 pos, V3I cp, V3 rot, string type) =>
-		LoadStruct(pos, cp, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), type);
-	public GameObject LoadStruct(V3 pos, V3I cp, Quater rot, string type)
+	public GameObject LoadStruct(V3 pos, V3I cp, V3 rot,int index , string type) =>
+		LoadStruct(pos, cp, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), index, type);
+	public GameObject LoadStruct(V3 pos, V3I cp, Quater rot, int index, string type)
 	{
 		Loc loc = new Loc
 		{
 			position = pos,
 			rotation = rot
 		};
-		return LoadStruct(loc, cp,type);
+		if (index == -1)
+		{
+			index = ct.curWorldRule.distribuiteBodyIndex;
+			LoadVoidBody(index, loc, cp);
+		}
+		return LoadStruct(loc, cp, index,type);
 	}
 
 	/// <summary>
@@ -141,10 +167,10 @@ public class Bodies
 	/// <param name="cp"></param>
 	/// <param name="type"></param>
 	/// <returns></returns>
-	public GameObject LoadStruct(Loc loc, V3I cp, string type)
+	public GameObject LoadStruct(Loc loc, V3I cp, int index, string type)
 	{
-		Dictionary<string, Material> mats = ct.materials.GetValueOrDefault(type);
-		return LoadStruct(new StructState { location = loc, type = type }, cp, mat);
+		//Dictionary<string, Material> mats = ct.materials.GetValueOrDefault(type);
+		return LoadStruct(new StructState { location = loc, type = type, bodyIndex = index}, cp /*, mat*/);
 	}
 
 
@@ -155,22 +181,22 @@ public class Bodies
 		return g;
 	}
 
-	public void AddFromOBJ(string oggPath,string name)
-	{
-		string ogg = Data.ReadFile(oggPath);
-		var si = SMesh.LoadStructInfoOGG(ogg);
-		ct.meshTypes.Add(name, si.mesh);
-		ct.meshFaces.Add(name, si.faces);
-		ct.structTypes.Add(name);
-	}
-
-	public void AddMaterial(Dictionary<string, Material> mats, string name)
-	{
-		if (!ct.materials.TryAdd(name, mats))
-		{
-			ct.log.Write("Bodies", $"Failed to add material, the name has {name} already exists");
-		}
-	}
+	// public void AddFromOBJ(string oggPath,string name)
+	// {
+	// 	string ogg = Data.ReadFile(oggPath);
+	// 	var si = SMesh.LoadStructInfoOGG(ogg);
+	// 	ct.meshTypes.Add(name, si.mesh);
+	// 	ct.meshFaces.Add(name, si.faces);
+	// 	ct.structTypes.Add(name);
+	// }
+	//
+	// public void AddMaterial(Dictionary<string, Material> mats, string name)
+	// {
+	// 	if (!ct.materials.TryAdd(name, mats))
+	// 	{
+	// 		ct.log.Write("Bodies", $"Failed to add material, the name has {name} already exists");
+	// 	}
+	// }
 
 	/// <summary>
 	/// Render for gameobject its outline
@@ -187,22 +213,6 @@ public class Bodies
 				mr.renderingLayerMask = 1;//00000001
 			}
 		}
-	}
-
-	public Bodies()
-	{
-		ct.command.Add("struct", (l) =>
-		{
-			var a1 = l.Load();
-			if (a1 == "load")
-			{
-				var a2 = l.Load();//is the name
-				var rp = l.LoadV3();
-				var rr = l.LoadV3();
-				var cp = l.LoadV3I();
-				LoadStruct(rp,cp, Quater.Parse(rr), a2);
-			}
-		});
 	}
 }
 

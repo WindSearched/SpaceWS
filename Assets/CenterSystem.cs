@@ -9,6 +9,7 @@ public class CenterSystem : MonoBehaviour
     public static InputAction mouseD;
 
     public Material m_outline;
+    public Transform templateParent;
     private void Start()
     {
         ct.ctsym = this;
@@ -37,7 +38,7 @@ public class CenterSystem : MonoBehaviour
         if(!Data.FileExists(ct.setting.exSpacePath))
             Data.DirectoryCreate(ct.setting.exSpacePath);
 
-        ct.curWorldRule.JsonGet(ct.setting.exRulePath);
+        ct.curWorldRule = Data.ReadJson<Rule>(ct.setting.exRulePath);
 
         Tick.Reg(new()//update position every tick
         {
@@ -97,13 +98,13 @@ public class CenterSystem : MonoBehaviour
         ct.bodiesParent = GameObject.Find("Bodies").transform;
         ct.defaultMat = Resources.Load("DefaultMat") as Material;
 
-        var si = SMesh.LoadStructInfoOGG(SMesh.cubeOBJ);
-        ct.meshTypes.Add("test/normalCube", si.mesh);
-        ct.meshFaces.Add("test/normalCube", si.faces);
-
-        si = SMesh.LoadStructInfoOGG(SMesh.testStruct1);
-        ct.meshTypes.Add("test/str1", si.mesh);
-        ct.meshFaces.Add("test/str1", si.faces);
+        // var si = SMesh.LoadStructInfoOGG(SMesh.cubeOBJ);
+        // ct.meshTypes.Add("test/normalCube", si.mesh);
+        // ct.meshFaces.Add("test/normalCube", si.faces);
+        //
+        // si = SMesh.LoadStructInfoOGG(SMesh.testStruct1);
+        // ct.meshTypes.Add("test/str1", si.mesh);
+        // ct.meshFaces.Add("test/str1", si.faces);
         
         ct.log.Write("Center","Finishes to load the center");
 

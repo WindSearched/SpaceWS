@@ -106,14 +106,12 @@ public class ChunkLoader
 
                     if (loaded.ContainsKey(cur))
                     {
-                        Debug.Log("existed");
                         removed.Remove(cur);
                         continue;
                     }
                     var ch = GetChunk(cur);
                     if (ch == null)//when does not exist chunk data
                     {
-                        Debug.Log("null");
                         ch = GenerateChunk(cur);
                     }
                     loaded.Add(cur, ch);

@@ -57,7 +57,7 @@ public class CommandPage : MonoBehaviour
             var rot = l.LoadV3();
             var cp = pos.intDivision(cu);
             pos %= cu;
-            ct.bodies.LoadStruct(pos, cp, rot, type);
+            ct.bodies.LoadStruct(pos, cp, rot, -1, type);
         });
 
         ct.command.AddValueMethod("rand", () =>//@rand
