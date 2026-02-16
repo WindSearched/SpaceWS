@@ -39,8 +39,11 @@ public class Tick : MonoBehaviour
                     reg.onTick.Invoke(reg);
 
                     reg.repeattime--;
-                    if (reg.repeattime < 1) continue;
-                    Reg(reg);
+                    if (reg.repeattime >= 1)
+                        Reg(reg);
+
+                    else if(reg.repeattime == -100)
+                        Reg(reg, tick + 1 + reg.interval);
                 }
             }
 

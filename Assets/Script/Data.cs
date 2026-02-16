@@ -185,6 +185,8 @@ public class Set
 	public Scolor outlineColor = Scolor.outline;
 	public int outlineColorIntensity = 25;
 	public float outlineWidth = 0.0015f;
+	public int debugLineNumber = 16;
+	public bool debugShowIndex = true;
 }
 
 public class LogicalFace

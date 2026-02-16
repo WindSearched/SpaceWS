@@ -13,9 +13,11 @@ public static class ct
     public static Log log = new();
     public static Mod mod = new();
     public static Command command = new();
+    public static SDebug debugInfo;
     public static ChunkLoader chunkLoader;
     public static SAction action = new();
     public static PageStm pages = new();
+    public static DebugPage dePa => ctsym.debugPage;
     public static ModeStm modes = new();
     public static Dictionary<string,InputAction> acts = new();
     public static Vector3 playerPosition;//updated every frame
@@ -32,6 +34,8 @@ public static class ct
     public static float fps;
     public static float yawCamera;
     public static float pitchCamera;
+
+    public static Vector2 screenSize => ctsym.canvas.sizeDelta;
 
     public static Transform bodiesParent;
     public static GameObject defualtBody;

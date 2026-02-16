@@ -75,7 +75,7 @@ public class Bodies
 	/// <param name="cp"></param>
 	public void LoadVoidBody(int index, Loc loc, V3I cp)
 	{
-		datas.Add(index, new body()
+		datas.TryAdd(index, new body()
 		{
 			structs = new(),
 			faces = new()
@@ -83,7 +83,7 @@ public class Bodies
 		var g = GameObject.Instantiate(ct.defualtBody, ct.bodiesParent);
 		g.name = index.ToString();
 		loc.LocateHere(g,cp);
-		objects.Add(index, new obj()
+		objects.TryAdd(index, new obj()
 		{
 			self = g,
 			structs = new(),

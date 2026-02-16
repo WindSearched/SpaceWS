@@ -70,23 +70,6 @@ public class Player : MonoBehaviour
                 Bodies.OutlineObj(o, false);
         };
 
-
-
-        // TickReg tr = new((tr) =>
-        // {
-        //     Debug.Log($"log{tr.repeattime+1}");
-        // }, 5, 5);
-        // Tick.Reg(tr);
-
-        //test
-        //Chunk ch = new() {
-        //    position = V3I.zero,
-        //    structs = new()
-        //};
-        //ChunkStorage.SaveChunk("world",ch.position,ch.ToBytes());
-        //var v = Chunk.FromBytes(ChunkStorage.LoadChunk("world", ch.position));
-        //Debug.Log(v.position.ToString());
-        //Debug.Log(Application.persistentDataPath);
     }
     private void FixedUpdate()
     {

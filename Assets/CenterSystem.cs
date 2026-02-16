@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static ct;
 
 public class CenterSystem : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class CenterSystem : MonoBehaviour
 
     public Material m_outline;
     public Transform templateParent;
+    public RectTransform canvas;
+    public DebugPage debugPage;
     private void Start()
     {
         ct.ctsym = this;
@@ -98,13 +101,18 @@ public class CenterSystem : MonoBehaviour
         ct.bodiesParent = GameObject.Find("Bodies").transform;
         ct.defaultMat = Resources.Load("DefaultMat") as Material;
 
-        // var si = SMesh.LoadStructInfoOGG(SMesh.cubeOBJ);
-        // ct.meshTypes.Add("test/normalCube", si.mesh);
-        // ct.meshFaces.Add("test/normalCube", si.faces);
-        //
-        // si = SMesh.LoadStructInfoOGG(SMesh.testStruct1);
-        // ct.meshTypes.Add("test/str1", si.mesh);
-        // ct.meshFaces.Add("test/str1", si.faces);
+        ct.debugInfo = new(ct.setting.debugLineNumber);
+        debugInfo.RightAdd(() =>
+        {
+            var p = pp;
+            return $"{p.x} {p.y} {p.z}";
+        },"position");
+        debugInfo.RightAdd(() =>
+        {
+            var p = pcp;
+            return $"{p.x} {p.y} {p.z}";
+        },"chunk");
+        debugInfo.LeftAdd(() => fps.ToString(), "fps");
         
         ct.log.Write("Center","Finishes to load the center");
 
