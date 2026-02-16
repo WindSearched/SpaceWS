@@ -123,6 +123,7 @@ public class ChunkLoader
         foreach (var r in removed)
         {
             RemoveChunk(loaded[r]);
+            loaded.Remove(r);
         }
     }
 

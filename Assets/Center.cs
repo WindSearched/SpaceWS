@@ -59,8 +59,8 @@ public static class ct
         set
         {
             if (playerchunkPosition == value) return;
-            onChunkPositionChange?.Invoke();
             playerchunkPosition = value;
+            onChunkPositionChange?.Invoke();
         }
     }
 

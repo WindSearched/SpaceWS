@@ -230,7 +230,7 @@ public class Chunk
 		bw.Write(position.z);
 
 		// 写 structs 数量
-		int count = structs != null ? structs.Count : 0;
+		int count = structs?.Count ?? 0;
 		bw.Write(count);
 
 		if (structs != null)
@@ -341,6 +341,7 @@ public class Rule
 
 
 	public int newerBodyIndex = 0;
+	[JsonIgnore]
 	public int distribuiteBodyIndex => newerBodyIndex++;
 
 	public int RandInt(int seed, int max, int min) => SMath.Random(seed.GetHashCode() + seedInt, max, min);
