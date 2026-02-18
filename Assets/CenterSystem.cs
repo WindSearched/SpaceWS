@@ -19,6 +19,7 @@ public class CenterSystem : MonoBehaviour
 
         ct.log.Write("Center","Starts to load the center");
         ct.mousecast = new();
+        ct.screenSize = canvas.sizeDelta;
 
         move = ct.action.Add("move",InputActionType.Value);
         ct.action.AddVector2(move);

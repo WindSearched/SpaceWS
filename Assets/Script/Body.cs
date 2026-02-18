@@ -96,28 +96,6 @@ public class Bodies
 	/// <param name="cp">relative location</param>
 	public GameObject LoadStruct(StructState strct, V3I cp, Material material = null, GameObject strobj = null)
 	{
-		// Debug.Log($"{strct.type},{strct.location.ToString()},{ct.meshFaces.ContainsKey(strct.type)}");
-		//
-		// if (!datas.ContainsKey(strct.bodyIndex))
-		// {
-		// 	return null;
-		// 	//LoadVoidBody(strct.bodyIndex);
-		// }
-		// datas[strct.bodyIndex].structs.Add(strct);
-		//
-		// if (strobj == null)
-		// {
-		// 	strobj = new GameObject(datas[strct.bodyIndex].structs.Count.ToString());//be fix
-		// }
-		// strobj.tag = "struct";
-		//
-		// SMesh.AddMesh(strobj, ct.meshTypes[strct.type]);//it is test just
-		// strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
-		// objects[strct.bodyIndex].structs.Add(strobj);
-		//
-		// strct.location.LocateHere(strobj, cp);
-		// return strobj;
-
 		if (!strobj)
 		{
 			if(ct.structTemplate.TryGetValue(strct.type, out var ob))
@@ -180,23 +158,6 @@ public class Bodies
 		objects[body].structs[index] = null;
 		return g;
 	}
-
-	// public void AddFromOBJ(string oggPath,string name)
-	// {
-	// 	string ogg = Data.ReadFile(oggPath);
-	// 	var si = SMesh.LoadStructInfoOGG(ogg);
-	// 	ct.meshTypes.Add(name, si.mesh);
-	// 	ct.meshFaces.Add(name, si.faces);
-	// 	ct.structTypes.Add(name);
-	// }
-	//
-	// public void AddMaterial(Dictionary<string, Material> mats, string name)
-	// {
-	// 	if (!ct.materials.TryAdd(name, mats))
-	// 	{
-	// 		ct.log.Write("Bodies", $"Failed to add material, the name has {name} already exists");
-	// 	}
-	// }
 
 	/// <summary>
 	/// Render for gameobject its outline

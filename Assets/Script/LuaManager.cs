@@ -102,7 +102,9 @@ public class Mod
         //     ct.bodies.AddMaterial(SMesh.Mtl.Load(pp, Path.GetDirectoryName(pp)),name);
 
         ct.structTypes.Add(name);
-        ct.structTemplate.Add(name, SMesh.ObjTemplate.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p),name));
+        var t = SMesh.ObjTemp.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p), name);
+        ct.structTemplate.Add(name, t.template);
+        ct.structFaces.Add(name, t.faces);
     }
 }
 

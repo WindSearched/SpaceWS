@@ -35,7 +35,7 @@ public static class ct
     public static float yawCamera;
     public static float pitchCamera;
 
-    public static Vector2 screenSize => ctsym.canvas.sizeDelta;
+    public static Vector2 screenSize;
 
     public static Transform bodiesParent;
     public static GameObject defualtBody;
@@ -75,6 +75,7 @@ public static class ct
     // public static Dictionary<string, StructData> structDatas = new();
     // public static Dictionary<string, Dictionary<string, Material>>  materials = new();
     public static Dictionary<string, GameObject> structTemplate = new();
+    public static Dictionary<string, SMesh.RuntimeFace[]> structFaces = new();
     public static Transform templateParent => ctsym.templateParent;
     public static List<string> structTypes = new();
 
