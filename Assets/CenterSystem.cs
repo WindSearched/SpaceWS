@@ -13,6 +13,7 @@ public class CenterSystem : MonoBehaviour
 
     public Material m_outline;
     public Transform templateParent;
+    public Transform structFacesTemplateParent;
     public RectTransform canvas;
     public DebugPage debugPage;
     private void Start()
@@ -157,7 +158,9 @@ public class CenterSystem : MonoBehaviour
                     var id = c.transform.parent.parent.gameObject.name;
                     Debug.Log(id);
                     var type = bodies.datas[int.Parse(id)].structs[0].type;
-                    SMesh.Face.CreateFace(ct.structFaces[type]);
+                    var g = Instantiate(structFaceTemplates[type]);
+                    g.SetActive(true);
+                    g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
                     c.SetActive(false);
                 }
             }

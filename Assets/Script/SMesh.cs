@@ -624,7 +624,7 @@ public static class SMesh
 		static Vector3 ParseVec3(string[] p) =>
 			new Vector3(ParseFloat(p[1]), ParseFloat(p[2]), ParseFloat(p[3]));
 
-		public static (GameObject template, RuntimeFace[] faces) CreateTemplate(string objPath, string mtlPath, string textureRoot, string name)
+		public static (GameObject template, GameObject facesTemp, RuntimeFace[] faces) CreateTemplate(string objPath, string mtlPath, string textureRoot, string name)
 		{
 			var data = Parse(objPath);
 			var fs = Face.BuildRuntimeFaces(data);
@@ -645,6 +645,8 @@ public static class SMesh
 			mc.convex = false; // 若需要 Rigidbody 请改为 true
 
 
+			Material[] ms = new Material[data.faces.Count];
+
 			Material[] mats = new Material[subMeshMats.Count];
 			if (Data.FileExists(mtlPath))
 			{
@@ -656,6 +658,10 @@ public static class SMesh
 					if (!materialDict.TryGetValue(subMeshMats[i], out mats[i]))
 						mats[i] = ct.defaultMat;
 				}
+				for (int i = 0; i < data.faces.Count; i++)
+				{
+					ms[i] = materialDict[data.faces[i].material];
+				}
 			}
 			else
 			{
@@ -663,12 +669,21 @@ public static class SMesh
 				{
 					mats[i] = ct.defaultMat;
 				}
+				for (int i = 0; i < data.faces.Count; i++)
+				{
+					ms[i] = ct.defaultMat;
+				}
 			}
-
 			mr.sharedMaterials = mats;
 			mf.sharedMesh = mesh;
 
-			return new(go, fs);
+			GameObject ft = new GameObject(name);
+			ft.transform.SetParent(ct.structFacesTemplateParent);
+			ft.SetActive(false);
+
+			Face.CreateFace(fs, ms, ft.transform);
+
+			return new(go, ft, fs);
 		}
 	}
 
@@ -777,6 +792,7 @@ public static class SMesh
 		public static GameObject CreateFace(
 		    RuntimeFace face,
 		    string name = "",
+		    Material mat = null,
 		    Transform parent = null,
 		    Transform ownerTransform = null
 		)
@@ -839,7 +855,7 @@ public static class SMesh
 		    mf.sharedMesh = mesh;
 
 		    MeshRenderer mr = g.AddComponent<MeshRenderer>();
-		    // 材质你可以外部再设
+		    mr.sharedMaterial = ct.defaultMat;
 
 		    // ---------- 7. MeshCollider ----------
 		    MeshCollider collider = g.AddComponent<MeshCollider>();
@@ -849,12 +865,12 @@ public static class SMesh
 		    return g;
 		}
 
-		public static void CreateFace(RuntimeFace[] faces, Transform parent = null)
+		public static void CreateFace(RuntimeFace[] faces, Material[] mats, Transform parent = null)
 		{
 			for (int i = 0; i < faces.Length; i++)
 			{
 				var f =  faces[i];
-				CreateFace(f,i.ToString(),parent);
+				CreateFace(f,i.ToString(),mats[i],parent);
 			}
 		}
 	}
