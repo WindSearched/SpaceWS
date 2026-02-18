@@ -113,6 +113,11 @@ public class Bodies
 		strct.location.LocateHere(strobj, cp);
 		objects[strct.bodyIndex].structs.Add(strobj);
 		strobj.SetActive(true);
+
+		//reg
+		ct.bodies.objects[strct.bodyIndex].structs.Add(strobj);
+		ct.bodies.datas[strct.bodyIndex].structs.Add(strct);
+
 		return strobj;
 	}
 

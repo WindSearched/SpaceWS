@@ -110,8 +110,8 @@ public class DebugPage : MonoBehaviour
 
     private void OnRectTransformDimensionsChange()
     {
-        Debug.Log("OnRectTransformDimensionsChange");
-        float sx = screenSize.x;
+        if(ct.ctsym == null) return;
+        float sx = ct.ctsym.canvas.sizeDelta.x;
         for (int i = 0; i < parent.transform.childCount; i++)
         {
             var child = parent.transform.GetChild(i);

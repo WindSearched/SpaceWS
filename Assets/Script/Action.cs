@@ -88,6 +88,8 @@ public class SAction
             {"ButtonWithOneModifier","Modifier / Button"},
             {"ButtonWithOneModifiers","Modifier1 / Modifier2 / Button"},
             {"mouseDelta","<Mouse>/delta"},
+            {"leftMouse", "<Mouse>/leftButton"},
+            {"rightMouse", "<Mouse>/rightButton"},
         };
     public Dictionary<string,InputAction> acts = new();
 

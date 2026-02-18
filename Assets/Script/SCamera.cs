@@ -8,9 +8,10 @@ public class SCamera: MonoBehaviour
     public TransfEv followmode;
     public float rotateSpeed = 5f;
     public float radius = 5f;
-
+    private bool canMove => ct.cameraCanMove;
     private void Start()
     {
+        ct.sCamera = this;
         followmodes.Add("simple",(tr) =>//a simple follow mode
         {
             tr.position = ct.pp + Vector3.left * 5;
@@ -18,24 +19,24 @@ public class SCamera: MonoBehaviour
         });
         followmodes.Add("simpleSurround", (obj) =>
         {
-            // momentum = ½ÇËÙ¶È£¬Òò´Ë * deltaTime »ý·Ö³É½Ç¶È
+            // momentum = ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½ * deltaTime ï¿½ï¿½ï¿½Ö³É½Ç¶ï¿½
             ct.yawCamera += -ct.mouseDirection.x * Time.deltaTime;
             ct.pitchCamera += -ct.mouseDirection.y * Time.deltaTime;
 
-            // ÏÞÖÆÉÏÏÂ½Ç£¨·ÀÖ¹·­×ª£©
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½Ç£ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½×ªï¿½ï¿½
             ct.pitchCamera = Mathf.Clamp(ct.pitchCamera, -1.2f, 1.2f);
 
-            // ½Ç¶È ¡ú ÊÀ½ç×ø±êÆ«ÒÆ
+            // ï¿½Ç¶ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½
             Vector3 offset = new Vector3(
                 Mathf.Cos(ct.yawCamera) * Mathf.Cos(ct.pitchCamera),
                 Mathf.Sin(ct.pitchCamera),
                 Mathf.Sin(ct.yawCamera) * Mathf.Cos(ct.pitchCamera)
             ) * radius;
 
-            // ¸üÐÂÎ»ÖÃ
+            // ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
             obj.position = ct.pp + offset;
 
-            // Ê¼ÖÕ³¯ÏòÖÐÐÄ
+            // Ê¼ï¿½Õ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             obj.LookAt(ct.pp);
         });
 
@@ -45,7 +46,8 @@ public class SCamera: MonoBehaviour
     }
     private void LateUpdate()
     {
-        followmode?.Invoke(transform);
+        if(canMove)
+            followmode?.Invoke(transform);
     }
 
 

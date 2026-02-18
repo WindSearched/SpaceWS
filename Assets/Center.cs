@@ -31,6 +31,8 @@ public static class ct
     public static Vector2 mouseDirection;
     public static bool playerCanMove = false;
     public static bool mouseCanMove = false;
+    public static SCamera sCamera;
+    public static bool cameraCanMove = true;
     public static float fps;
     public static float yawCamera;
     public static float pitchCamera;
@@ -39,6 +41,10 @@ public static class ct
 
     public static Transform bodiesParent;
     public static GameObject defualtBody;
+    public static GameObject mouseCasted => mousecast.casted;
+    /// <summary>
+    /// player position
+    /// </summary>
     public static Vector3 pp
     {
         get => playerPosition;
@@ -87,6 +93,8 @@ public static class ct
     /// invoke when chunk position of player change and a time when game start
     /// </summary>
     public static event Meth onChunkPositionChange;
+
+    public static InputAction leftMouse_act;
 
     public static CommandPage cmdPg;
 

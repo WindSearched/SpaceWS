@@ -27,9 +27,11 @@ public class Mode
 		this.type = type;
 	}
 
-	public void Set()
+	public bool Set()
 	{
-		meth?.Invoke(currentActivation = cond());
+		currentActivation = cond();
+		meth?.Invoke(currentActivation);
+		return currentActivation;
 	}
 	public void Set(bool active) => meth(currentActivation = active);
 }
@@ -52,10 +54,10 @@ public class ModeStm
 	}
 
 	/// <summary>
-	/// active the mode with self Condition method
+	/// try active the mode if the condition meth returns true
 	/// </summary>
 	/// <param name="key"></param>
-	public void Active(string key) =>
+	public bool TryActive(string key) =>
 		Get(key).Set();
 	/// <summary>
 	/// active the mode
@@ -86,7 +88,8 @@ public class ModeStm
 			}
 			else
 			{
-				Active(a1);
+			 	TryActive(a1);
+				//be add somethings
 			}
 		});
 

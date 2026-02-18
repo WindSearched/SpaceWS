@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static ct;
@@ -8,6 +9,7 @@ public class CenterSystem : MonoBehaviour
     public static string fp;
     public static InputAction move;
     public static InputAction mouseD;
+    public static InputAction mouseP;
 
     public Material m_outline;
     public Transform templateParent;
@@ -25,6 +27,7 @@ public class CenterSystem : MonoBehaviour
         ct.action.AddVector2(move);
         mouseD = ct.action.Add("mouseDelta",InputActionType.Value);
         ct.action.AddBiding(mouseD,SAction.keyTable["mouseDelta"]);
+        mouseP = action.Add("mouse",InputActionType.Value, SAction.keyTable["mouse"]);
 
         //load setting data
         fp = Application.persistentDataPath + "/setpath";
@@ -108,13 +111,58 @@ public class CenterSystem : MonoBehaviour
             var p = pp;
             return $"{p.x} {p.y} {p.z}";
         },"position");
-        debugInfo.RightAdd(() =>
+        debugInfo.RightAdd(() =>// position of chunk where located player
         {
             var p = pcp;
             return $"{p.x} {p.y} {p.z}";
         },"chunk");
-        debugInfo.LeftAdd(() => fps.ToString(), "fps");
-        
+        debugInfo.RightAdd(() =>//position of mouse
+        {
+            var p = mousePosition;
+            return $"{p.x} {p.y}";
+        }, "mouse position");
+        debugInfo.RightAdd(() =>//delta position of mouse
+        {
+            var p = mouseDirection;
+            return $"{p.x} {p.y}";
+        }, "mouse delta");
+        debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
+
+        modes.Register("alt", new("alt", () => true, active =>
+        {
+            if (!pages.IsPage("main")) return;
+            if (active)
+            {
+                UnlockMouse();
+                cameraCanMove = false;
+            }
+            else
+            {
+                LockMouse();
+                cameraCanMove = true;
+            }
+        }));
+        var alt = action.Add("alt", InputActionType.Button, SAction.keyTable["alt"]);
+        alt.performed += _ => modes.Active("alt", true);
+        alt.canceled += _ => modes.Active("alt", false);
+        var lm = ct.leftMouse_act = ct.action.Add("leftMouse", InputActionType.Button, SAction.keyTable["leftMouse"]);
+        lm.performed += _ =>
+        {
+
+            if (modes.IsActive("alt"))
+            {
+                var c = mouseCasted;
+                if (c)
+                {
+                    var id = c.transform.parent.parent.gameObject.name;
+                    Debug.Log(id);
+                    var type = bodies.datas[int.Parse(id)].structs[0].type;
+                    SMesh.Face.CreateFace(ct.structFaces[type]);
+                    c.SetActive(false);
+                }
+            }
+        };
+
         ct.log.Write("Center","Finishes to load the center");
 
         ct.mod.OnStart();
@@ -132,6 +180,9 @@ public class CenterSystem : MonoBehaviour
         ct.mouseDirection = v;       //  Get mouse data
        //ct.mousePosition += v;                           //
         ct.mouseCanMove = v != Vector2.zero;
+
+        var p = mouseP.ReadValue<Vector2>();
+        ct.mousePosition = p;
 
         if (ct.mouseCanMove)
         {
@@ -174,5 +225,10 @@ public class CenterSystem : MonoBehaviour
         Data.CreateFile(fp,ct.setting.settingPath,false);//update every disable the setting path
         Data.WriteJson(ct.setting, ct.setting.settingPath);
         ct.curWorldRule.SetJson(ct.setting.exRulePath);
+    }
+
+    private void OnRectTransformDimensionsChange()
+    {
+        ct.screenSize = canvas.sizeDelta;
     }
 }

@@ -19,7 +19,7 @@ public class MouseRaycast
         int layerMask = ~(1 << layerToIgnore); // 取反，排除这个图层
 
         var p = ct.mousePosition;
-        Ray ray = Camera.main.ScreenPointToRay(new Vector2(Screen.width / 2f, Screen.height / 2f));
+        Ray ray = Camera.main.ScreenPointToRay(p);
 
         excasted = casted;//update
 

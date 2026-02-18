@@ -1107,6 +1107,15 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""leftmmouse"",
+                    ""type"": ""Button"",
+                    ""id"": ""b7bcf8a4-ab27-4546-a119-c05a49ca42bd"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1241,6 +1250,28 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""action"": ""enter"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c81d6252-4ce5-4737-a673-3453578ff757"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""leftmmouse"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6e9e1055-28a3-42c5-b11e-6bb607661c93"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""leftmmouse"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -1336,6 +1367,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         m_main_move = m_main.FindAction("move", throwIfNotFound: true);
         m_main_mouse = m_main.FindAction("mouse", throwIfNotFound: true);
         m_main_enter = m_main.FindAction("enter", throwIfNotFound: true);
+        m_main_leftmmouse = m_main.FindAction("leftmmouse", throwIfNotFound: true);
     }
 
     ~@Actions()
@@ -1800,6 +1832,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_main_move;
     private readonly InputAction m_main_mouse;
     private readonly InputAction m_main_enter;
+    private readonly InputAction m_main_leftmmouse;
     /// <summary>
     /// Provides access to input actions defined in input action map "main".
     /// </summary>
@@ -1823,6 +1856,10 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "main/enter".
         /// </summary>
         public InputAction @enter => m_Wrapper.m_main_enter;
+        /// <summary>
+        /// Provides access to the underlying input action "main/leftmmouse".
+        /// </summary>
+        public InputAction @leftmmouse => m_Wrapper.m_main_leftmmouse;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1858,6 +1895,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @enter.started += instance.OnEnter;
             @enter.performed += instance.OnEnter;
             @enter.canceled += instance.OnEnter;
+            @leftmmouse.started += instance.OnLeftmmouse;
+            @leftmmouse.performed += instance.OnLeftmmouse;
+            @leftmmouse.canceled += instance.OnLeftmmouse;
         }
 
         /// <summary>
@@ -1878,6 +1918,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @enter.started -= instance.OnEnter;
             @enter.performed -= instance.OnEnter;
             @enter.canceled -= instance.OnEnter;
+            @leftmmouse.started -= instance.OnLeftmmouse;
+            @leftmmouse.performed -= instance.OnLeftmmouse;
+            @leftmmouse.canceled -= instance.OnLeftmmouse;
         }
 
         /// <summary>
@@ -2153,5 +2196,12 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEnter(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "leftmmouse" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLeftmmouse(InputAction.CallbackContext context);
     }
 }

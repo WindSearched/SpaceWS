@@ -781,7 +781,7 @@ public static class SMesh
 		    Transform ownerTransform = null
 		)
 		{
-		    if (face == null || face.localVerts == null || face.localVerts.Length < 3)
+		    if (face?.localVerts == null || face.localVerts.Length < 3)
 		        return null;
 
 		    Mesh mesh = new Mesh();
@@ -791,7 +791,7 @@ public static class SMesh
 
 		    for (int i = 0; i < face.localVerts.Length; i++)
 		    {
-		        verts3D[i] = ownerTransform != null
+		        verts3D[i] = ownerTransform
 		            ? ownerTransform.TransformPoint(face.localVerts[i])
 		            : face.localVerts[i];
 		    }
