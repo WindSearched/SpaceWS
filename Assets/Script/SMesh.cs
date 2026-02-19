@@ -849,13 +849,14 @@ public static class SMesh
 
 		    // ---------- 6. 创建 GameObject ----------
 		    GameObject g = new GameObject(string.IsNullOrEmpty(name) ? "PolygonFace" : name);
+		    g.tag = "structFace";
 			if(parent) g.transform.SetParent(parent);
 
 		    MeshFilter mf = g.AddComponent<MeshFilter>();
 		    mf.sharedMesh = mesh;
 
 		    MeshRenderer mr = g.AddComponent<MeshRenderer>();
-		    mr.sharedMaterial = ct.defaultMat;
+		    mr.sharedMaterial = mat;
 
 		    // ---------- 7. MeshCollider ----------
 		    MeshCollider collider = g.AddComponent<MeshCollider>();

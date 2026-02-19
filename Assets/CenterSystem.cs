@@ -16,6 +16,8 @@ public class CenterSystem : MonoBehaviour
     public Transform structFacesTemplateParent;
     public RectTransform canvas;
     public DebugPage debugPage;
+    public GameObject escPage;
+    public GameObject buildPage;
     private void Start()
     {
         ct.ctsym = this;
@@ -129,7 +131,41 @@ public class CenterSystem : MonoBehaviour
         }, "mouse delta");
         debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
 
-        modes.Register("alt", new("alt", () => true, active =>
+        modes.Register("esc", new Mode("esc",() => false, active =>
+        {
+            if (active)
+            {
+                UnlockMouse();
+                cameraCanMove = false;
+            }
+            else
+            {
+                LockMouse();
+                cameraCanMove = true;
+            }
+        }));
+        pages.Register("esc", new(_ =>
+        {//on open
+            escPage.SetActive(true);
+        }, _ =>
+        {// on close
+            escPage.SetActive(false);
+        }));
+        var esc = action.Add("esc",  InputActionType.Button, SAction.keyTable["esc"]);
+        esc.performed += _ =>
+        {
+            if (pages.IsPage("main"))
+            {
+                modes.Active("esc", true);
+                pages.Swap("esc");
+            }
+            else
+            {
+                pages.Swap("main");
+                modes.Active("esc", false);
+            }
+        };
+        modes.Register("alt", new("alt", () => true, active =>//regist a mode named alt
         {
             if (!pages.IsPage("main")) return;
             if (active)
@@ -144,25 +180,74 @@ public class CenterSystem : MonoBehaviour
             }
         }));
         var alt = action.Add("alt", InputActionType.Button, SAction.keyTable["alt"]);
-        alt.performed += _ => modes.Active("alt", true);
-        alt.canceled += _ => modes.Active("alt", false);
+        alt.performed += _ =>
+        {
+            modes.Active("alt", true);
+        };
+        alt.canceled += _ =>
+        {
+            modes.Active("alt", false);
+        };
+        pages.Register("build", new(s =>
+        {
+            buildPage.SetActive(true);
+            //modes.Active("esc", true);
+
+            var c = mouseCasted;
+            if (c)
+            {
+                //load objects
+                var id = c.transform.parent.parent.gameObject.name;
+                var type = bodies.datas[int.Parse(id)].structs[0].type;//get object type
+                var g = Instantiate(structFaceTemplates[type]);
+                g.name = id + " " + type;
+                g.SetActive(true);
+                g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
+                c.SetActive(false);
+                //save
+                s.storer.Add("str", c);//save true struct
+                s.storer.Add("faced", g);// the fake(faced) struct
+            }
+        }, s =>
+        {
+            buildPage.SetActive(false);
+            //modes.Active("esc", false);
+
+            var str = s.storer.Get("str") as GameObject;
+            var faced = s.storer.Get("faced") as GameObject;
+
+            str.SetActive(true);
+            faced.SetActive(false);
+            Destroy(faced);
+
+            s.storer.Clear();
+        }));
         var lm = ct.leftMouse_act = ct.action.Add("leftMouse", InputActionType.Button, SAction.keyTable["leftMouse"]);
         lm.performed += _ =>
         {
-
-            if (modes.IsActive("alt"))
+            if (modes.IsActive("alt") && !pages.IsPage("build"))
             {
-                var c = mouseCasted;
-                if (c)
+                pages.Swap("build");
+            }
+        };
+        var rm = rightMouse_act = action.Add("rightMouse", InputActionType.Button, SAction.keyTable["rightMouse"]);
+        rm.performed += _ =>
+        {
+            if (!pages.IsPage("build")) return;
+            var c = mouseCasted;
+            if (c && c.CompareTag("structFace"))
+            {
+                int fid = int.Parse(c.name);
+                string[] ss = c.transform.parent.name.Split(" ");
+                int sid = int.Parse(ss[0]);
+                string type = ss[1];
+                var ng = bodies.LoadStruct(new StructState()
                 {
-                    var id = c.transform.parent.parent.gameObject.name;
-                    Debug.Log(id);
-                    var type = bodies.datas[int.Parse(id)].structs[0].type;
-                    var g = Instantiate(structFaceTemplates[type]);
-                    g.SetActive(true);
-                    g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
-                    c.SetActive(false);
-                }
+                    bodyIndex = sid,
+                    isStruct = true,
+                    type = structTypes[2]
+                },pcp);
+                SMesh.Face.AlignFaceToFace(ng, structFaces[structTypes[2]], 0, c, structFaces[type], fid);
             }
         };
 

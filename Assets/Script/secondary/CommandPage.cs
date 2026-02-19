@@ -19,12 +19,12 @@ public class CommandPage : MonoBehaviour
         var e = ct.action.Add("enter",InputActionType.Button);
         ct.action.AddBiding(e,SAction.keyTable["enter"]);
 
-        ct.pages.Register("command", new(parent.transform, () =>
+        ct.pages.Register("command", new(_ =>
         {
             ct.UnlockMouse();
             e.performed += ToCommand;
             parent.SetActive(true);
-        }, () =>
+        }, _ =>
         {
             ct.LockMouse();
             parent.SetActive(false);

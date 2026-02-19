@@ -97,6 +97,7 @@ public static class ct
     public static event Meth onChunkPositionChange;
 
     public static InputAction leftMouse_act;
+    public static InputAction rightMouse_act;
 
     public static CommandPage cmdPg;
 

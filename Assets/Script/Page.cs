@@ -9,33 +9,21 @@ mode 应为布尔值，且只存有一个逻辑，通过布尔判断逻辑，可
 
 public class Page
 {
-    /// <summary>
-    /// usually is corrispoding page object, it include all menber of page
-    /// </summary>
-    public Transform shine;
-    public Meth OnInit;
-    public Meth OnEnd;
+    public Storer storer;
+    public PageMeth OnInit;
+    public PageMeth OnEnd;
     public string type;
 
-    /// <summary>
-    /// default method to active or disactive the object
-    /// </summary>
-    /// <param name="active"></param>
-    public void Active(bool active)
+    public Page(PageMeth onInit, PageMeth onEnd, Storer storer = null)
     {
-        shine.gameObject.SetActive(active);
-    }
-
-    public Page(Transform shine)
-    {
-        this.shine = shine;
-    }
-
-    public Page(Transform shine, Meth onInit, Meth onEnd)
-    {
-        this.shine = shine;
+        this.storer = storer ?? new Storer();
         OnInit = onInit;
         OnEnd = onEnd;
+    }
+
+    public Page()
+    {
+        storer = new Storer();
     }
 }
 
@@ -61,8 +49,12 @@ public class PageStm
     /// <param name="key"></param>
     public void Swap(string key)
     {
-        Get(current).OnEnd?.Invoke();
-        Get(key).OnInit?.Invoke();
+        var cur = Get(current);
+        cur.OnEnd?.Invoke(cur);
+
+        var n = Get(key);
+        n.OnInit?.Invoke(n);
+
         current = key;
     }
     public Page Get(string key) => pages.ContainsKey(key) ? pages[key] : null;
@@ -76,8 +68,24 @@ public class PageStm
     public PageStm()
     {
         current = "main";
-        Register("main",new (null));
+        Register("main",new ());
 
         ct.command.Add("page", (l) => Swap(l.Load()));
     }
 }
+
+public class Storer
+{
+    public Dictionary<string, object> store = new();
+
+    public bool Add(string name, object value) =>  store.TryAdd(name, value);
+    public object Get(string name) => store[name];
+    public object Take(string name)
+    {
+        var o = Get(name);
+        store.Remove(name);
+        return o;
+    }
+    public void Clear() => store.Clear();
+}
+public delegate void PageMeth(Page page);

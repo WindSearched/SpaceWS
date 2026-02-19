@@ -46,14 +46,14 @@ public class DebugPage : MonoBehaviour
             left_texts.Add(ltx);
         }
 
-        ct.pages.Register("debugPage", new(parent, () =>
+        ct.pages.Register("debugPage", new(_ =>
         {
             ct.UnlockMouse();
             active = true;
             parent.gameObject.SetActive(active);
             RegToTick();
         },
-        () =>
+        _ =>
         {
             ct.LockMouse();
             active = false;
