@@ -37,8 +37,11 @@ public static class Data
 	{
 		if (!FileExists(path))
 			return new T();
-
-		string json = ReadTextFile(path);
+		return JsonConvert.DeserializeObject<T>(File.ReadAllText(path));
+	}
+	public static T ReadJsonFromText<T>(string textPath) where T : new()
+	{
+		string json = ReadTextFile(textPath);
 
 		try
 		{
@@ -132,6 +135,8 @@ public static class Data
 		sr.Close();
 		return result;
 	}
+	public static string GetFileName(string path) => Path.GetFileName(path);
+
 }
 public class Set
 {
@@ -187,6 +192,7 @@ public class Set
 	public float outlineWidth = 0.0015f;
 	public int debugLineNumber = 16;
 	public bool debugShowIndex = true;
+	public int tickPerSecond = 20;
 }
 
 public class LogicalFace

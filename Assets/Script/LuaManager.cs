@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using XLua;
 
 public class LuaManager : MonoBehaviour
@@ -39,6 +42,8 @@ public class Mod
         env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,int,string,GameObject>)ct.bodies.LoadStruct);
 
         LoadMod();
+
+
     }
 
 
@@ -63,11 +68,86 @@ public class Mod
         }
         foreach (var p in Directory.GetDirectories(path))
         {
-            string name = Path.GetFileName(p);
+            string name = Path.GetFileName(p);// mmod name
             env.DoString(File.ReadAllText(Path.Combine(p, name +".lua")));
-
-
             Load(name, "OnLoad");
+
+            //load data directory
+            var pp = p + "/data";
+            var ppp = pp + "/structs";
+            if(Data.DirectioryExists(ppp))
+            {// if "structs" exists
+                foreach (var f in Directory.GetFiles(ppp))
+                {
+                    if (LoadJson(f, out List<StructData> items))
+                    {
+                        foreach (var i in items)
+                        {
+                            i.mod = name;
+                            ct.structsData.Add(i.type, i);
+                        }
+                    }
+                    else
+                    {
+                        string l = $"The json file of {name} in {f} for load struct data is not valid";
+                        Debug.Log(l);
+                        ct.log.Write("ModLoader", l);
+                    }
+                }
+            }
+            ppp = pp + "/items";
+            if (Data.DirectioryExists(ppp))
+            {
+                foreach (var f in Directory.GetFiles(ppp))
+                {
+                    if (LoadJson(f, out List<ItemData> items))
+                    {
+                        foreach (var i in items)
+                        {
+                            i.mod = name;
+                            ct.itemsData.Add(i.type, i);
+                        }
+                    }
+                    else
+                    {
+                        string l = $"The json file of {name} in {f} for load item data is not valid";
+                        Debug.Log(l);
+                        ct.log.Write("ModLoader", l);
+                    }
+                }
+            }
+
+            ppp = pp + "/structsIcon";
+            if (Data.DirectioryExists(ppp))
+            {
+                foreach (var f in Directory.GetFiles(ppp))
+                {
+                    if (SMath.Spr.TryLoadFromPNG(f, out Sprite spr, 256))
+                    {
+                        string fileName =  Data.GetFileName(ppp);
+                        ct.structIcons.Add(fileName, spr);
+                    }
+                }
+            }
+        }
+
+        bool LoadJson<T>(string path, out List<T> list) where T : new()
+        {
+            var tx = Data.ReadFile(path);
+            var tk = JToken.Parse(tx);
+            if (tk.Type == JTokenType.Object)
+            {
+                list = new List<T>();
+                list.Add(Data.ReadJsonFromText<T>(path));
+            }
+            else if  (tk.Type == JTokenType.Array)
+                list = Data.ReadJson<List<T>>(tx);
+            else
+            {
+                list = null;
+                return false;
+            }
+            return true;
         }
     }
 
@@ -90,27 +170,16 @@ public class Mod
 
     public void AddStructFromOBJ(string mod, string modPath)
     {
-         string name = mod + "/" + Path.GetFileName(modPath);
-         Debug.Log(name);
-         string p = ct.mod.path + "/" + mod + "/" + modPath;
-        // string pp;
-        // // load struct
-        // ct.bodies.AddFromOBJ( p + ".obj",name);
-        // // load materials
-        // pp = p + ".mtl";
-        // if (Data.FileExists(pp))
-        //     ct.bodies.AddMaterial(SMesh.Mtl.Load(pp, Path.GetDirectoryName(pp)),name);
+        string name = mod + "/" + Path.GetFileName(modPath);
+        Debug.Log(name);
+        string p = ct.mod.path + "/" + mod + "/" + modPath;
 
         ct.structTypes.Add(name);
         var t = SMesh.ObjTemp.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p), name);
         ct.structTemplate.Add(name, t.template);
         ct.structFaces.Add(name, t.faces);
         ct.structFaceTemplates.Add(name, t.facesTemp);
-    }
-}
 
-public interface SMod
-{
-    public void OnStart();
-    public void OnFinish();
+        t.template.SetActive(false);
+    }
 }

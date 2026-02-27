@@ -5,7 +5,7 @@ using UnityEngine;
 public class Tick : MonoBehaviour
 {
     public static Tick ticksym;
-    public int tickPerSecond = 5;
+    public int tickPerSecond => ct.setting.tickPerSecond;
     public int tick;
     public float tickInterval;
     public Dictionary<int, List<TickReg>> tickEvents = new();

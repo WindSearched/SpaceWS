@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static ct;
@@ -18,13 +19,27 @@ public class CenterSystem : MonoBehaviour
     public DebugPage debugPage;
     public GameObject escPage;
     public GameObject buildPage;
+    public Camera projectCamera;
+    public Transform projectedParent;
+    public RenderTexture projectTexture;
+
+    public event Meth WhenIconsFinisheLoading;
+    public void IWhenIconsFinisheLoading() => WhenIconsFinisheLoading?.Invoke();
+
+
+    public bool finishLoadIcon = false;
     private void Start()
     {
         ct.ctsym = this;
+        ct.camera = Camera.main;
 
         ct.log.Write("Center","Starts to load the center");
         ct.mousecast = new();
         ct.screenSize = canvas.sizeDelta;
+
+        Projector.previewCamera = projectCamera;
+        Projector.parent = projectedParent;
+        Projector.renderTexture = projectTexture;
 
         move = ct.action.Add("move",InputActionType.Value);
         ct.action.AddVector2(move);
@@ -130,6 +145,7 @@ public class CenterSystem : MonoBehaviour
             return $"{p.x} {p.y}";
         }, "mouse delta");
         debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
+        debugInfo.LeftAdd(() => Tick.ticksym.tick.ToString(), "tick");
 
         modes.Register("esc", new Mode("esc",() => false, active =>
         {
@@ -251,9 +267,11 @@ public class CenterSystem : MonoBehaviour
             }
         };
 
+
         ct.log.Write("Center","Finishes to load the center");
 
         ct.mod.OnStart();
+        var t = structsData;
 
         if (ct.curWorldRule.chunkload)
         {

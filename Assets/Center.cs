@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
@@ -8,6 +9,7 @@ using UnityEngine.InputSystem;
 public static class ct
 {
     public static CenterSystem ctsym;
+    public static Camera camera;
     public static Set setting = new();
     public static Rule curWorldRule = new();
     public static Log log = new();
@@ -83,6 +85,26 @@ public static class ct
     public static Dictionary<string, GameObject> structTemplate = new();
     public static Dictionary<string, SMesh.RuntimeFace[]>  structFaces = new();
     public static Dictionary<string, GameObject> structFaceTemplates = new();
+    public static Dictionary<string, Sprite> structIcons = new();
+
+    public static Meth LoadAfterInconsFinishLoading
+    {
+        set
+        {
+            if(ctsym.finishLoadIcon)
+                value?.Invoke();
+            else
+                ctsym.WhenIconsFinisheLoading +=  value;;
+        }
+    }
+
+    public static Dictionary<string, StructData> structsData = new();
+    public static Dictionary<string, ItemData> itemsData = new();
+
+    public static Dictionary<string, Sprite> indicatorSprites = new();
+    public static Indicator indicator = new();
+
+    public static SScroll buildScroll;
     public static Transform templateParent => ctsym.templateParent;
     public static Transform structFacesTemplateParent => ctsym.structFacesTemplateParent;
     public static List<string> structTypes = new();
@@ -95,7 +117,6 @@ public static class ct
     /// invoke when chunk position of player change and a time when game start
     /// </summary>
     public static event Meth onChunkPositionChange;
-
     public static InputAction leftMouse_act;
     public static InputAction rightMouse_act;
 
@@ -270,183 +291,63 @@ public static class SMath
             .ToList();
         return result;
     }
-
-    public static class V3
-    {
-        /// <summary>
-        /// around parallele by plane xz
-        /// </summary>
-        public static Vector3 ParaAround(Vector3 center, float angle, float radius)
-        {
-            angle *= degRad;
-            Vector3 rela = new Vector3(Cos(angle), 0, Sin(angle)) * radius;
-
-            return center + rela;
-        }
-        public static float Length(Vector3 to, Vector3 from)
-        {
-            Vector3 r = to - from;
-            return r.magnitude;
-        }
-        public static Vector3 GetVector(float x = 0, float y = 0, float z = 0)
-            => new(x, y, z);
-        /// <summary>
-        /// get from a plan position |||
-        /// => (x,h,y);
-        /// </summary>
-        /// <param name="vec"></param>
-        /// <returns></returns>
-        public static Vector3 GetVector(Vector2 vec, float height = 0) => new(vec.x, height, vec.y);
-        public static Vector3 Parse(string p)
-        {
-            try
-            {
-                p = p.TrimStart('{');
-                p = p.TrimEnd('}');
-                string[] s = p.Split(',');
-                return new(float.Parse(s[0]), float.Parse(s[1]), float.Parse(s[2]));
-            }
-            catch
-            {
-                return Vector3.zero;
-            }
-        }
-
-        public static Vector3 DirectionAdjustment(Vector3 dir, float angle)
-        {
-            float b = Angle(dir);
-            float r = b - 90 + angle;
-
-            return GetVector(SMath.GetVector(r)) * dir.magnitude;
-        }
-    }
-    public static class V2
-    {
-        public static Vector2Int Floor(Vector2 position)
-        {
-            return new(SMath.Floor(position.x), SMath.Floor(position.y));
-        }
-        public static float Length(Vector2 from, Vector2 to)
-        {
-            Vector2 v = from - to;
-            return v.magnitude;
-        }
-        public static Vector2Int Random(Vector2Int max, Vector2Int min)
-        {
-            return new(SMath.Random(max.x, min.x), SMath.Random(max.y, min.y));
-        }
-        public static Vector2 Random(float max, float min)
-        {
-            return new(SMath.Random(max, min), SMath.Random(max, min));
-        }
-        public static Vector2 RandomByDirection(float dirangle, float angleArea)
-        {
-            float a = angleArea / 2;
-            float b = SMath.Random(a, -a);
-            float c = dirangle + b;
-            return GetVector(c);
-        }
-        public static Vector2 RandomByDirection(Vector2 dir, float dirangle)
-        {
-            float a = Angle(dir);
-            return RandomByDirection(a, dirangle);
-        }
-    }
     public static class Spr
     {
-        public static int pxPerUnit = 32;
-        public static Vector2Int GetDistance(Sprite sprite)
-        {
-            Texture2D tex = sprite.texture;
-            Color co = new();
-            Vector2Int v = new();
-            for (int x = 0; x < 32; x++)
-            {
-                bool found = false;
-                for (int i = 0; i < 32; i++)
-                {
-                    if (tex.GetPixel(x, i) != co)
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-                if (found)
-                {
-                    v.x = x + 1;
-                    break;
-                }
-            }
-            for (int y = 0; y < 32; y++)
-            {
-                bool found = false;
-                for (int i = 0; i < 32; i++)
-                {
-                    if (tex.GetPixel(i, y) != co)
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-                if (found)
-                {
-                    v.y = y + 1;
-                    break;
-                }
-            }
-            return v;
-        }
         /// <summary>
-        /// Get area of opaque pixels
+        /// 通过本地 PNG 文件路径创建 Sprite
         /// </summary>
-        /// <param name="sprite"></param>
-        /// <returns></returns>
-        public static Rect GetValidPixels(Sprite sprite)
+        /// <param name="filePath">PNG 文件完整路径</param>
+        /// <param name="pixelsPerUnit">Sprite 的 Pixels Per Unit，默认 100</param>
+        /// <param name="pivot">Sprite 的 Pivot（0~1），默认中心</param>
+        public static Sprite LoadFromPNG(
+            string filePath,
+            float pixelsPerUnit = 100f,
+            Vector2? pivot = null)
         {
-            return GetValidPixels(sprite.texture, sprite.rect);
-        }
-        public static Rect GetValidPixels(Texture2D texture, Rect spriteRect)
-        {
-            //get sprite area
-            int startX = (int)spriteRect.x;
-            int startY = (int)spriteRect.y;
-            int width = (int)spriteRect.width;
-            int height = (int)spriteRect.height;
-
-            int minX = width, maxX = 0, minY = height, maxY = 0;
-            bool hasOpaquePixel = false;
-
-            for (int y = 0; y < height; y++)
+            if (!File.Exists(filePath))
             {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixel = texture.GetPixel(startX + x, startY + y);
-
-                    if (pixel.a > 0) //check just opaque pixel
-                    {
-                        hasOpaquePixel = true;
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                    }
-                }
+                Debug.LogError($"PNG 文件不存在: {filePath}");
+                return null;
             }
 
-            if (hasOpaquePixel)
-            {
-                Debug.Log($"[SMath.Spr]Area of opaque px: minX={minX}, maxX={maxX}, minY={minY}, maxY={maxY}");
-            }
-            else
-            {
-                Debug.Log("[SMath.Spr]Has not opaque area!!");
-            }
+            byte[] pngData = File.ReadAllBytes(filePath);
 
-            return new(minX, minY, maxX - minX + 1, maxY - minY + 1);
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            texture.LoadImage(pngData);
+
+            // 自动设置纹理属性
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.anisoLevel = 1;
+
+            Rect rect = new Rect(0, 0, texture.width, texture.height);
+            Vector2 spritePivot = pivot ?? new Vector2(0.5f, 0.5f);
+
+            Sprite sprite = Sprite.Create(
+                texture,
+                rect,
+                spritePivot,
+                pixelsPerUnit,
+                0,
+                SpriteMeshType.FullRect
+            );
+
+            sprite.name = Path.GetFileNameWithoutExtension(filePath);
+
+            return sprite;
         }
 
+        public static bool TryLoadFromPNG(string filePath,
+            out Sprite sprite,
+            float pixelsPerUnit = 100f,
+            Vector2? pivot = null)
+        {
+            sprite = LoadFromPNG(filePath, pixelsPerUnit, pivot);
+            return sprite != null;
+        }
     }
 }
+
 
 public class STable<TLin, TCol, TVal>
 {

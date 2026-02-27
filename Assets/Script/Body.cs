@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
@@ -39,8 +40,26 @@ public class StructState : State
 [Serializable]
 public class StructData
 {
-	public string meshType;
+	public string type;
+	public Demand[] buildDemands;
+	public Remove remove;
 
+
+	[Serializable]
+	public struct Demand
+	{
+		public string itemType;
+		public int quantity;
+	}
+	[Serializable]
+	public struct Remove
+	{
+		public float time;
+		public Demand[] remains;
+	}
+	public string mod;
+	public Sprite icon;
+	public bool externIcon;
 }
 [Serializable]
 public class FaceState :State
@@ -413,4 +432,16 @@ public struct Loc
 	{
 		return $"({position}, {rotation})";
 	}
+}
+[Serializable]
+public class ItemData
+{
+	public string type;
+
+    [JsonIgnore]
+    public string mod;
+	[JsonIgnore]
+	public Sprite sprite;
+	[JsonIgnore]
+	public GameObject template;
 }

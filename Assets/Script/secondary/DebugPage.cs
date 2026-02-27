@@ -48,14 +48,12 @@ public class DebugPage : MonoBehaviour
 
         ct.pages.Register("debugPage", new(_ =>
         {
-            ct.UnlockMouse();
             active = true;
             parent.gameObject.SetActive(active);
             RegToTick();
         },
         _ =>
         {
-            ct.LockMouse();
             active = false;
             parent.gameObject.SetActive(active);
         }));

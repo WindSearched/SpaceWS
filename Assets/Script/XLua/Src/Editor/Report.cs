@@ -12,11 +12,11 @@ namespace XLua
     public class Report
     {
         private const string PREFS_KEY = "XLuaReport";
-        private const string DIALOG_MSG_FORMAT = @"ÎÒÃÇ·Ç³£×¢ÖØÄúµÄÒþË½È¨£¬ÐèÒªÊÕ¼¯ÒÔÏÂ±ØÒªÐÅÏ¢ÒÔÌá¹©¸üºÃµÄ·þÎñ£º
+        private const string DIALOG_MSG_FORMAT = @"ï¿½ï¿½ï¿½Ç·Ç³ï¿½×¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë½È¨ï¿½ï¿½ï¿½ï¿½Òªï¿½Õ¼ï¿½ï¿½ï¿½ï¿½Â±ï¿½Òªï¿½ï¿½Ï¢ï¿½ï¿½ï¿½á¹©ï¿½ï¿½ï¿½ÃµÄ·ï¿½ï¿½ï¿½
 
-XLua°æ±¾£º{0}
-ÒýÇæ°æ±¾£º{1}
-Éè±¸±êÊ¶£º{2}
+XLuaï¿½æ±¾ï¿½ï¿½{0}
+ï¿½ï¿½ï¿½ï¿½æ±¾ï¿½ï¿½{1}
+ï¿½è±¸ï¿½ï¿½Ê¶ï¿½ï¿½{2}
 
 We attach great importance to your privacy and need to collect the following necessary information to provide better services:
 
@@ -24,33 +24,6 @@ XLua Version: {0}
 Unity Version: {1}
 Device Identifier: {2}";
 
-        static Report()
-        {
-            if (EditorPrefs.HasKey(PREFS_KEY) && !EditorPrefs.GetBool(PREFS_KEY))
-                return;
-
-            var version = "2.1.16";
-            var engine = Application.unityVersion;
-            var machine = SystemInfo.deviceUniqueIdentifier;
-            var msg = string.Format("cmd=0&tag=glcoud.xlua.report&version={0}&engine={1}&machine_name={2}", version, engine, machine);
-
-            if (!EditorPrefs.HasKey(PREFS_KEY))
-            {
-                var dialogMsg = string.Format(DIALOG_MSG_FORMAT, version, engine, machine);
-                var result = EditorUtility.DisplayDialog(string.Empty, dialogMsg, "ÔÊÐí Allow", "¾Ü¾ø Deny");
-                EditorPrefs.SetBool(PREFS_KEY, result);
-                if (!result)
-                    return;
-            }
-
-            new Thread(() =>
-            {
-                var data = Encoding.UTF8.GetBytes(msg);
-                var client = new UdpClient();
-                client.Send(data, data.Length, "101.226.141.148", 8080);
-                client.Close();
-            }).Start();
-        }
     }
 }
 
