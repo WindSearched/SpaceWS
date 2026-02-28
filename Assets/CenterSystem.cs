@@ -241,6 +241,8 @@ public class CenterSystem : MonoBehaviour
         var lm = ct.leftMouse_act = ct.action.Add("leftMouse", InputActionType.Button, SAction.keyTable["leftMouse"]);
         lm.performed += _ =>
         {
+            if(!mouseCasted || !mouseCasted.CompareTag("struct"))
+                return;
             if (modes.IsActive("alt") && !pages.IsPage("build"))
             {
                 pages.Swap("build");
