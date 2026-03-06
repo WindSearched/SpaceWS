@@ -1,4 +1,5 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,9 +13,11 @@ public class BuildPage : MonoBehaviour
     public GameObject sbuttonTemplate;
     public GameObject buildStructButtonTemplate;
     public (string name, GameObject structObject) buildStruct;
-
+    public GameObject buildObject;
+    public SLibrary buildObjectLibrary =>  buildObject.GetComponent<SLibrary>();
     private void Start()
     {
+        ct.buildPage = this;
         sbuttonTemplate = Resources.Load<GameObject>("ui/SButton");
 
         buildScroll = builScrollParent.GetComponent<SScroll>();
@@ -33,8 +36,6 @@ public class BuildPage : MonoBehaviour
 
         }
         buildScroll.template = buildStructButtonTemplate;
-
-
         buildScroll.SStart();
 
         ct.LoadAfterInconsFinishLoading = () =>
@@ -73,6 +74,7 @@ public class BuildPage : MonoBehaviour
                         }
                         buildStruct.structObject = g;
                         buildStruct.name = g.name;//save struct type
+                        Debug.Log(buildStruct.name);
                     };
                     b.onButtonUp += g =>
                     {
@@ -82,5 +84,34 @@ public class BuildPage : MonoBehaviour
                 });
             }
         };
+
+        ct.mousecast.InCast += g =>
+        {
+            if(!buildStruct.structObject) return;
+            if (!g)
+            {
+                buildObject.SetActive(false);
+            }
+            else if (g.CompareTag("structFace") && ct.pages.IsPage("build"))
+            {
+                buildObject.SetActive(true);
+                if (buildObject.name != buildStruct.name)
+                {
+                    int id = int.Parse(buildStruct.name);
+                    var s = ct.structTypes[id];
+                    var t = ct.structTemplate[s];
+                    var m = STool.CopyComponentTo(t.GetComponent<MeshRenderer>(), buildObject);
+                    m.material = ct.trasparentMat;
+                    m.material.color -= new Color(0, 0, 0, 0.8f);
+                    STool.CopyComponentTo(t.GetComponent<MeshFilter>(), buildObject);
+
+                    buildObjectLibrary.Write("type", s);
+                }
+
+                var type = g.transform.parent.name.Split(' ')[1];
+                SMesh.Face.AlignFaceToFace(buildObject,ct.structFaces[buildObjectLibrary.Read("type") as string],0,g, ct.structFaces[type], int.Parse(g.name));
+            }
+        };
+
     }
 }

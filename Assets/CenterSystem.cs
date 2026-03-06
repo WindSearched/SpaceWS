@@ -13,6 +13,7 @@ public class CenterSystem : MonoBehaviour
     public static InputAction mouseP;
 
     public Material m_outline;
+    public Material trasparentMat;
     public Transform templateParent;
     public Transform structFacesTemplateParent;
     public RectTransform canvas;
@@ -213,8 +214,9 @@ public class CenterSystem : MonoBehaviour
             if (c)
             {
                 //load objects
-                var id = c.transform.parent.parent.gameObject.name;
-                var type = bodies.datas[int.Parse(id)].structs[0].type;//get object type
+                var id = c.transform.parent.parent.gameObject.name;//index of struct's body
+                int strid = int.Parse(c.name);//index of struct in whose body
+                var type = bodies.datas[int.Parse(id)].structs[strid].type;//get object type
                 var g = Instantiate(structFaceTemplates[type]);
                 g.name = id + " " + type;
                 g.SetActive(true);
@@ -259,13 +261,14 @@ public class CenterSystem : MonoBehaviour
                 string[] ss = c.transform.parent.name.Split(" ");
                 int sid = int.Parse(ss[0]);
                 string type = ss[1];
-                var ng = bodies.LoadStruct(new StructState()
+                var state = new StructState()
                 {
                     bodyIndex = sid,
                     isStruct = true,
-                    type = structTypes[2]
-                },pcp);
-                SMesh.Face.AlignFaceToFace(ng, structFaces[structTypes[2]], 0, c, structFaces[type], fid);
+                    type = ct.buildPage.buildObjectLibrary.Read("type") as string
+                };
+                var ng = bodies.LoadStruct(state,pcp);
+                SMesh.Face.AlignFaceToFace(ng, structFaces[state.type], 0, c, structFaces[type], fid);
             }
         };
 

@@ -62,11 +62,13 @@ public class Player : MonoBehaviour
 
         ct.mousecast.InCast += (GameObject o) =>
         {
+            if(!o) return;
             if(o.CompareTag("struct") || o.CompareTag("structFace"))
                 Bodies.OutlineObj(o, true);
         };
         ct.mousecast.OutCast += o =>
         {
+            if(!o) return;
             if(o.CompareTag("struct") || o.CompareTag("structFace"))
                 Bodies.OutlineObj(o, false);
         };

@@ -20,6 +20,8 @@ public static class ct
     public static SAction action = new();
     public static PageStm pages = new();
     public static DebugPage dePa => ctsym.debugPage;
+    public static BuildPage buildPage;
+
     public static ModeStm modes = new();
     public static Dictionary<string,InputAction> acts = new();
     public static Vector3 playerPosition;//updated every frame
@@ -111,6 +113,7 @@ public static class ct
 
     public static Material defaultMat;
     public static Material outlineMat => ctsym.m_outline;
+    public static Material trasparentMat => ctsym.trasparentMat;
 
     public static event Meth updatePerTick;
     /// <summary>
