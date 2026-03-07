@@ -26,6 +26,14 @@ public class SLibrary : MonoBehaviour
             return library[name];
         return null;
     }
+
+    public T Read<T>(string name)
+    where T : new()
+    {
+        if(library.ContainsKey(name))
+            return (T)library[name];
+        return new T();
+    }
     public void Clear() => library.Clear();
 
     public void Remove(string name)

@@ -23,6 +23,7 @@ public class CenterSystem : MonoBehaviour
     public Camera projectCamera;
     public Transform projectedParent;
     public RenderTexture projectTexture;
+    public GameObject player;
 
     public event Meth WhenIconsFinisheLoading;
     public void IWhenIconsFinisheLoading() => WhenIconsFinisheLoading?.Invoke();
@@ -208,7 +209,6 @@ public class CenterSystem : MonoBehaviour
         pages.Register("build", new(s =>
         {
             buildPage.SetActive(true);
-            //modes.Active("esc", true);
 
             var c = mouseCasted;
             if (c)
@@ -222,9 +222,13 @@ public class CenterSystem : MonoBehaviour
                 g.SetActive(true);
                 g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
                 c.SetActive(false);
+                ct.sCamera.ChangeTarget(g);
                 //save
                 s.storer.Add("str", c);//save true struct
                 s.storer.Add("faced", g);// the fake(faced) struct
+
+                ct.cameraCanMove = true;
+                ct.playerCanMove = false;
             }
         }, s =>
         {
@@ -238,7 +242,11 @@ public class CenterSystem : MonoBehaviour
             faced.SetActive(false);
             Destroy(faced);
 
+            sCamera.ChangeTarget(ct.player);
+
             s.storer.Clear();
+
+            ct.playerCanMove = true;
         }));
         var lm = ct.leftMouse_act = ct.action.Add("leftMouse", InputActionType.Button, SAction.keyTable["leftMouse"]);
         lm.performed += _ =>

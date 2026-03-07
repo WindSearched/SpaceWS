@@ -9,6 +9,7 @@ using UnityEngine.InputSystem;
 public static class ct
 {
     public static CenterSystem ctsym;
+    public static GameObject player => ctsym.player;
     public static Camera camera;
     public static Set setting = new();
     public static Rule curWorldRule = new();
