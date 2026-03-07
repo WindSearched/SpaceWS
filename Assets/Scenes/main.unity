@@ -745,6 +745,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rotateSpeed: 5
   radius: 5
+  lib: {fileID: 330585549}
+  target: {fileID: 0}
 --- !u!114 &330585549
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -754,7 +756,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 330585543}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6200fb66ff31a1f48ae3517fb2b2ec20, type: 3}
+  m_Script: {fileID: 11500000, guid: f42e9e74b7a059648a2f19351f8eb3b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &393727217
