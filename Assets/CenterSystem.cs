@@ -75,7 +75,7 @@ public class CenterSystem : MonoBehaviour
                 ct.UpdatePerTick();
 
                 var p = move.ReadValue<Vector2>();// player move diretion
-                ct.playerCanMove = p != Vector2.zero;
+                ct.plyComp.moving = p != Vector2.zero;
                 ct.wasdDirection = p;
 
                 ct.fps = 1f / Time.unscaledDeltaTime;
@@ -125,6 +125,7 @@ public class CenterSystem : MonoBehaviour
         ct.bodiesParent = GameObject.Find("Bodies").transform;
         ct.defaultMat = Resources.Load("DefaultMat") as Material;
 
+        debugInfo:
         ct.debugInfo = new(ct.setting.debugLineNumber);
         debugInfo.RightAdd(() =>
         {
@@ -149,18 +150,11 @@ public class CenterSystem : MonoBehaviour
         debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
         debugInfo.LeftAdd(() => Tick.ticksym.tick.ToString(), "tick");
 
+        inputRegistering:
         modes.Register("esc", new Mode("esc",() => false, active =>
         {
-            if (active)
-            {
-                UnlockMouse();
-                cameraCanMove = false;
-            }
-            else
-            {
-                LockMouse();
-                cameraCanMove = true;
-            }
+            cameraMove.Pin("esc", active);
+            MouseLocking(!active);
         }));
         pages.Register("esc", new(_ =>
         {//on open
@@ -185,17 +179,8 @@ public class CenterSystem : MonoBehaviour
         };
         modes.Register("alt", new("alt", () => true, active =>//regist a mode named alt
         {
-            if (!pages.IsPage("main")) return;
-            if (active)
-            {
-                UnlockMouse();
-                cameraCanMove = false;
-            }
-            else
-            {
-                LockMouse();
-                cameraCanMove = true;
-            }
+            cameraMove.Pin("alt", active);
+            MouseLocking(!active);
         }));
         var alt = action.Add("alt", InputActionType.Button, SAction.keyTable["alt"]);
         alt.performed += _ =>
@@ -227,7 +212,8 @@ public class CenterSystem : MonoBehaviour
                 s.storer.Add("str", c);//save true struct
                 s.storer.Add("faced", g);// the fake(faced) struct
 
-                ct.cameraCanMove = true;
+                cameraMove.RemovePin("build");
+
                 ct.playerCanMove = false;
             }
         }, s =>
@@ -269,17 +255,19 @@ public class CenterSystem : MonoBehaviour
                 string[] ss = c.transform.parent.name.Split(" ");
                 int sid = int.Parse(ss[0]);
                 string type = ss[1];
-                var state = new StructState()
+                var state = new StructState
                 {
                     bodyIndex = sid,
                     isStruct = true,
                     type = ct.buildPage.buildObjectLibrary.Read("type") as string
                 };
                 var ng = bodies.LoadStruct(state,pcp);
-                SMesh.Face.AlignFaceToFace(ng, structFaces[state.type], 0, c, structFaces[type], fid);
+                var t = ct.buildPage.buildObject.transform;
+                ng.transform.SetPositionAndRotation(t.position, t.rotation);
             }
         };
 
+        ct.debugInfo.LeftAdd(() => ct.playerCanMove.ToString(), "player can move" );
 
         ct.log.Write("Center","Finishes to load the center");
 

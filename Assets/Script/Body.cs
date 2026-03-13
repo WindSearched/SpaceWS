@@ -115,7 +115,7 @@ public class Bodies
 	/// <param name="cp">relative location</param>
 	public GameObject LoadStruct(StructState strct, V3I cp, Material material = null, GameObject strobj = null)
 	{
-		if (!strobj)
+		if (!strobj || strobj.name == "new")
 		{
 			if(ct.structTemplate.TryGetValue(strct.type, out var ob))
 				strobj = Object.Instantiate(ob, objects[strct.bodyIndex].str.transform, true);
@@ -134,10 +134,15 @@ public class Bodies
 		strobj.SetActive(true);
 
 		//reg
-		ct.bodies.objects[strct.bodyIndex].structs.Add(strobj);
-		ct.bodies.datas[strct.bodyIndex].structs.Add(strct);
+		RegisterStruct(strct, strobj);
 
 		return strobj;
+	}
+
+	public void RegisterStruct(StructState state, GameObject structObject)
+	{
+		ct.bodies.objects[state.bodyIndex].structs.Add(structObject);
+		ct.bodies.datas[state.bodyIndex].structs.Add(state);
 	}
 
 	public GameObject LoadStruct(float px, float py, float pz,

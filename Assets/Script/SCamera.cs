@@ -15,7 +15,7 @@ public class SCamera: MonoBehaviour
     public bool changeTarget = false;
 
     public static int stick = 30;
-    private bool canMove => ct.cameraCanMove;
+    private Pinner camMove => ct.cameraMove;
     private void Start()
     {
         ct.sCamera = this;
@@ -94,7 +94,7 @@ public class SCamera: MonoBehaviour
                 if (i >= stick)
                 {//finish iteration
 
-                    offset = -tw;
+                    offset = Vector3.zero;
                     lib.Write("smooth", false);
                 }
                 else
@@ -135,7 +135,7 @@ public class SCamera: MonoBehaviour
     }
     private void LateUpdate()
     {
-        if(canMove)
+        if(camMove.loosing)
             followmode?.Invoke(transform);
     }
     public void ChangeTarget(GameObject curTarget)

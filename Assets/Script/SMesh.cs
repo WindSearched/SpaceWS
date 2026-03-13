@@ -700,8 +700,7 @@ public static class SMesh
 			int faceIndexB
 		)
 		{
-			// ---------- 1. 参数检查 ----------
-			if (objectA == null || objectB == null) return false;
+			if (!objectA|| !objectB) return false;
 			if (facesA == null || facesB == null) return false;
 			if (faceIndexA < 0 || faceIndexA >= facesA.Length) return false;
 			if (faceIndexB < 0 || faceIndexB >= facesB.Length) return false;
@@ -712,34 +711,169 @@ public static class SMesh
 			Transform tA = objectA.transform;
 			Transform tB = objectB.transform;
 
-			// ---------- 2. 世界空间面顶点 ----------
-			Vector3[] worldA = TransformVerts(tA, faceA.localVerts);
-			Vector3[] worldB = TransformVerts(tB, faceB.localVerts);
-
-			// ---------- 3. 世界空间法线 ----------
 			Vector3 normalA = tA.TransformDirection(faceA.localNormal).normalized;
 			Vector3 normalB = tB.TransformDirection(faceB.localNormal).normalized;
 
-			// ---------- 4. 面中心 ----------
+			Vector3[] worldA = TransformVerts(tA, faceA.localVerts);
+			Vector3[] worldB = TransformVerts(tB, faceB.localVerts);
+
 			Vector3 centerA = GetFaceCenter(worldA);
 			Vector3 centerB = GetFaceCenter(worldB);
 
-			// ---------- 5. 计算旋转（A 面 → B 面反方向） ----------
+			// ---------- 1. 法线对齐 ----------
 			Quaternion alignRotation =
 				Quaternion.FromToRotation(normalA, -normalB);
 
-			// ---------- 6. 应用旋转 ----------
-			tA.rotation = alignRotation * tA.rotation;
+			Quaternion newRotation = alignRotation * tA.rotation;
+			tA.rotation = newRotation;
+			
+			// 重新计算
+			worldA = TransformVerts(tA, faceA.localVerts);
+			normalA = tA.TransformDirection(faceA.localNormal).normalized;
 
-			// ---------- 7. 旋转后重新计算 A 面中心 ----------
-			Vector3[] worldA2 = TransformVerts(tA, faceA.localVerts);
-			Vector3 newCenterA = GetFaceCenter(worldA2);
+			float[] edgesA = GetEdgeLengths(worldA);
+			float[] edgesB = GetEdgeLengths(worldB);
 
-			// ---------- 8. 平移对齐 ----------
+			bool edgeMatch = MatchEdgeSequence(edgesA, edgesB);
+
+			bool perfectFit = false;
+
+			if (edgeMatch)
+			{
+				perfectFit = TryPerfectFaceAlign(
+					tA,
+					worldA,
+					worldB,
+					normalA
+				);
+			}
+
+			// ---------- 2. 中心对齐 ----------
+			Vector3 newCenterA = GetFaceCenter(worldA);
 			Vector3 offset = centerB - newCenterA;
 			tA.position += offset;
 
-			return true;
+			return perfectFit;
+		}
+		static bool MatchEdgeSequence(float[] a, float[] b, float tolerance = 0.001f)
+		{
+			int n = a.Length;
+
+			if (b.Length != n)
+				return false;
+
+			// ---------- 正向循环 ----------
+			for (int shift = 0; shift < n; shift++)
+			{
+				bool ok = true;
+
+				for (int i = 0; i < n; i++)
+				{
+					float ai = a[i];
+					float bi = b[(i + shift) % n];
+
+					if (Mathf.Abs(ai - bi) > tolerance)
+					{
+						ok = false;
+						break;
+					}
+				}
+
+				if (ok)
+					return true;
+			}
+
+			// ---------- 反向循环 ----------
+			for (int shift = 0; shift < n; shift++)
+			{
+				bool ok = true;
+
+				for (int i = 0; i < n; i++)
+				{
+					float ai = a[i];
+					float bi = b[(shift - i + n) % n];
+
+					if (Mathf.Abs(ai - bi) > tolerance)
+					{
+						ok = false;
+						break;
+					}
+				}
+
+				if (ok)
+					return true;
+			}
+
+			return false;
+		}
+		static float[] GetEdgeLengths(Vector3[] verts)
+		{
+			int n = verts.Length;
+			float[] edges = new float[n];
+
+			for (int i = 0; i < n; i++)
+			{
+				Vector3 a = verts[i];
+				Vector3 b = verts[(i + 1) % n];
+				edges[i] = Vector3.Distance(a, b);
+			}
+
+			return edges;
+		}
+		static bool TryPerfectFaceAlign(
+			Transform tA,
+			Vector3[] worldA,
+			Vector3[] worldB,
+			Vector3 normal
+		)
+		{
+			if (worldA.Length != worldB.Length)
+				return false;
+
+			int n = worldA.Length;
+
+			Vector3 centerA = GetFaceCenter(worldA);
+			Vector3 centerB = GetFaceCenter(worldB);
+
+			// 转为相对中心
+			Vector3[] a = new Vector3[n];
+			Vector3[] b = new Vector3[n];
+
+			for (int i = 0; i < n; i++)
+			{
+				a[i] = worldA[i] - centerA;
+				b[i] = worldB[i] - centerB;
+			}
+
+			float tolerance = 0.001f;
+
+			// 尝试所有循环匹配
+			for (int shift = 0; shift < n; shift++)
+			{
+				Quaternion rot = Quaternion.FromToRotation(a[0], b[shift]);
+
+				bool match = true;
+
+				for (int i = 0; i < n; i++)
+				{
+					Vector3 ra = rot * a[i];
+					Vector3 rb = b[(i + shift) % n];
+
+					if ((ra - rb).sqrMagnitude > tolerance * tolerance)
+					{
+						match = false;
+						break;
+					}
+				}
+
+				if (match)
+				{
+					tA.rotation = rot * tA.rotation;
+					return true;
+				}
+			}
+
+			return false;
 		}
 		static Vector3[] TransformVerts(Transform t, Vector3[] localVerts)
 		{

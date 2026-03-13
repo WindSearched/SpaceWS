@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
+    public  bool moving = false;
     public Entity entity;
     /// <summary>
     /// current Move Mode
@@ -12,6 +13,7 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
+        ct.plyComp = this;
         entity = GetComponent<Entity>();
         
         moveModes.Add("LevelMove",new() {
@@ -28,14 +30,10 @@ public class Player : MonoBehaviour
         moveModes.Add("CameraFrontDirectionMove", new() {
             OnMove = (Vector2 dir, Rigidbody rig) =>
             {
-                if (ct.playerCanMove)
-                {
-                    float v = dir.y;
-                    var toward = Camera.main.transform.forward;
-                    rig.linearVelocity = Vector2.zero;
-                    rig.AddForce(500 * v * toward);
-                }
-
+                float v = dir.y;
+                var toward = Camera.main.transform.forward;
+                rig.linearVelocity = Vector2.zero;
+                rig.AddForce(500 * v * toward);
             },
             OnStop = (Rigidbody rig) =>
             {
@@ -45,10 +43,13 @@ public class Player : MonoBehaviour
         cMvMd = moveModes["CameraFrontDirectionMove"];
 
         Tick.Reg(new() { offset = 1, onTick = (TickReg reg) => {
-            if(ct.playerCanMove)
-                OnMove(ct.wasdDirection);
-            else
-                OnStop(ct.wasdDirection);
+            if (ct.playerCanMove)
+            {
+                if(moving)
+                    OnMove(ct.wasdDirection);
+                else
+                    OnStop(ct.wasdDirection);
+            }
             Tick.Reg(reg);
         } });
 

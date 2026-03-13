@@ -10,6 +10,7 @@ public static class ct
 {
     public static CenterSystem ctsym;
     public static GameObject player => ctsym.player;
+    public static Player plyComp;
     public static Camera camera;
     public static Set setting = new();
     public static Rule curWorldRule = new();
@@ -34,10 +35,10 @@ public static class ct
     /// delta position of mouse this frame
     /// </summary>
     public static Vector2 mouseDirection;
-    public static bool playerCanMove = false;
+    public static bool playerCanMove = true;
     public static bool mouseCanMove = false;
     public static SCamera sCamera;
-    public static bool cameraCanMove = true;
+    public static Pinner cameraMove = new();
     public static float fps;
     public static float yawCamera;
     public static float pitchCamera;
@@ -163,7 +164,13 @@ public static class ct
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
-
+    public static void MouseLocking(bool locked)
+    {
+        if(locked)
+            LockMouse();
+        else
+            UnlockMouse();
+    }
 }
 public delegate void Meth();
 
