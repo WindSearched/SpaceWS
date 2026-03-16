@@ -212,9 +212,7 @@ public class CenterSystem : MonoBehaviour
                 s.storer.Add("str", c);//save true struct
                 s.storer.Add("faced", g);// the fake(faced) struct
 
-                cameraMove.RemovePin("build");
-
-                ct.playerCanMove = false;
+                playerMove.AddPin("build");
             }
         }, s =>
         {
@@ -232,7 +230,7 @@ public class CenterSystem : MonoBehaviour
 
             s.storer.Clear();
 
-            ct.playerCanMove = true;
+            playerMove.RemovePin("build");
         }));
         var lm = ct.leftMouse_act = ct.action.Add("leftMouse", InputActionType.Button, SAction.keyTable["leftMouse"]);
         lm.performed += _ =>
@@ -269,7 +267,7 @@ public class CenterSystem : MonoBehaviour
             }
         };
 
-        ct.debugInfo.LeftAdd(() => ct.playerCanMove.ToString(), "player can move" );
+        ct.debugInfo.LeftAdd(() => ct.playerMove.loosing.ToString(), "player can move" );
 
         ct.log.Write("Center","Finishes to load the center");
 

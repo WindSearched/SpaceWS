@@ -35,10 +35,10 @@ public static class ct
     /// delta position of mouse this frame
     /// </summary>
     public static Vector2 mouseDirection;
-    public static bool playerCanMove = true;
+    public static Pinner playerMove = new();
     public static bool mouseCanMove = false;
-    public static SCamera sCamera;
     public static Pinner cameraMove = new();
+    public static SCamera sCamera;
     public static float fps;
     public static float yawCamera;
     public static float pitchCamera;

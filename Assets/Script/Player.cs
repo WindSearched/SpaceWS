@@ -43,7 +43,7 @@ public class Player : MonoBehaviour
         cMvMd = moveModes["CameraFrontDirectionMove"];
 
         Tick.Reg(new() { offset = 1, onTick = (TickReg reg) => {
-            if (ct.playerCanMove)
+            if (ct.playerMove.loosing)
             {
                 if(moving)
                     OnMove(ct.wasdDirection);
