@@ -21,12 +21,7 @@ public class ChunkLoader
         ct.log.Write("ChunkLoader","Load a chunk loader");
         poolParent = new GameObject("structpool");
         structPool = new SPool<GameObject>(ct.setting.objectpPoolSize);
-        structPool.CreateNew = () =>
-        {
-            var g = new GameObject();
-            g.name = "new";
-            return g;
-        };//can be create before, in bodies.LoadStruct
+        structPool.CreateNew = () => null;//can be create before, in bodies.LoadStruct
         structPool.OnInPool = o =>
         {
             o.SetActive(false);

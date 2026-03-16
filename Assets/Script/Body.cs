@@ -115,6 +115,8 @@ public class Bodies
 	/// <param name="cp">relative location</param>
 	public GameObject LoadStruct(StructState strct, V3I cp, Material material = null, GameObject strobj = null)
 	{
+		if(strct.type == null)
+			return strobj;
 		if (!strobj || strobj.name == "new")
 		{
 			if(ct.structTemplate.TryGetValue(strct.type, out var ob))

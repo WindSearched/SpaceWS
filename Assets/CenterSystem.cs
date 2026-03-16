@@ -261,6 +261,8 @@ public class CenterSystem : MonoBehaviour
                     isStruct = true,
                     type = ct.buildPage.buildObjectLibrary.Read("type") as string
                 };
+                if(state.type == null)
+                    return;
                 var ng = bodies.LoadStruct(state,pcp);
                 var t = ct.buildPage.buildObject.transform;
                 ng.transform.SetPositionAndRotation(t.position, t.rotation);
