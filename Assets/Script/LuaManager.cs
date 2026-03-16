@@ -68,13 +68,26 @@ public class Mod
         }
         foreach (var p in Directory.GetDirectories(path))
         {
-            string name = Path.GetFileName(p);// mmod name
+            string name = Path.GetFileName(p);// mod name
             env.DoString(File.ReadAllText(Path.Combine(p, name +".lua")));
             Load(name, "OnLoad");
 
+            string pp = "";
+            string ppp = "";
+
+            pp = p + "/structs";
+            if (Data.DirectioryExists(pp))
+            {
+                foreach (var file in Directory.EnumerateFiles(pp, "*.obj"))
+                {
+                    var n = Path.GetFileNameWithoutExtension(file);
+                    AddStructFromOBJ(name, $"structs/{n}");
+                }
+            }
+
             //load data directory
-            var pp = p + "/data";
-            var ppp = pp + "/structs";
+            pp = p + "/data";
+            ppp = pp + "/structs";
             if(Data.DirectioryExists(ppp))
             {// if "structs" exists
                 foreach (var f in Directory.GetFiles(ppp))
@@ -173,6 +186,9 @@ public class Mod
         string name = mod + "/" + Path.GetFileName(modPath);
         Debug.Log(name);
         string p = ct.mod.path + "/" + mod + "/" + modPath;
+
+        if(ct.structTypes.Contains(name))
+            return;
 
         ct.structTypes.Add(name);
         var t = SMesh.ObjTemp.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p), name);

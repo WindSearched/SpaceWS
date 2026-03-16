@@ -88,13 +88,14 @@ public class Command
         /// </summary>
         public string Load()
         {
-            var line = args[0];
+            var line = args[0].TrimStart('@')
+                .Replace("\u200B", "");
+
             args.RemoveAt(0);
             if (line.StartsWith("@"))
             {
-                string s = line
-                    .TrimStart('@')
-                    .Replace("\u200B", "");;
+                string s = line;
+
                 if (!LoadValMeth(s, out object obj))
                 {
                     string m =$"The method value {s} is not exists!";

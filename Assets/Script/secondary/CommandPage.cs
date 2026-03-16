@@ -59,6 +59,10 @@ public class CommandPage : MonoBehaviour
             pos %= cu;
             ct.bodies.LoadStruct(pos, cp, rot, -1, type);
         });
+        ct.command.Add("exit", l =>
+        {
+            ct.ExitGame();
+        });
 
         ct.command.AddValueMethod("rand", () =>//@rand
         {
