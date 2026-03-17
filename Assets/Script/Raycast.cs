@@ -1,30 +1,38 @@
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class MouseRaycast
 {
+    public delegate void CastEv(GameObject casted);
+
     public static float distance = 100;
-    
+
     public GameObject casted;
     public GameObject excasted;
+
+    public MouseRaycast()
+    {
+        ct.log.Write("Raycast", "load a raycast");
+    }
+
     public event CastEv InCast;
     public event CastEv OutCast;
 
     /// <summary>
-    /// can be update
+    ///     can be update
     /// </summary>
     public void Casting()
     {
-        int layerToIgnore = LayerMask.NameToLayer("raynocast"); // 图层名
-        int layerMask = ~(1 << layerToIgnore); // 取反，排除这个图层
+        var layerToIgnore = LayerMask.NameToLayer("raynocast"); // 图层名
+        var layerMask = ~(1 << layerToIgnore); // 取反，排除这个图层
 
         var p = ct.mousePosition;
-        Ray ray = Camera.main.ScreenPointToRay(p);
+        var ray = Camera.main.ScreenPointToRay(p);
 
-        excasted = casted;//update
+        excasted = casted; //update
 
-        casted = Physics.Raycast(ray, out RaycastHit hit, distance, layerMask, QueryTriggerInteraction.Ignore)
-            ? hit.collider.gameObject : null;
+        casted = Physics.Raycast(ray, out var hit, distance, layerMask, QueryTriggerInteraction.Ignore)
+            ? hit.collider.gameObject
+            : null;
 
 
         if (casted != excasted)
@@ -33,11 +41,4 @@ public class MouseRaycast
             OutCast?.Invoke(excasted);
         }
     }
-
-    public MouseRaycast()
-    {
-        ct.log.Write("Raycast","load a raycast");
-    }
-    
-    public delegate void CastEv(GameObject casted);
 }

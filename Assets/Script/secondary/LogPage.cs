@@ -1,9 +1,8 @@
 using UnityEngine;
 
-public class LogPage: MonoBehaviour
+public class LogPage : MonoBehaviour
 {
     private void Start()
     {
-
     }
 }

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,15 +10,16 @@ public class CommandPage : MonoBehaviour
     public GameObject parent;
     public Transform listparent;
     public GameObject orMsg;
-    public float listheitght = 0;
+    public float listheitght;
+
     private void Start()
     {
         ct.cmdPg = this;
 
-        var e = ct.action.Add("enter",InputActionType.Button);
-        ct.action.AddBiding(e,SAction.keyTable["enter"]);
+        var e = ct.action.Add("enter", InputActionType.Button);
+        ct.action.AddBiding(e, SAction.keyTable["enter"]);
 
-        ct.pages.Register("command", new(_ =>
+        ct.pages.Register("command", new Page(_ =>
         {
             ct.UnlockMouse();
             e.performed += ToCommand;
@@ -34,15 +34,15 @@ public class CommandPage : MonoBehaviour
         }));
 
         //add an action to active the command page
-        var b = ct.action.Add("commandButton",InputActionType.Button);
-        ct.action.AddBiding(b,SAction.keyTable["f2"]);
+        var b = ct.action.Add("commandButton", InputActionType.Button);
+        ct.action.AddBiding(b, SAction.keyTable["f2"]);
         b.performed += c => ct.pages.Swap(ct.pages.IsPage("command") ? "main" : "command");
 
         button.onClick.AddListener(ToCommand);
 
         orMsg = Resources.Load<GameObject>("ui/logmessage");
 
-        ct.command.Add("debug", (l) =>
+        ct.command.Add("debug", l =>
         {
             var s = l.Load();
             Debug.Log(s);
@@ -59,12 +59,9 @@ public class CommandPage : MonoBehaviour
             pos %= cu;
             ct.bodies.LoadStruct(pos, cp, rot, -1, type);
         });
-        ct.command.Add("exit", l =>
-        {
-            ct.ExitGame();
-        });
+        ct.command.Add("exit", l => { ct.ExitGame(); });
 
-        ct.command.AddValueMethod("rand", () =>//@rand
+        ct.command.AddValueMethod("rand", () => //@rand
         {
             return SMath.Random(int.MaxValue, int.MinValue);
         });
@@ -72,8 +69,12 @@ public class CommandPage : MonoBehaviour
         Message("test");
     }
 
-    void ToCommand(InputAction.CallbackContext context) => ToCommand();
-    void ToCommand()
+    private void ToCommand(InputAction.CallbackContext context)
+    {
+        ToCommand();
+    }
+
+    private void ToCommand()
     {
         var c = text.text;
         ct.command.Load(c);
@@ -82,15 +83,15 @@ public class CommandPage : MonoBehaviour
 
     public void Message(string msg)
     {
-        GameObject o = Instantiate(orMsg, listparent);
+        var o = Instantiate(orMsg, listparent);
         var tx = o.GetComponent<TextMeshProUGUI>();
-        var rt =  o.GetComponent<RectTransform>();
+        var rt = o.GetComponent<RectTransform>();
         tx.text = msg;
         tx.ForceMeshUpdate();
-        float h = tx.preferredHeight;
-        rt.sizeDelta = new(rt.sizeDelta.x, h);
+        var h = tx.preferredHeight;
+        rt.sizeDelta = new Vector2(rt.sizeDelta.x, h);
 
-        rt.anchoredPosition = new(0, -listheitght);
+        rt.anchoredPosition = new Vector2(0, -listheitght);
         listheitght += h;
     }
 }
