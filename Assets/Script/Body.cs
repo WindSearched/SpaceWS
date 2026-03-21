@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System;
+using System.IO;
+using System.Text;
+using MemoryPack;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -25,16 +28,59 @@ public class State
 
 }
 
-[Serializable]
-public class BodyState
+[Serializable][MemoryPackable]
+public partial class BodyState
 {
 	public int index;
 	public Loc location;
+
+	public static implicit operator byte[](BodyState s)
+	{
+		using var ms = new MemoryStream();
+		using var bw = new BinaryWriter(ms, Encoding.UTF8);
+
+		bw.Write(s.index);
+		bw.Write(s.location);
+
+		return ms.ToArray();
+	}
+
+	public static BodyState FromBytes(BinaryReader br)
+	{
+		BodyState s = new();
+		s.index = br.ReadInt32();
+		s.location = Loc.FromBytes(br);
+		return s;
+	}
 }
-[Serializable]
-public class StructState : State
+[Serializable][MemoryPackable]
+public partial class StructState : State
 {
 	public Loc location;
+
+	public static implicit operator byte[](StructState s)
+	{
+		using var ms = new MemoryStream();
+		using var bw = new BinaryWriter(ms, Encoding.UTF8);
+
+		bw.Write(s.type);
+		bw.Write(s.bodyIndex);
+		bw.Write(s.isStruct);
+		bw.Write(s.location);
+
+		return ms.ToArray();
+	}
+
+	public static StructState FromBytes(BinaryReader br)
+	{
+		StructState s = new();
+		s.type = br.ReadString();
+		s.bodyIndex = br.ReadInt32();
+		s.isStruct = br.ReadBoolean();
+		s.location = Loc.FromBytes(br);
+
+		return s;
+	}
 }
 
 [Serializable]
@@ -120,7 +166,7 @@ public class Bodies
 		if (!strobj || strobj.name == "new")
 		{
 			if(ct.structTemplate.TryGetValue(strct.type, out var ob))
-				strobj = Object.Instantiate(ob, objects[strct.bodyIndex].str.transform, true);
+				strobj = Object.Instantiate(ob);
 			else
 			{
 				ct.log.Write("Bodies", $"the struct {strct.type} doesn't exist");
@@ -128,6 +174,7 @@ public class Bodies
 			}
 		}
 
+		strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
 		strobj.tag = "struct";
 		strobj.name = datas[strct.bodyIndex].structs.Count.ToString();
 
@@ -221,7 +268,8 @@ public struct Location
 		return new Loc(this);
 	}
 }
-public struct V3
+[MemoryPackable]
+public partial struct V3
 {
 	public float x;
 	public float y;
@@ -269,9 +317,32 @@ public struct V3
 	{
 		return new(p.x % n, p.y % n, p.z % n);
 	}
+
+	public static implicit operator byte[](V3 p)
+	{
+		using var ms = new MemoryStream();
+		using var bw = new BinaryWriter(ms, Encoding.UTF8);
+
+		bw.Write(p.x);
+		bw.Write(p.y);
+		bw.Write(p.z);
+
+		return ms.ToArray();
+	}
+
+	public static V3 FromBytes(BinaryReader br)
+	{
+		V3 v = new V3();
+		v.x = br.ReadSingle();
+		v.y = br.ReadSingle();
+		v.z = br.ReadSingle();
+
+		return v;
+	}
 }
 
-public struct V3I
+[MemoryPackable]
+public partial struct V3I
 {
 	public int x;
 	public int y;
@@ -384,6 +455,31 @@ public struct Quater
 	{
 		return $"({x},{y},{z},{w})";
 	}
+
+
+	public static implicit operator byte[](Quater q)
+	{
+		using var ms = new MemoryStream();
+		using var bw = new BinaryWriter(ms, Encoding.UTF8);
+
+		bw.Write(q.x);
+		bw.Write(q.y);
+		bw.Write(q.z);
+		bw.Write(q.w);
+
+		return ms.ToArray();
+	}
+
+	public static Quater FromBytes(BinaryReader br)
+	{
+		var q = new Quater();
+		q.x = br.ReadSingle();
+		q.y = br.ReadSingle();
+		q.z = br.ReadSingle();
+		q.w = br.ReadSingle();
+
+		return q;
+	}
 }
 /// <summary>
 /// location to save
@@ -439,6 +535,26 @@ public struct Loc
 	{
 		return $"({position}, {rotation})";
 	}
+
+	public static implicit operator byte[](Loc loc)
+	{
+		using var ms = new MemoryStream();
+		using var bw = new BinaryWriter(ms, Encoding.UTF8);
+
+		bw.Write(loc.position);
+		bw.Write(loc.rotation);
+
+		return ms.ToArray();
+	}
+
+	public static Loc FromBytes(BinaryReader br)
+	{
+		Loc l = new();
+		l.position = V3.FromBytes(br);
+		l.rotation = Quater.FromBytes(br);
+
+		return l;
+	}
 }
 [Serializable]
 public class ItemData
@@ -451,4 +567,14 @@ public class ItemData
 	public Sprite sprite;
 	[JsonIgnore]
 	public GameObject template;
+}
+[Serializable]
+public class MaterialData
+{
+	public string type;
+	public float fusionPoint;
+	public float specificHeat;
+	public float density;
+
+	[JsonIgnore] public string mod;
 }

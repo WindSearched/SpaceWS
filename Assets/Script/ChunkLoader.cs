@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using MemoryPack;
 using UnityEngine;
 
 public class ChunkLoader
@@ -11,9 +12,6 @@ public class ChunkLoader
     /// </summary>
     public Dictionary<V3I, Chunk> loaded = new();
     public List<ChunkGenerator> generators = new();
-    /// <summary>
-    /// the center chunk's absolutely chunk position
-    /// </summary>
     public Bodies bodies;
 
     public ChunkLoader(Bodies bodies)
@@ -86,7 +84,15 @@ public class ChunkLoader
             var idx = s.bodyIndex;
             var g = bodies.objects[idx];
             structPool.Put(g.self);
+            bodies.datas.Remove(idx);
+            bodies.objects.Remove(idx);
         }
+    }
+
+    public void SaveChunk(Chunk chunk)
+    {
+        var p = chunk.position;
+        ChunkStorage.SaveChunk(ct.curWorldRule.name, p.x,p.y,p.z, MemoryPackSerializer.Serialize(chunk));
     }
 
     /// <summary>
@@ -122,6 +128,7 @@ public class ChunkLoader
 
         foreach (var r in removed)
         {
+            ct.chunkLoader.SaveChunk(loaded[r]);
             RemoveChunk(loaded[r]);
             loaded.Remove(r);
         }
@@ -130,7 +137,9 @@ public class ChunkLoader
 
     public Chunk GetChunk(V3I cp)
     {
-        return Chunk.FromBytes(ChunkStorage.LoadChunk(ct.curWorldRule.name, cp));
+        var b = ChunkStorage.LoadChunk(ct.curWorldRule.name, cp);
+
+        return b == null ? null : MemoryPackSerializer.Deserialize<Chunk>(b);
     }
 }
 

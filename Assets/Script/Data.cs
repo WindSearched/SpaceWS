@@ -4,6 +4,7 @@ using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using MemoryPack;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -201,9 +202,11 @@ public class LogicalFace
 	public int[] triangles; // 0-based 索引
 }
 
-
-public class Chunk
+[MemoryPackable]
+public partial class Chunk
 {
+	[MemoryPackConstructor]
+	public Chunk(){}
 	public Chunk(V3I cp)
 	{
 		position = cp;
@@ -235,6 +238,11 @@ public class Chunk
 		bw.Write(position.y);
 		bw.Write(position.z);
 
+		bw.Write(bodies.Count);
+		for (int i = 0; i < bodies.Count; i++)
+		{
+			bw.Write(bodies[i]);
+		}
 		// 写 structs 数量
 		int count = structs?.Count ?? 0;
 		bw.Write(count);
@@ -243,21 +251,7 @@ public class Chunk
 		{
 			foreach (var s in structs)
 			{
-				// 写 string type
-				bw.Write(s.type ?? "");
-
-				// 写 Loc
-				bw.Write(s.location.position.x);
-				bw.Write(s.location.position.y);
-				bw.Write(s.location.position.z);
-
-				bw.Write(s.location.rotation.x);
-				bw.Write(s.location.rotation.y);
-				bw.Write(s.location.rotation.z);
-				bw.Write(s.location.rotation.w);
-
-				// 写 bodyIndex
-				bw.Write(s.bodyIndex);
+				bw.Write(s);
 			}
 		}
 
@@ -284,29 +278,18 @@ public class Chunk
 		Chunk chunk = new Chunk(pos);
 		chunk.structs = new List<StructState>();
 
+		int c = br.ReadInt32();
+		for (int i = 0; i < c; i++)
+		{
+			chunk.bodies.Add(BodyState.FromBytes(br));
+		}
+
 		// 读取 structs 数量
 		int count = br.ReadInt32();
 
 		for (int i = 0; i < count; i++)
 		{
-			StructState s = new StructState();
-
-			// 读取 string
-			s.type = br.ReadString();
-
-			// 读取 Loc
-			s.location.position.x = br.ReadSingle();
-			s.location.position.y = br.ReadSingle();
-			s.location.position.z = br.ReadSingle();
-
-			s.location.rotation.x = br.ReadSingle();
-			s.location.rotation.y = br.ReadSingle();
-			s.location.rotation.z = br.ReadSingle();
-			s.location.rotation.w = br.ReadSingle();
-
-			// 读取 bodyIndex
-			s.bodyIndex = br.ReadInt32();
-
+			StructState s = StructState.FromBytes(br);
 			chunk.structs.Add(s);
 		}
 

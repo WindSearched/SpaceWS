@@ -91,6 +91,8 @@ public static class ct
     public static Dictionary<string, SMesh.RuntimeFace[]>  structFaces = new();
     public static Dictionary<string, GameObject> structFaceTemplates = new();
     public static Dictionary<string, Sprite> structIcons = new();
+    public static SDict<string, ItemData> items = new();
+    public static SDict<string, MaterialData> materials = new();
 
     public static Meth LoadAfterInconsFinishLoading
     {
