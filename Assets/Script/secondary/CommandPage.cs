@@ -1,3 +1,4 @@
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -22,11 +23,15 @@ public class CommandPage : MonoBehaviour
         ct.pages.Register("command", new Page(_ =>
         {
             ct.UnlockMouse();
+            ct.cameraMove.AddPin("cmd");
+            ct.playerMove.AddPin("cmd");
             e.performed += ToCommand;
             parent.SetActive(true);
         }, _ =>
         {
             ct.LockMouse();
+            ct.cameraMove.RemovePin("cmd");
+            ct.playerMove.RemovePin("cmd");
             parent.SetActive(false);
             e.performed -= ToCommand;
 
@@ -60,13 +65,32 @@ public class CommandPage : MonoBehaviour
             ct.bodies.LoadStruct(pos, cp, rot, -1, type);
         });
         ct.command.Add("exit", l => { ct.ExitGame(); });
+        ct.command.Add("modify", l =>// modify @indicated temperature 100
+        {
+            var id = l.Load();
+            Debug.Log(id);
+            int idx = int.Parse(id);
+            var state =ct.bodies.datas[idx].self;
+            var vt = l.Load();
+            FieldInfo fi = typeof(BodyState).GetField(vt);
+            if (fi == null)
+            {
+                Message($"The value type '{vt}' is not exist in bodystate");
+            }
+            else
+            {
+                fi.SetValue(state, l.Load());
+            }
+        });
+        // ct.command.Add("addHeat", l => // addheat @indicated 200
+        // {
+        //
+        // });
 
         ct.command.AddValueMethod("rand", () => //@rand
-        {
-            return SMath.Random(int.MaxValue, int.MinValue);
-        });
-
-        Message("test");
+            SMath.Random(int.MaxValue, int.MinValue));
+        ct.command.AddValueMethod("indicated", () => //@indicated
+            ct.mouseCasted ? ct.mouseCasted.transform.parent.parent.name : "0");
     }
 
     private void ToCommand(InputAction.CallbackContext context)

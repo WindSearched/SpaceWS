@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using MemoryPack;
 using Newtonsoft.Json;
@@ -33,6 +34,19 @@ public partial class BodyState
 {
 	public int index;
 	public Loc location;
+	public int structCount;
+
+	public float sumSpecif1icHeat;
+	public float averageSpecif1icHeat;
+	public float temperature;
+	/// <summary>
+	/// total mass in the body
+	/// </summary>
+	public float mass;
+
+	public float minFusionPoint;
+	public int minFusionPointStructIndex;
+
 
 	public static implicit operator byte[](BodyState s)
 	{
@@ -57,6 +71,9 @@ public partial class BodyState
 public partial class StructState : State
 {
 	public Loc location;
+	public (string material, string mod) material;
+	public float temperature = 273.15f;
+	public float mass;
 
 	public static implicit operator byte[](StructState s)
 	{
@@ -90,6 +107,8 @@ public class StructData
 	public Demand[] buildDemands;
 	public Remove remove;
 
+	public float mass;
+	public float volume = -1;
 
 	[Serializable]
 	public struct Demand
@@ -120,6 +139,7 @@ public class Bodies
 	{
 		public List<StructState> structs;
 		public List<FaceState> faces;
+		public BodyState self;
 	}
 	public struct obj
 	{
@@ -143,7 +163,11 @@ public class Bodies
 		datas.Add(index, new body()
 		{
 			structs = new(),
-			faces = new()
+			faces = new(),
+			self = new()
+			{
+				location = loc
+			}
 		});
 		var g = GameObject.Instantiate(ct.defualtBody, ct.bodiesParent);
 		g.name = index.ToString();
@@ -184,6 +208,24 @@ public class Bodies
 
 		//reg
 		RegisterStruct(strct, strobj);
+
+
+		if (strct.material.material == null)
+		{
+			var t = ct.materials.dict.Values.First().Values.First();
+			strct.material.material = t.type;
+			strct.material.mod = t.mod;
+		}
+		var bs = datas[strct.bodyIndex].self;
+		var sd = ct.structsData[strct.type];
+		var md = ct.materials.Get(strct.material.material, strct.material.mod);
+		bs.temperature = (bs.mass * bs.averageSpecif1icHeat * bs.temperature +//find equilibrate temperature
+		                  strct.mass * md.specificHeat * strct.temperature) / (bs.mass * bs.averageSpecif1icHeat + strct.mass * md.specificHeat);
+		bs.sumSpecif1icHeat += md.specificHeat;
+		bs.structCount++;
+		bs.averageSpecif1icHeat = bs.sumSpecif1icHeat / bs.structCount;
+		bs.mass += strct.mass;
+
 
 		return strobj;
 	}
@@ -237,6 +279,15 @@ public class Bodies
 		return g;
 	}
 
+	public void AddHeat(int index, float heat)
+	{
+		var bs = datas[index].self;
+		float deltaT = heat * (bs.averageSpecif1icHeat + bs.mass);
+		bs.temperature += deltaT;
+
+		Debug.Log(bs.temperature);
+
+	}
 	/// <summary>
 	/// Render for gameobject its outline
 	/// </summary>

@@ -88,13 +88,13 @@ public class Command
         /// </summary>
         public string Load()
         {
-            var line = args[0].TrimStart('@')
+            var line = args[0]
                 .Replace("\u200B", "");
 
             args.RemoveAt(0);
             if (line.StartsWith("@"))
             {
-                string s = line;
+                string s = line.TrimStart('@');
 
                 if (!LoadValMeth(s, out object obj))
                 {

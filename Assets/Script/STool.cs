@@ -1,5 +1,10 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 /// <summary>
 /// This class store some messy(not include in SMath and SMesh) tool method
@@ -64,5 +69,65 @@ public static class STool
         }
 
         return targetComp;
+    }
+
+    public static class TypeConverterUtil
+    {
+        public static object ConvertFromString(Type type, string value)
+        {
+            if (type == typeof(string))
+                return value;
+
+            if (string.IsNullOrEmpty(value))
+                return null;
+
+            // 基础类型
+            if (type == typeof(int)) return int.Parse(value);
+            if (type == typeof(float)) return float.Parse(value, CultureInfo.InvariantCulture);
+            if (type == typeof(double)) return double.Parse(value, CultureInfo.InvariantCulture);
+            if (type == typeof(bool)) return bool.Parse(value);
+            if (type == typeof(long)) return long.Parse(value);
+
+            // 枚举
+            if (type.IsEnum)
+                return Enum.Parse(type, value);
+
+            // List<T>（用逗号分隔）
+            if (typeof(IList<>).IsAssignableFrom(type))
+            {
+                var list = (IList)Activator.CreateInstance(type);
+                Type elementType = type.GetGenericArguments()[0];
+
+                var parts = value.Split(',');
+
+                foreach (var p in parts)
+                {
+                    list.Add(ConvertFromString(elementType, p.Trim()));
+                }
+
+                return list;
+            }
+
+            // struct / class（简单支持：用 "x,y,z" 形式）
+            if (type.IsValueType || type.IsClass)
+            {
+                var obj = Activator.CreateInstance(type);
+                var fields = type.GetFields();
+
+                var parts = value.Split(',');
+
+                for (int i = 0; i < fields.Length && i < parts.Length; i++)
+                {
+                    var field = fields[i];
+                    object fieldValue = ConvertFromString(field.FieldType, parts[i].Trim());
+                    field.SetValue(obj, fieldValue);
+                }
+
+                return obj;
+            }
+
+            // fallback
+            return Convert.ChangeType(value, type);
+        }
     }
 }
