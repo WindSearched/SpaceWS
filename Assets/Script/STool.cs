@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using MemoryPack;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -129,5 +130,18 @@ public static class STool
             // fallback
             return Convert.ChangeType(value, type);
         }
+    }
+}
+
+[MemoryPackable]
+public partial struct SMType
+{
+    public string type;
+    public string mod;
+
+    public SMType(string type, string mod)
+    {
+        this.type = type;
+        this.mod = mod;
     }
 }

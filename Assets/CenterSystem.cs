@@ -105,7 +105,8 @@ public class CenterSystem : MonoBehaviour
             chunk.bodies.Add(new()
             {
                 index = id,
-                location = new(p,r)
+                location = new(p,r),
+                mass = 10
             });
             chunk.structs.Add(new()
             {
@@ -266,6 +267,15 @@ public class CenterSystem : MonoBehaviour
                 ng.transform.SetPositionAndRotation(t.position, t.rotation);
             }
         };
+
+        materials.Set("hoonk", "main", new MaterialData() // 焢
+        {
+            density = 1145,
+            fusionPoint = 9999,
+            mod = "main",
+            specificHeat = 7900,
+            type = "hoonk"
+        });
 
         ct.debugInfo.LeftAdd(() => ct.playerMove.loosing.ToString(), "player can move" );
 

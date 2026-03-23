@@ -42,12 +42,46 @@ public partial class BodyState
 	/// <summary>
 	/// total mass in the body
 	/// </summary>
-	public float mass;
+	public float mass = 1;
 
 	public float minFusionPoint;
 	public int minFusionPointStructIndex;
 
+	/// <summary>
+	/// setonly, add the specific heat to body
+	/// </summary>
+	[MemoryPackIgnore]
+	public (float specifcHeat, int structNumber) _addSpacificHeat
+	{
+		set
+		{
+			structCount += value.structNumber;
+			sumSpecif1icHeat += value.specifcHeat;
+			averageSpecif1icHeat = sumSpecif1icHeat / structCount;
+		}
+	}
+	/// <summary>
+	/// input mass, specificHeat and temperature
+	/// </summary>
+	[MemoryPackIgnore]
+	public (float mass, float specificHeat, float temperature) _equilibrateTemperature
+	{
+		set => temperature = (mass * averageSpecif1icHeat * temperature + //find equilibrate temperature
+		                      value.mass * value.specificHeat * value.temperature) /
+		                     (mass * averageSpecif1icHeat + value.mass * value.specificHeat);
+	}
 
+	public float _addHeat
+	{
+		set
+		{
+			if(mass == 0 || value == 0)
+				return;
+			if(float.IsNaN(temperature))
+				temperature = 0;
+			temperature += value / (averageSpecif1icHeat * mass);
+		}
+	}
 	public static implicit operator byte[](BodyState s)
 	{
 		using var ms = new MemoryStream();
@@ -70,11 +104,23 @@ public partial class BodyState
 [Serializable][MemoryPackable]
 public partial class StructState : State
 {
+	public string type;
 	public Loc location;
-	public (string material, string mod) material;
+	public SMType material;
 	public float temperature = 273.15f;
 	public float mass;
 
+	public SMType _setMaterial
+	{
+		set
+		{
+			material = value;
+			var md = ct.materials.Get(value.type, value.mod);
+			var sd = ct.structsData[type];
+
+			mass = sd.volume * md.density;
+		}
+	}
 	public static implicit operator byte[](StructState s)
 	{
 		using var ms = new MemoryStream();
@@ -210,20 +256,15 @@ public class Bodies
 		RegisterStruct(strct, strobj);
 
 
-		if (strct.material.material == null)
+		if (strct.material.type == null)
 		{
 			var t = ct.materials.dict.Values.First().Values.First();
-			strct.material.material = t.type;
-			strct.material.mod = t.mod;
+			strct._setMaterial = new(t.type, t.mod);
 		}
 		var bs = datas[strct.bodyIndex].self;
-		var sd = ct.structsData[strct.type];
-		var md = ct.materials.Get(strct.material.material, strct.material.mod);
-		bs.temperature = (bs.mass * bs.averageSpecif1icHeat * bs.temperature +//find equilibrate temperature
-		                  strct.mass * md.specificHeat * strct.temperature) / (bs.mass * bs.averageSpecif1icHeat + strct.mass * md.specificHeat);
-		bs.sumSpecif1icHeat += md.specificHeat;
-		bs.structCount++;
-		bs.averageSpecif1icHeat = bs.sumSpecif1icHeat / bs.structCount;
+		var md = ct.materials.Get(strct.material.type, strct.material.mod);
+		bs._equilibrateTemperature = new(strct.mass, md.specificHeat, strct.temperature);
+		bs._addSpacificHeat = new(md.specificHeat, 1);
 		bs.mass += strct.mass;
 
 
@@ -282,8 +323,7 @@ public class Bodies
 	public void AddHeat(int index, float heat)
 	{
 		var bs = datas[index].self;
-		float deltaT = heat * (bs.averageSpecif1icHeat + bs.mass);
-		bs.temperature += deltaT;
+		bs._addHeat = heat;
 
 		Debug.Log(bs.temperature);
 

@@ -75,10 +75,6 @@ public class Command
         public bool LoadValMeth(string methName, out object obj)
         {
             bool b = command.valuemethod.TryGetValue(methName, out var meth);
-            foreach (var c in command.valuemethod.Keys)
-            {
-                Debug.Log(c.Length);
-            }
             obj = b ? meth?.Invoke() : null;
             return b;
         }

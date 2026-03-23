@@ -82,10 +82,11 @@ public class CommandPage : MonoBehaviour
                 fi.SetValue(state, l.Load());
             }
         });
-        // ct.command.Add("addHeat", l => // addheat @indicated 200
-        // {
-        //
-        // });
+        ct.command.Add("addheat", l => // addheat @indicated 200
+        {
+            int id = int.Parse(l.Load());
+            ct.bodies.AddHeat(id, l.LoadFloat());
+        });
 
         ct.command.AddValueMethod("rand", () => //@rand
             SMath.Random(int.MaxValue, int.MinValue));
