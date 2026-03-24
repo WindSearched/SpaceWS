@@ -205,7 +205,7 @@ public class Mod
 
         ct.structTypes.Add(name);
         var t = SMesh.ObjTemp.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p), name);
-        ct.structTemplate.Add(name, t.template);
+        ct.structsInfo.GetAbs(name, name).template = t.template;
         ct.structFaces.Add(name, t.faces);
         ct.structFaceTemplates.Add(name, t.facesTemp);
 

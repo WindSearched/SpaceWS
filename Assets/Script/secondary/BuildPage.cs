@@ -97,9 +97,8 @@ public class BuildPage : MonoBehaviour
                 buildObject.SetActive(true);
                 if (buildObject.name != buildStruct.name)
                 {
-                    int id = int.Parse(buildStruct.name);
-                    var s = ct.structTypes[id];
-                    var t = ct.structTemplate[s];
+                    var s = buildStruct.name;
+                    var t = ct.structsInfo.Get(s).template;
                     var m = STool.CopyComponentTo(t.GetComponent<MeshRenderer>(), buildObject);
                     m.material = ct.trasparentMat;
                     m.material.color -= new Color(0, 0, 0, 0.8f);

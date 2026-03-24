@@ -246,8 +246,8 @@ public class Bodies
 			return strobj;
 		if (!strobj || strobj.name == "new")
 		{
-			if(ct.structTemplate.TryGetValue(strct.type, out var ob))
-				strobj = Object.Instantiate(ob);
+			if(ct.structsInfo.TryGet(strct.type, strct.type, out var info))
+				strobj = Object.Instantiate(info.template);
 			else
 			{
 				ct.log.Write("Bodies", $"the struct {strct.type} doesn't exist");
