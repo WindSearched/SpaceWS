@@ -80,13 +80,6 @@ public static class ct
     public static Bodies bodies = new();
     public static MouseRaycast mousecast;
 
-    /// <summary>
-    /// all type of mesh loaded
-    /// </summary>
-    // public static Dictionary<string, Mesh> meshTypes = new();
-    // public static Dictionary<string, LogicalFace[]> meshFaces = new();
-    // public static Dictionary<string, StructData> structDatas = new();
-    // public static Dictionary<string, Dictionary<string, Material>>  materials = new();
     public static Dictionary<string, GameObject> structTemplate = new();
     public static Dictionary<string, SMesh.RuntimeFace[]>  structFaces = new();
     public static Dictionary<string, GameObject> structFaceTemplates = new();
@@ -368,37 +361,5 @@ public static class SMath
             sprite = LoadFromPNG(filePath, pixelsPerUnit, pivot);
             return sprite != null;
         }
-    }
-}
-
-
-public class STable<TLin, TCol, TVal>
-{
-    public Dictionary<TLin, Dictionary<TCol, TVal>> table = new();
-
-    public void AddLine(TLin line)
-    {
-        table.Add(line, new Dictionary<TCol, TVal>());
-    }
-
-    public bool ExistsLine(TLin line)
-    {
-        return table.ContainsKey(line);
-    }
-
-    public bool TryAddLine(TLin line)
-    {
-        bool b = ExistsLine(line);
-        if (!b)
-        {
-            AddLine(line);
-        }
-
-        return b;
-    }
-
-    public bool ExistsColumn(TLin lin,TCol col)
-    {
-        return table[lin].ContainsKey(col);
     }
 }

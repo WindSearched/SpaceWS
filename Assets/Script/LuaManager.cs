@@ -18,10 +18,10 @@ public class LuaManager : MonoBehaviour
         env = new LuaEnv();
     }
 
-    private void OnDestroy()
-    {
-        env.Dispose();
-    }
+    // private void OnDestroy()
+    // {
+    //     env.Dispose();
+    // }
 }
 
 public class Mod
@@ -37,13 +37,26 @@ public class Mod
         env.Global.Set("Command",(Action<string>)ct.command.Load);
         env.Global.Set("swapPage",(Action<string>)ct.pages.Swap);
         env.Global.Set("AddStructOBJ",(Action<string,string>)AddStructFromOBJ);
-
         env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
         env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,int,string,GameObject>)ct.bodies.LoadStruct);
+        env.Global.Set("AddChunkGenerator", (Action <ChunkGenerator>) ct.chunkLoader.AddGenerator);
+        env.Global.Set("RandomFlt", (Func<int,float,float, float>)ct.curWorldRule.RandFlt);
+        env.Global.Set("RandomInt", (Func<int,int,int, int>)ct.curWorldRule.RandInt);
+        env.Global.Set("GetNewBodyIndex", (Func<int>)(() => ct.curWorldRule.distribuiteBodyIndex));
+
+        //class
+        env.Global.Set("Chunk", typeof(Chunk));
+        env.Global.Set("StructState", typeof(StructState));
+        env.Global.Set("BodyState", typeof(BodyState));
+        env.Global.Set("Loc", typeof(Loc));
+        env.Global.Set("Quater", typeof(Quater));
+        env.Global.Set("V3I", typeof(V3I));
+        env.Global.Set("V3", typeof(V3));
+
+        env.Global.Set("LocNew", (Func<float, float, float, float, float, float, Loc>)(
+            (x, y, z, rx, ry, rz) => new Loc(x, y, z, rx, ry, rz)));
 
         LoadMod();
-
-
     }
 
 
@@ -198,4 +211,5 @@ public class Mod
 
         t.template.SetActive(false);
     }
+
 }

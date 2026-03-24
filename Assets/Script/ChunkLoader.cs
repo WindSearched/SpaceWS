@@ -141,6 +141,11 @@ public class ChunkLoader
 
         return b == null ? null : MemoryPackSerializer.Deserialize<Chunk>(b);
     }
+
+    public void AddGenerator(ChunkGenerator generator)
+    {
+        generators.Add(generator);
+    }
 }
 
 public class SPool<T>

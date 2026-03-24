@@ -7,6 +7,7 @@ using System.Text;
 using MemoryPack;
 using UnityEngine;
 using UnityEngine.Networking;
+using XLua;
 
 public static class Data
 {
@@ -202,7 +203,7 @@ public class LogicalFace
 	public int[] triangles; // 0-based 索引
 }
 
-[MemoryPackable]
+[MemoryPackable][LuaCallCSharp]
 public partial class Chunk
 {
 	[MemoryPackConstructor]

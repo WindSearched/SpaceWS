@@ -7,6 +7,7 @@ using MemoryPack;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UIElements;
+using XLua;
 using Object = UnityEngine.Object;
 
 [Serializable]
@@ -29,7 +30,7 @@ public class State
 
 }
 
-[Serializable][MemoryPackable]
+[Serializable][MemoryPackable][LuaCallCSharp]
 public partial class BodyState
 {
 	public int index;
@@ -101,13 +102,13 @@ public partial class BodyState
 		return s;
 	}
 }
-[Serializable][MemoryPackable]
+[Serializable][MemoryPackable][LuaCallCSharp]
 public partial class StructState : State
 {
 	public string type;
 	public Loc location;
 	public SMType material;
-	public float temperature = 273.15f;
+	public float temperature;
 	public float mass;
 
 	public SMType _setMaterial
@@ -116,7 +117,17 @@ public partial class StructState : State
 		{
 			material = value;
 			var md = ct.materials.Get(value.type, value.mod);
-			var sd = ct.structsData[type];
+			StructData sd;
+			if (!ct.structsData.TryGetValue(type, out var value1))
+			{
+				string s = $"the struct data of '{type}' is not exists";
+				ct.log.Write("StructState._setMaterial",s);
+				sd = new();
+			}
+			else
+			{
+				sd = value1;
+			}
 
 			mass = sd.volume * md.density;
 		}
@@ -359,7 +370,7 @@ public struct Location
 		return new Loc(this);
 	}
 }
-[MemoryPackable]
+[MemoryPackable][LuaCallCSharp]
 public partial struct V3
 {
 	public float x;
@@ -432,7 +443,7 @@ public partial struct V3
 	}
 }
 
-[MemoryPackable]
+[MemoryPackable][LuaCallCSharp]
 public partial struct V3I
 {
 	public int x;
@@ -507,6 +518,7 @@ public partial struct V3I
 	public static bool operator !=(V3I a, V3I b) => !(a == b);
 }
 
+[LuaCallCSharp]
 public struct Quater
 {
    public float x;
@@ -521,6 +533,14 @@ public struct Quater
 		w = q.w;
 	}
 
+	public Quater(float rx, float ry, float rz)
+	{
+		var q = Quaternion.Euler(rx,ry,rz);
+		x = q.x;
+		y = q.y;
+		z = q.z;
+		w = q.w;
+	}
 	public Quater(V3 rot)
 	{
 		var q = Quaternion.Euler(rot.x, rot.y, rot.z);
@@ -575,6 +595,7 @@ public struct Quater
 /// <summary>
 /// location to save
 /// </summary>
+[LuaCallCSharp]
 public struct Loc
 {
 	public V3 position;
@@ -584,6 +605,12 @@ public struct Loc
 	{
 		position = new V3(loc.position);
 		rotation = new Quater(loc.rotation);
+	}
+
+	public Loc(float x, float y, float z, float rx, float ry, float rz)
+	{
+		position = new V3(x, y, z);
+		rotation = new Quater(rx, ry, rz);
 	}
 
 	public Loc(V3 pos, V3 rot)
