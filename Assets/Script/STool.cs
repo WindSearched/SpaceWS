@@ -144,4 +144,20 @@ public partial struct SMType
         this.type = type;
         this.mod = mod;
     }
+    public override string ToString() => mod + "/" + type;
+    public static bool TryParse(string s, out  SMType smt)
+    {
+        smt = default;
+        if (!s.Contains("/")) return false;
+        var ss = s.Split('/');
+        if (ss.Length > 2) return false;
+        smt = new SMType(ss[1], ss[0]);
+        return true;
+    }
+
+    public static SMType Parse(string s)
+    {
+        var ss = s.Split('/');
+        return new SMType(ss[1], ss[0]);
+    }
 }

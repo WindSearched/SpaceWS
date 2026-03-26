@@ -98,7 +98,7 @@ public class BuildPage : MonoBehaviour
                 if (buildObject.name != buildStruct.name)
                 {
                     var s = buildStruct.name;
-                    var t = ct.structsInfo.Get(s).template;
+                    var t = ct.structsInfo.Get(SMType.Parse(s)).template;
                     var m = STool.CopyComponentTo(t.GetComponent<MeshRenderer>(), buildObject);
                     m.material = ct.trasparentMat;
                     m.material.color -= new Color(0, 0, 0, 0.8f);
@@ -108,7 +108,9 @@ public class BuildPage : MonoBehaviour
                 }
 
                 var type = g.transform.parent.name.Split(' ')[1];
-                SMesh.Face.AlignFaceToFace(buildObject,ct.structFaces[buildObjectLibrary.Read("type") as string],0,g, ct.structFaces[type], int.Parse(g.name));
+
+                var ty = buildObjectLibrary.Read("type") as string;
+                SMesh.Face.AlignFaceToFace(buildObject,ct.structsInfo.Get(SMType.Parse(ty)).faces,0,g, ct.structsInfo.Get(SMType.Parse(type)).faces, int.Parse(g.name));
             }
         };
 

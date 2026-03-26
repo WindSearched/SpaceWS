@@ -48,7 +48,7 @@ public class Log
     public void Write(string logger, string text)
     {
         Write($"[{logger}] {text}");
-        Debug.Log(logger);
+        Debug.Log(text);
     }
     public void Stop()
     {

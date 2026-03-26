@@ -105,7 +105,7 @@ public partial class BodyState
 [Serializable][MemoryPackable][LuaCallCSharp]
 public partial class StructState : State
 {
-	public string type;
+	public SMType type;
 	public Loc location;
 	public SMType material;
 	public float temperature;
@@ -137,7 +137,7 @@ public partial class StructState : State
 		using var ms = new MemoryStream();
 		using var bw = new BinaryWriter(ms, Encoding.UTF8);
 
-		bw.Write(s.type);
+		bw.Write(s.type.ToString());
 		bw.Write(s.bodyIndex);
 		bw.Write(s.isStruct);
 		bw.Write(s.location);
@@ -246,7 +246,7 @@ public class Bodies
 			return strobj;
 		if (!strobj || strobj.name == "new")
 		{
-			if(ct.structsInfo.TryGet(strct.type, strct.type, out var info))
+			if(ct.structsInfo.TryGet(SMType.Parse(strct.type), out var info))
 				strobj = Object.Instantiate(info.template);
 			else
 			{

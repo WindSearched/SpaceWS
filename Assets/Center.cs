@@ -80,13 +80,10 @@ public static class ct
     public static Bodies bodies = new();
     public static MouseRaycast mousecast;
 
-    public static Dictionary<string, SMesh.RuntimeFace[]>  structFaces = new();
-    public static Dictionary<string, GameObject> structFaceTemplates = new();
-
     public static Dictionary<string, Sprite> structIcons = new();
     public static SDict<string, ItemData> items = new();
     public static SDict<string, MaterialData> materials = new();
-    public static SDict<string, StructInfo> structsInfo = new();
+    public static SMTDict<StructInfo> structsInfo = new();
 
     public static Meth LoadAfterInconsFinishLoading
     {

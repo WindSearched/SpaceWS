@@ -106,3 +106,14 @@ public class SDict<Tkey, Tval> where Tval : class, new()
         return false;
     }
 }
+
+public class SMTDict<TVal> : SDict<string, TVal> where TVal : class, new()
+{
+    public TVal Get(SMType smt)
+    {
+        return Get(smt.type, smt.mod);
+    }
+
+    public TVal GetAbs(SMType smt) => GetAbs(smt.type, smt.mod);
+    public bool TryGet(SMType smt, out TVal value) => TryGet(smt.type, smt.mod, out value);
+}
