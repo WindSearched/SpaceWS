@@ -55,6 +55,7 @@ public class Mod
 
         env.Global.Set("LocNew", (Func<float, float, float, float, float, float, Loc>)(
             (x, y, z, rx, ry, rz) => new Loc(x, y, z, rx, ry, rz)));
+        env.Global.Set("SMTypeNew", (Func<string,string, SMType>)((type, mod) => new SMType(type, mod)));
 
         LoadMod();
     }
@@ -110,7 +111,7 @@ public class Mod
                         foreach (var i in items)
                         {
                             i.mod = name;
-                            ct.structsInfo.GetAbs(i.type).data = i;
+                            ct.structsInfo.GetAbs(i.smt).data = i;
                         }
                     }
                     else
@@ -164,7 +165,16 @@ public class Mod
             if (tk.Type == JTokenType.Object)
             {
                 list = new List<T>();
-                list.Add(Data.ReadJsonFromText<T>(path));
+
+                try
+                {
+                    var d = Data.ReadJsonFromText<T>(path);
+                    list.Add(d);
+                }
+                catch
+                {
+                    return false;
+                }
             }
             else if  (tk.Type == JTokenType.Array)
                 list = Data.ReadJson<List<T>>(tx);

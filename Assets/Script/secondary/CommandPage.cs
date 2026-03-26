@@ -53,16 +53,21 @@ public class CommandPage : MonoBehaviour
             Debug.Log(s);
             Message(s);
         });
-        ct.command.Add("load", l => // /load meteorite 0 0 0 0 0 0
+        ct.command.Add("load", l => // /load Smod/meteorite 0 0 0 0 0 0
         {
             var cu = ct.setting.chunkUnit;
 
-            var type = l.Load();
+            var t = l.Load();
+            if (!SMType.TryParse(t,  out var smt))
+            {
+                smt = ct.structsInfo.GetFirstKey(l.Load());
+            }
+
             var pos = l.LoadV3();
             var rot = l.LoadV3();
             var cp = pos.intDivision(cu);
             pos %= cu;
-            ct.bodies.LoadStruct(pos, cp, rot, -1, type);
+            ct.bodies.LoadStruct(pos, cp, rot, -1, smt);
         });
         ct.command.Add("exit", l => { ct.ExitGame(); });
         ct.command.Add("modify", l =>// modify @indicated temperature 100

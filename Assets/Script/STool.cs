@@ -162,5 +162,5 @@ public partial struct SMType
     }
 
 
-    public bool IsNull() => type == null || mod == null;
+    public bool IsNull() => type == null && mod == null;
 }

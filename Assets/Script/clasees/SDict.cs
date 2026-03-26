@@ -105,6 +105,8 @@ public class SDict<Tkey, Tval> where Tval : class, new()
         value = null;
         return false;
     }
+
+
 }
 
 public class SMTDict<TVal> : SDict<string, TVal> where TVal : class, new()
@@ -116,4 +118,13 @@ public class SMTDict<TVal> : SDict<string, TVal> where TVal : class, new()
 
     public TVal GetAbs(SMType smt) => GetAbs(smt.type, smt.mod);
     public bool TryGet(SMType smt, out TVal value) => TryGet(smt.type, smt.mod, out value);
+
+    public SMType GetFirstKey(string key)
+    {
+        if (dict.TryGetValue(key, out var line))
+        {
+            return new(key, line.Keys.First());
+        }
+        return new SMType(key, null);
+    }
 }

@@ -137,7 +137,7 @@ public partial class StructState : State
 [Serializable]
 public class StructData
 {
-	public SMType type;
+	public string type;
 	public Demand[] buildDemands;
 	public Remove remove;
 
@@ -159,6 +159,8 @@ public class StructData
 	public string mod;
 	public Sprite icon;
 	public bool externIcon;
+
+	public SMType smt => new(type, mod);
 }
 [Serializable]
 public class FaceState :State
