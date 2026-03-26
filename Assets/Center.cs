@@ -96,7 +96,6 @@ public static class ct
         }
     }
 
-    public static Dictionary<string, StructData> structsData = new();
     public static Dictionary<string, ItemData> itemsData = new();
 
     public static Dictionary<string, Sprite> indicatorSprites = new();

@@ -133,7 +133,7 @@ public static class STool
     }
 }
 
-[MemoryPackable]
+[MemoryPackable][Serializable]
 public partial struct SMType
 {
     public string type;
@@ -160,4 +160,7 @@ public partial struct SMType
         var ss = s.Split('/');
         return new SMType(ss[1], ss[0]);
     }
+
+
+    public bool IsNull() => type == null || mod == null;
 }

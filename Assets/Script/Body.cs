@@ -118,7 +118,7 @@ public partial class StructState : State
 			material = value;
 			var md = ct.materials.Get(value.type, value.mod);
 			StructData sd;
-			if (!ct.structsData.TryGetValue(type, out var value1))
+			if (!ct.structsInfo.TryGet(type, out var val))
 			{
 				string s = $"the struct data of '{type}' is not exists";
 				ct.log.Write("StructState._setMaterial",s);
@@ -126,41 +126,18 @@ public partial class StructState : State
 			}
 			else
 			{
-				sd = value1;
+				sd = val.data;
 			}
 
 			mass = sd.volume * md.density;
 		}
-	}
-	public static implicit operator byte[](StructState s)
-	{
-		using var ms = new MemoryStream();
-		using var bw = new BinaryWriter(ms, Encoding.UTF8);
-
-		bw.Write(s.type.ToString());
-		bw.Write(s.bodyIndex);
-		bw.Write(s.isStruct);
-		bw.Write(s.location);
-
-		return ms.ToArray();
-	}
-
-	public static StructState FromBytes(BinaryReader br)
-	{
-		StructState s = new();
-		s.type = br.ReadString();
-		s.bodyIndex = br.ReadInt32();
-		s.isStruct = br.ReadBoolean();
-		s.location = Loc.FromBytes(br);
-
-		return s;
 	}
 }
 
 [Serializable]
 public class StructData
 {
-	public string type;
+	public SMType type;
 	public Demand[] buildDemands;
 	public Remove remove;
 
@@ -242,11 +219,11 @@ public class Bodies
 	/// <param name="cp">relative location</param>
 	public GameObject LoadStruct(StructState strct, V3I cp, Material material = null, GameObject strobj = null)
 	{
-		if(strct.type == null)
+		if(strct.type.IsNull())
 			return strobj;
 		if (!strobj || strobj.name == "new")
 		{
-			if(ct.structsInfo.TryGet(SMType.Parse(strct.type), out var info))
+			if(ct.structsInfo.TryGet(strct.type, out var info))
 				strobj = Object.Instantiate(info.template);
 			else
 			{
@@ -290,12 +267,13 @@ public class Bodies
 
 	public GameObject LoadStruct(float px, float py, float pz,
 		int cx, int cy, int cz,
-		float rx, float ry, float rz, int index, string type) =>
-		LoadStruct(new V3(px, py, pz), new V3I(cx, cy, cz),new V3(rx, ry, rz), index, type);
+		float rx, float ry, float rz, int index, string type, string mod) =>
+		LoadStruct(new V3(px, py, pz), new V3I(cx, cy, cz),new V3(rx, ry, rz),
+			index, new(type, mod));
 
-	public GameObject LoadStruct(V3 pos, V3I cp, V3 rot,int index , string type) =>
+	public GameObject LoadStruct(V3 pos, V3I cp, V3 rot,int index , SMType type) =>
 		LoadStruct(pos, cp, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), index, type);
-	public GameObject LoadStruct(V3 pos, V3I cp, Quater rot, int index, string type)
+	public GameObject LoadStruct(V3 pos, V3I cp, Quater rot, int index, SMType type)
 	{
 		Loc loc = new Loc
 		{
@@ -317,7 +295,7 @@ public class Bodies
 	/// <param name="cp"></param>
 	/// <param name="type"></param>
 	/// <returns></returns>
-	public GameObject LoadStruct(Loc loc, V3I cp, int index, string type)
+	public GameObject LoadStruct(Loc loc, V3I cp, int index, SMType type)
 	{
 		//Dictionary<string, Material> mats = ct.materials.GetValueOrDefault(type);
 		return LoadStruct(new StructState { location = loc, type = type, bodyIndex = index}, cp /*, mat*/);

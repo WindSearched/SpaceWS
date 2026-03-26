@@ -85,37 +85,37 @@ public class CenterSystem : MonoBehaviour
         });
 
         ct.chunkLoader = new(ct.bodies);
-        ct.chunkLoader.generators.Add(chunk =>
-        {
-            var cp = chunk.position;
-            var cunit = ct.curWorldRule.chunk_unit;
-
-            V3 p = new(
-                ct.curWorldRule.RandFlt(cp.x + cp.y - cp.z,cunit, 0),
-                ct.curWorldRule.RandFlt(cp.x - cp.y - cp.z,cunit, 0),
-                ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,cunit, 0)
-                );
-            V3 r = new(
-                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0),
-                ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,360, 0),
-                ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0)
-            );
-
-            int id = ct.curWorldRule.distribuiteBodyIndex;
-            chunk.bodies.Add(new()
-            {
-                index = id,
-                location = new(p,r),
-                mass = 10
-            });
-            chunk.structs.Add(new()
-            {
-                isStruct =  true,
-                location = Loc.zero,
-                bodyIndex = id,
-                type = ct.structTypes[ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0)]
-            });
-        });
+        // ct.chunkLoader.generators.Add(chunk =>
+        // {
+        //     var cp = chunk.position;
+        //     var cunit = ct.curWorldRule.chunk_unit;
+        //
+        //     V3 p = new(
+        //         ct.curWorldRule.RandFlt(cp.x + cp.y - cp.z,cunit, 0),
+        //         ct.curWorldRule.RandFlt(cp.x - cp.y - cp.z,cunit, 0),
+        //         ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,cunit, 0)
+        //         );
+        //     V3 r = new(
+        //         ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0),
+        //         ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,360, 0),
+        //         ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0)
+        //     );
+        //
+        //     int id = ct.curWorldRule.distribuiteBodyIndex;
+        //     chunk.bodies.Add(new()
+        //     {
+        //         index = id,
+        //         location = new(p,r),
+        //         mass = 10
+        //     });
+        //     chunk.structs.Add(new()
+        //     {
+        //         isStruct =  true,
+        //         location = Loc.zero,
+        //         bodyIndex = id,
+        //         type = ct.structsInfo.GetIndexKey(ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0))
+        //     });
+        // });
         //needed load
         m_outline.SetColor("_OutlineColour", ct.setting.outlineColor.ToColor());
         m_outline.SetFloat("_Intensity", ct.setting.outlineColorIntensity);
@@ -258,9 +258,9 @@ public class CenterSystem : MonoBehaviour
                 {
                     bodyIndex = sid,
                     isStruct = true,
-                    type = ct.buildPage.buildObjectLibrary.Read("type") as string
+                    type = SMType.Parse(ct.buildPage.buildObjectLibrary.Read("type") as string),
                 };
-                if(state.type == null)
+                if(state.type.IsNull())
                     return;
                 var ng = bodies.LoadStruct(state,pcp);
                 var t = ct.buildPage.buildObject.transform;
@@ -282,7 +282,6 @@ public class CenterSystem : MonoBehaviour
         ct.log.Write("Center","Finishes to load the center");
 
         ct.mod.OnStart();
-        var t = structsData;
 
         if (ct.curWorldRule.chunkload)
         {

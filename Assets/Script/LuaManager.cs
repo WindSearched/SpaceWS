@@ -38,7 +38,7 @@ public class Mod
         env.Global.Set("swapPage",(Action<string>)ct.pages.Swap);
         env.Global.Set("AddStructOBJ",(Action<string,string>)AddStructFromOBJ);
         env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
-        env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,int,string,GameObject>)ct.bodies.LoadStruct);
+        env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,int,string, string,GameObject>)ct.bodies.LoadStruct);
         env.Global.Set("AddChunkGenerator", (Action <ChunkGenerator>) ct.chunkLoader.AddGenerator);
         env.Global.Set("RandomFlt", (Func<int,float,float, float>)ct.curWorldRule.RandFlt);
         env.Global.Set("RandomInt", (Func<int,int,int, int>)ct.curWorldRule.RandInt);
@@ -110,7 +110,7 @@ public class Mod
                         foreach (var i in items)
                         {
                             i.mod = name;
-                            ct.structsData.Add(i.type, i);
+                            ct.structsInfo.GetAbs(i.type).data = i;
                         }
                     }
                     else
