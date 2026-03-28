@@ -82,7 +82,7 @@ public static class ct
 
     public static Dictionary<string, Sprite> structIcons = new();
     public static SDict<string, ItemData> items = new();
-    public static SDict<string, MaterialData> materials = new();
+    public static SMTDict<MaterialData> materials = new();
     public static SMTDict<StructInfo> structsInfo = new();
 
     public static Meth LoadAfterInconsFinishLoading

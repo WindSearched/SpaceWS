@@ -108,6 +108,30 @@ public class Command
             return line;
         }
 
+        public object LoadObj()
+        {
+            var line = args[0]
+                .Replace("\u200B", "");
+
+            args.RemoveAt(0);
+            if (line.StartsWith("@"))
+            {
+                string s = line.TrimStart('@');
+
+                if (!LoadValMeth(s, out object obj))
+                {
+                    string m =$"The method value {s} is not exists!";
+                    ct.log.Write("Command", m);
+                    Debug.Log(m);
+                    Debug.Log(s.Length);
+                    return null;
+                }
+
+                return obj;
+            }
+            return line;
+        }
+
         public float LoadFloat()
         {
             var l = Load();

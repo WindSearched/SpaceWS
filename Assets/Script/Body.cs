@@ -111,6 +111,9 @@ public partial class StructState : State
 	public float temperature;
 	public float mass;
 
+	public bool buildable;
+	public Mixture mixture;
+
 	public SMType _setMaterial
 	{
 		set
@@ -132,6 +135,44 @@ public partial class StructState : State
 			mass = sd.volume * md.density;
 		}
 	}
+
+	public bool isMixture_ => mixture == null;
+
+	[Serializable][MemoryPackable][LuaCallCSharp]
+	public partial class Mixture
+	{
+		public List<(SMType type, float proportion)> mixture = new();
+		private float sum = 0;
+
+		public void Add(SMType type, float proportion)
+		{
+			mixture.Add((type, proportion));
+			sum +=  proportion;
+		}
+
+		/// <summary>
+		/// calculate proportion with their sum as 1
+		/// </summary>
+		/// <param name="prop"></param>
+		/// <returns></returns>
+		public float GetProportion(float prop) => prop / sum;
+
+		public float getSum_ => sum;
+		public override string ToString()
+		{
+			StringWriter sw = new();
+			sw.Write("{");
+			foreach (var m in mixture)
+			{
+				sw.Write(m.type);
+				sw.Write(",");
+				sw.Write(m.proportion);
+				sw.Write(";");
+			}
+			sw.Write("}");
+			return sw.ToString();
+		}
+	}
 }
 
 [Serializable]
@@ -141,7 +182,6 @@ public class StructData
 	public Demand[] buildDemands;
 	public Remove remove;
 
-	public float mass;
 	public float volume = -1;
 
 	[Serializable]
@@ -675,4 +715,6 @@ public class MaterialData
 	public float density;
 
 	[JsonIgnore] public string mod;
+
+	public SMType smt => new(type, mod);
 }

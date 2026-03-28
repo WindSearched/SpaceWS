@@ -11,7 +11,8 @@ public class SDict<Tkey, Tval> where Tval : class, new()
     /// Set val in dict
     /// </summary>
     /// <param name="overwrite">if has already contained the value overwrite them</param>
-    public void Set(Tkey key, Tkey tag, Tval value, bool overwrite = true)
+    public void
+        Set(Tkey key, Tkey tag, Tval value, bool overwrite = true)
     {
         if (!dict.TryGetValue(key, out Dictionary<Tkey, Tval> line))
         {
@@ -127,4 +128,6 @@ public class SMTDict<TVal> : SDict<string, TVal> where TVal : class, new()
         }
         return new SMType(key, null);
     }
+
+    public void Set(SMType smt, TVal value, bool overwrite = true) => Set(smt.type, smt.mod, value, overwrite);
 }

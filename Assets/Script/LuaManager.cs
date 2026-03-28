@@ -26,11 +26,21 @@ public class LuaManager : MonoBehaviour
 
 public class Mod
 {
+    public class New
+    {
+        public Loc loc() => new Loc();
+        public SMType smType(string type, string mod) => new SMType(type, mod);
+        public StructState.Mixture structMixture() => new();
+    }
+
     public Dictionary<string, LuaTable> mods = new();
     public string path => ct.setting.modPath;
     public void OnStart()
     {
         var env = LuaManager.instance.env;
+
+        void set<Tval>(string key, Tval val) => env.Global.Set(key, val);
+
         env.Global.Set("Log",(Action<string,string>)ct.log.Write);
         env.Global.Set("Register",(Action<string,LuaTable>)RegistMod);
         env.Global.Set("dLog",(Action<object>)Debug.Log);
@@ -52,7 +62,9 @@ public class Mod
         env.Global.Set("Quater", typeof(Quater));
         env.Global.Set("V3I", typeof(V3I));
         env.Global.Set("V3", typeof(V3));
+        set("StructMixture", typeof(StructState.Mixture));
 
+        set("new", new New());
         env.Global.Set("LocNew", (Func<float, float, float, float, float, float, Loc>)(
             (x, y, z, rx, ry, rz) => new Loc(x, y, z, rx, ry, rz)));
         env.Global.Set("SMTypeNew", (Func<string,string, SMType>)((type, mod) => new SMType(type, mod)));
@@ -153,6 +165,28 @@ public class Mod
                     {
                         string fileName =  Data.GetFileName(ppp);
                         ct.structIcons.Add(fileName, spr);
+                    }
+                }
+            }
+
+            ppp = pp + "/materials";
+            if (Data.DirectioryExists(ppp))
+            {
+                foreach (var f in Directory.GetFiles(ppp))
+                {
+                    if (LoadJson(f, out List<MaterialData> materials))
+                    {
+                        foreach (var i in materials)
+                        {
+                            i.mod = name;
+                            ct.materials.Set(i.smt, i);
+                        }
+                    }
+                    else
+                    {
+                        string l = $"The json file of {name} in {f} for load material data is not valid";
+                        Debug.Log(l);
+                        ct.log.Write("ModLoader", l);
                     }
                 }
             }

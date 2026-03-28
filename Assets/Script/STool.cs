@@ -131,6 +131,49 @@ public static class STool
             return Convert.ChangeType(value, type);
         }
     }
+
+    /// <summary>
+    /// 通过反射获取对象中指定路径的内部实例，并返回它的 ToString()
+    /// </summary>
+    /// <param name="obj">外部对象实例</param>
+    /// <param name="path">属性或字段路径，例如 "Addr" 或 "Department.Manager"</param>
+    /// <returns>内部对象的 ToString() 或 null</returns>
+    public static string GetNestedToString(object obj, string path)
+    {
+        if (obj == null || string.IsNullOrEmpty(path))
+            return null;
+
+        string[] parts = path.Split('.');
+        object current = obj;
+        Type currentType = obj.GetType();
+
+        foreach (var part in parts)
+        {
+            // 先尝试属性
+            PropertyInfo prop = currentType.GetProperty(part);
+            if (prop != null)
+            {
+                current = prop.GetValue(current);
+                currentType = prop.PropertyType;
+                continue;
+            }
+
+            // 再尝试字段
+            FieldInfo field = currentType.GetField(part);
+            if (field != null)
+            {
+                current = field.GetValue(current);
+                currentType = field.FieldType;
+                continue;
+            }
+
+            // 没找到
+            return null;
+        }
+
+        return current?.ToString();
+    }
+
 }
 
 [MemoryPackable][Serializable]

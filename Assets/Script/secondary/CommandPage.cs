@@ -92,11 +92,38 @@ public class CommandPage : MonoBehaviour
             int id = int.Parse(l.Load());
             ct.bodies.AddHeat(id, l.LoadFloat());
         });
+        ct.command.Add("print", l =>// print @indicatedO mixture
+        {
+            object o = l.LoadObj();
+
+            string s = "";
+
+            if (o is GameObject g)//get struct state
+            {
+                int id = int.Parse(g.transform.parent.parent.name);
+                var ss = ct.bodies.datas[id].structs[int.Parse(g.name)];
+                string vt = l.Load();
+                s= STool.GetNestedToString(ss, vt);
+            }
+            else if(o == null)
+            {
+                return;
+            }
+            else
+            {
+                s = o.ToString();
+            }
+
+            if (s == "") return;
+            ct.log.Write("cmd.print", s);
+            Message(s);
+        });
 
         ct.command.AddValueMethod("rand", () => //@rand
             SMath.Random(int.MaxValue, int.MinValue));
         ct.command.AddValueMethod("indicated", () => //@indicated
             ct.mouseCasted ? ct.mouseCasted.transform.parent.parent.name : "0");
+        ct.command.AddValueMethod("indicatedO", () => ct.mouseCasted);
     }
 
     private void ToCommand(InputAction.CallbackContext context)
