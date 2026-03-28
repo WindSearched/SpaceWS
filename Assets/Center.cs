@@ -365,6 +365,8 @@ public class StructInfo
 {
     public GameObject template;
     public SMesh.RuntimeFace[]  faces;
+    public SMesh.RuntimeFace[] connectorFaces;
     public GameObject facesTamplate;
+    public GameObject connectorTamplate;
     public StructData data;
 }

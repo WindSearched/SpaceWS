@@ -253,6 +253,8 @@ public class Mod
         i.template = t.template;
         i.faces = t.faces;
         i.facesTamplate = t.facesTemp;
+        i.connectorFaces = t.connectors;
+        i.connectorTamplate = t.connectorsTemplate;
 
         t.template.SetActive(false);
     }

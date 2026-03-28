@@ -7,203 +7,6 @@ using Object = UnityEngine.Object;
 
 public static class SMesh
 {
-	public static Mesh LoadMeshFromOBJ(string objFilePath, Material material = null)
-	{
-		string fullPath = Path.Combine(Application.dataPath, objFilePath);
-		if (!File.Exists(fullPath))
-		{
-			Debug.LogError("OBJ 文件不存在: " + fullPath);
-			return null;
-		}
-
-		string[] lines = File.ReadAllLines(fullPath);
-		return LoadMeshFromOBJ(lines);
-	}
-
-	public static Mesh LoadMeshFromTextOBJ(string txt)
-	{
-		string[] ls = txt.Split('\n');
-		return LoadMeshFromOBJ(ls);
-	}
-
-	public static Mesh LoadMeshFromOBJ(string[] lines)
-	{
-		List<Vector3> vertices = new List<Vector3>();
-		List<int> triangles = new List<int>();
-
-		foreach (var line in lines)
-		{
-			if (line.StartsWith("v "))
-			{
-				// 顶点
-				string[] parts = line.Split(' ');
-				float x = float.Parse(parts[1]);
-				float y = float.Parse(parts[2]);
-				float z = float.Parse(parts[3]);
-				vertices.Add(new Vector3(x, y, z));
-			}
-			else if (line.StartsWith("f "))
-			{
-				// 面（假设三角形或多边形，做扇形三角化）
-				string[] parts = line.Split(' ');
-				int[] faceIndices = new int[parts.Length - 1];
-				for (int i = 1; i < parts.Length; i++)
-				{
-					faceIndices[i - 1] = int.Parse(parts[i].Split('/')[0]) - 1; // 顶点索引从0开始
-				}
-
-				// 多边形三角化（扇形法）
-				for (int i = 1; i < faceIndices.Length - 1; i++)
-				{
-					triangles.Add(faceIndices[0]);
-					triangles.Add(faceIndices[i]);
-					triangles.Add(faceIndices[i + 1]);
-				}
-			}
-		}
-
-		// 创建 Mesh
-		Mesh mesh = new Mesh
-		{
-			vertices = vertices.ToArray(),
-			triangles = triangles.ToArray()
-		};
-		mesh.RecalculateNormals();
-		mesh.RecalculateBounds();
-
-
-
-		return mesh;
-	}
-
-	/// <summary>
-	/// load faces by ogg file path
-	/// </summary>
-	/// <param name="path"></param>
-	/// <returns></returns>
-	public static LogicalFace[] LoadFacesOGG(string path)
-	{
-		if (!File.Exists(path))
-		{
-			Debug.LogError("OBJ 文件不存在: " + path);
-			return null;
-		}
-
-		return GetFacesOGG(File.ReadAllLines(path));
-	}
-
-	/// <summary>
-	/// get faces from ogg file lines
-	/// </summary>
-	/// <param name="lines"></param>
-	/// <returns></returns>
-	public static LogicalFace[] GetFacesOGG(string[] lines)
-	{
-		List<Vector3> vertexList = new List<Vector3>();
-		List<LogicalFace> faceList = new List<LogicalFace>();
-
-		foreach (string line in lines)
-		{
-			if (line.StartsWith("v "))
-			{
-				string[] parts = line.Split(' ');
-				float x = float.Parse(parts[1]);
-				float y = float.Parse(parts[2]);
-				float z = float.Parse(parts[3]);
-				vertexList.Add(new Vector3(x, y, z));
-			}
-			else if (line.StartsWith("f "))
-			{
-				string[] parts = line.Substring(2).Split(' ');
-				int[] indices = new int[parts.Length];
-				Vector3[] faceVerts = new Vector3[parts.Length];
-
-				for (int i = 0; i < parts.Length; i++)
-				{
-					string s = parts[i].Split('/')[0]; // 取顶点索引
-					int idx = int.Parse(s) - 1; // OBJ 索引从1开始
-					indices[i] = i; // 三角化用本地索引
-					faceVerts[i] = vertexList[idx];
-				}
-
-				// 三角化（如果是四边形或更多顶点）
-				List<int> tris = new List<int>();
-				for (int i = 1; i < faceVerts.Length - 1; i++)
-				{
-					tris.Add(0);
-					tris.Add(i);
-					tris.Add(i + 1);
-				}
-
-				faceList.Add(new LogicalFace()
-				{
-					vertices = faceVerts,
-					triangles = tris.ToArray()
-				});
-			}
-		}
-
-		return faceList.ToArray();
-	}
-
-	/// <summary>
-	/// get faces from ogg file text
-	/// </summary>
-	/// <param name="text"></param>
-	/// <returns></returns>
-	public static LogicalFace[] GetFacesOGG(string text) => GetFacesOGG(text.Split('\n'));
-
-	/// <summary>
-	/// get mesh from logical faces
-	/// </summary>
-	/// <param name="faces"></param>
-	/// <returns></returns>
-	public static Mesh GetMesh(LogicalFace[] faces)
-	{
-		Mesh mesh = new Mesh();
-		List<Vector3> verts = new List<Vector3>();
-		List<int> tris = new List<int>();
-
-		int vertOffset = 0;
-		foreach (var face in faces)
-		{
-			verts.AddRange(face.vertices);
-			for (int i = 0; i < face.triangles.Length; i++)
-			{
-				tris.Add(face.triangles[i] + vertOffset);
-			}
-
-			vertOffset += face.vertices.Length;
-		}
-
-		mesh.vertices = verts.ToArray();
-		mesh.triangles = tris.ToArray();
-		mesh.RecalculateNormals();
-		mesh.RecalculateBounds();
-
-		return mesh;
-	}
-
-	public static (Mesh mesh, LogicalFace[] faces) LoadStructInfoOGG(string[] lines)
-	{
-		LogicalFace[] faces = GetFacesOGG(lines);
-		Mesh mesh = GetMesh(faces);
-		return (mesh, faces);
-	}
-
-	public static (Mesh mesh, LogicalFace[] faces) LoadStructInfoOGG(string text) =>
-		LoadStructInfoOGG(text.Split('\n'));
-
-	public static (Mesh mesh, LogicalFace[] faces) GetStructInfoOGG(string path)
-	{
-		if (!File.Exists(path))
-		{
-			Debug.LogError("OBJ 文件不存在: " + path);
-			return default;
-		}
-
-		return LoadStructInfoOGG(File.ReadAllLines(path));
-	}
 
 	/// <summary>
 	/// add mesh to target gameobject
@@ -295,108 +98,6 @@ public static class SMesh
 		return indices.ToArray();
 	}
 
-	static Vector3 GetFaceCenter(Vector3[] verts)
-	{
-		Vector3 sum = Vector3.zero;
-		foreach (var v in verts) sum += v;
-		return sum / verts.Length;
-	}
-
-	static Vector3 GetFaceNormal(Vector3[] verts)
-	{
-		return Vector3.Normalize(
-			Vector3.Cross(verts[1] - verts[0], verts[2] - verts[0])
-		);
-	}
-
-	static Quaternion GetFaceRotation(Vector3[] verts)
-	{
-		Vector3 normal = GetFaceNormal(verts);
-		Vector3 tangent = Vector3.Normalize(verts[1] - verts[0]);
-		Vector3 bitangent = Vector3.Cross(normal, tangent);
-		return Quaternion.LookRotation(normal, bitangent);
-	}
-
-	static Vector3[] GetWorldFaceVertices(Transform t, LogicalFace face)
-	{
-		Vector3[] world = new Vector3[face.triangles.Length];
-		for (int i = 0; i < face.triangles.Length; i++)
-		{
-			world[i] = t.TransformPoint(face.vertices[face.triangles[i]]);
-		}
-
-		return world;
-	}
-
-	/// <param name="sourceMesh"></param>
-	/// <param name="logicalFaces"></param>
-	/// <param name="baseSubMeshIndex">usually is 0</param>
-	/// <returns></returns>
-	public static Mesh ToSubmesh(
-		Mesh sourceMesh,
-		List<int[]> logicalFaces,
-		out int baseSubMeshIndex
-	)
-	{
-		//复制 Mesh（关键：不破坏原始资源）
-		Mesh mesh = Object.Instantiate(sourceMesh);
-
-		int[] allTriangles = mesh.triangles;
-		int triangleCount = allTriangles.Length / 3;
-
-		// SubMesh 0：未被逻辑面使用的三角形
-		// SubMesh 1..n：每个逻辑面
-		mesh.subMeshCount = logicalFaces.Count + 1;
-		baseSubMeshIndex = 0;
-
-		// 收集被逻辑面占用的 triangleIndex
-		HashSet<int> usedTriangleSet = new HashSet<int>();
-		foreach (var face in logicalFaces)
-		{
-			foreach (int tri in face)
-			{
-				usedTriangleSet.Add(tri);
-			}
-		}
-
-		// 构建 SubMesh 0（剩余部分）
-		List<int> restTriangles = new List<int>();
-
-		for (int i = 0; i < triangleCount; i++)
-		{
-			if (!usedTriangleSet.Contains(i))
-			{
-				restTriangles.Add(allTriangles[i * 3 + 0]);
-				restTriangles.Add(allTriangles[i * 3 + 1]);
-				restTriangles.Add(allTriangles[i * 3 + 2]);
-			}
-		}
-
-		mesh.SetTriangles(restTriangles, 0);
-
-		//为每个逻辑面生成一个 SubMesh
-		for (int faceIndex = 0; faceIndex < logicalFaces.Count; faceIndex++)
-		{
-			List<int> faceTriangles = new List<int>();
-
-			foreach (int tri in logicalFaces[faceIndex])
-			{
-				faceTriangles.Add(allTriangles[tri * 3 + 0]);
-				faceTriangles.Add(allTriangles[tri * 3 + 1]);
-				faceTriangles.Add(allTriangles[tri * 3 + 2]);
-			}
-
-			mesh.SetTriangles(faceTriangles, faceIndex + 1);
-		}
-
-		// 可选：重新计算（视情况）
-		mesh.RecalculateBounds();
-		// mesh.RecalculateNormals(); // 若未修改顶点，一般不需要
-
-		return mesh;
-	}
-
-
 	/// <summary>
 	/// a test obj file to load a cube
 	/// </summary>
@@ -483,6 +184,7 @@ public static class SMesh
 			public List<Vector2> uvs = new();
 			public List<Vector3> norms = new();
 			public List<ObjFace> faces = new();
+			public List<ObjFace> connectors = new();
 		}
 
 		// =========================
@@ -532,6 +234,11 @@ public static class SMesh
 							face.verts.Add(ParseFaceIndex(p[i]));
 
 						data.faces.Add(face);
+						break;
+					}
+					case "cf":
+					{
+						data.connectors.Add(data.faces[int.Parse(p[0])]);
 						break;
 					}
 				}
@@ -624,10 +331,12 @@ public static class SMesh
 		static Vector3 ParseVec3(string[] p) =>
 			new Vector3(ParseFloat(p[1]), ParseFloat(p[2]), ParseFloat(p[3]));
 
-		public static (GameObject template, GameObject facesTemp, RuntimeFace[] faces) CreateTemplate(string objPath, string mtlPath, string textureRoot, string name)
+		public static (GameObject template, GameObject facesTemp, RuntimeFace[] faces, RuntimeFace[] connectors, GameObject connectorsTemplate)
+			CreateTemplate(string objPath, string mtlPath, string textureRoot, string name)
 		{
 			var data = Parse(objPath);
 			var fs = Face.BuildRuntimeFaces(data);
+			var cfs = Face.BuildConnectorFaces(data);
 			Mesh mesh = BuildMesh(
 				data,
 				out List<string> subMeshMats
@@ -680,10 +389,14 @@ public static class SMesh
 			GameObject ft = new GameObject(name);
 			ft.transform.SetParent(ct.structFacesTemplateParent);
 			ft.SetActive(false);
-
 			Face.CreateFace(fs, ms, ft.transform);
 
-			return new(go, ft, fs);
+			GameObject cft = new GameObject(name);
+			cft.transform.SetParent(ct.structFacesTemplateParent);
+			cft.SetActive(false);
+			Face.CreateFace(cfs, ms, cft.transform);
+
+			return new(go, ft, fs, cfs, cft);
 		}
 	}
 
@@ -913,6 +626,31 @@ public static class SMesh
 
 			return faces;
 		}
+
+		public static RuntimeFace[] BuildConnectorFaces(
+			ObjTemp.ObjData obj
+		)
+		{
+			var faces = new RuntimeFace[obj.connectors.Count];
+
+			for (int i = 0; i < obj.connectors.Count; i++)
+			{
+				var src = obj.connectors[i];
+				var verts = new Vector3[src.verts.Count];
+
+				for (int v = 0; v < src.verts.Count; v++)
+					verts[v] = obj.verts[src.verts[v].v];
+
+				faces[i] = new RuntimeFace
+				{
+					localVerts = verts,
+					localNormal = ComputeFaceNormal(verts)
+				};
+			}
+
+			return faces;
+		}
+
 		static Vector3 ComputeFaceNormal(Vector3[] verts)
 		{
 			if (verts.Length < 3)

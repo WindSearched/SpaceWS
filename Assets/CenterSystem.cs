@@ -205,9 +205,9 @@ public class CenterSystem : MonoBehaviour
                 var type = bodies.datas[int.Parse(id)].structs[strid].type;//get object type
                 var g = Instantiate(structsInfo.Get(SMType.Parse(id)).facesTamplate);
                 g.name = id + " " + type;
-                g.SetActive(true);
+                g.GetComponent<MeshCollider>().enabled = true;
                 g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
-                c.SetActive(false);
+                c.GetComponent<MeshCollider>().enabled = false;
                 ct.sCamera.ChangeTarget(g);
                 //save
                 s.storer.Add("str", c);//save true struct
@@ -223,8 +223,8 @@ public class CenterSystem : MonoBehaviour
             var str = s.storer.Get("str") as GameObject;
             var faced = s.storer.Get("faced") as GameObject;
 
-            str.SetActive(true);
-            faced.SetActive(false);
+            str.GetComponent<MeshCollider>().enabled = false;
+            faced.GetComponent<MeshCollider>().enabled = true;
             Destroy(faced);
 
             sCamera.ChangeTarget(ct.player);
