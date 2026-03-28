@@ -238,7 +238,7 @@ public static class SMesh
 					}
 					case "cf":
 					{
-						data.connectors.Add(data.faces[int.Parse(p[0])]);
+						data.connectors.Add(data.faces[int.Parse(p[1])]);
 						break;
 					}
 				}

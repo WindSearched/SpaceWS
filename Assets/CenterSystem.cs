@@ -202,9 +202,8 @@ public class CenterSystem : MonoBehaviour
                 //load objects
                 var id = c.transform.parent.parent.gameObject.name;//index of struct's body
                 int strid = int.Parse(c.name);//index of struct in whose body
-                Debug.Log(id);
                 var type = bodies.datas[int.Parse(id)].structs[strid].type;//get object type
-                var g = Instantiate(structsInfo.Get(type).facesTamplate);
+                var g = Instantiate(structsInfo.Get(type).connectorTamplate);
                 g.name = id + " " + type;
                 g.SetActive(true);
                 g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
