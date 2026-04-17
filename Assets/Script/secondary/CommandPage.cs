@@ -65,9 +65,7 @@ public class CommandPage : MonoBehaviour
 
             var pos = l.LoadV3();
             var rot = l.LoadV3();
-            var cp = pos.intDivision(cu);
-            pos %= cu;
-            ct.bodies.LoadStruct(pos, cp, rot, -1, smt);
+            ct.bodies.LoadStruct(pos, rot, -1, smt);
         });
         ct.command.Add("exit", l => { ct.ExitGame(); });
         ct.command.Add("modify", l =>// modify @indicated temperature 100

@@ -31,6 +31,7 @@ public class Mod
         public Loc loc() => new Loc();
         public SMType smType(string type, string mod) => new SMType(type, mod);
         public StructState.Mixture structMixture() => new();
+        public StructState structState() => new();
     }
 
     public Dictionary<string, LuaTable> mods = new();
@@ -48,7 +49,7 @@ public class Mod
         env.Global.Set("swapPage",(Action<string>)ct.pages.Swap);
         env.Global.Set("AddStructOBJ",(Action<string,string>)AddStructFromOBJ);
         env.Global.Set("GetFile",(Func<string,string,string>)ModGetFile);
-        env.Global.Set("LoadStruct",(Func<float,float,float,int,int,int,float,float,float,int,string, string,GameObject>)ct.bodies.LoadStruct);
+        env.Global.Set("LoadStruct",(Func<float,float,float,float,float,float,int,string, string,GameObject>)ct.bodies.LoadStruct);
         env.Global.Set("AddChunkGenerator", (Action <ChunkGenerator>) ct.chunkLoader.AddGenerator);
         env.Global.Set("RandomFlt", (Func<int,float,float, float>)ct.curWorldRule.RandFlt);
         env.Global.Set("RandomInt", (Func<int,int,int, int>)ct.curWorldRule.RandInt);

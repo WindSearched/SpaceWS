@@ -106,10 +106,14 @@ public partial class BodyState
 public partial class StructState : State
 {
 	public SMType type;
-	public Loc location;
+	public Loc relativeLocation;
+	public Loc absoluteLocation;
+
 	public SMType material;
 	public float temperature;
 	public float mass;
+
+	public float choosedRecipeIndex = 0;
 
 	public bool buildable;
 	public Mixture mixture;
@@ -173,29 +177,53 @@ public partial class StructState : State
 			return sw.ToString();
 		}
 	}
+
+	public Loc _absLoc
+	{
+		set
+		{
+			absoluteLocation = value;
+			relativeLocation = new(value.position / ct.setting.chunkUnit, value.rotation);
+		}
+	}
+
+	public void Locate(GameObject g)
+	{
+		g.transform.SetPositionAndRotation(absoluteLocation.position.ToVector3(), absoluteLocation.rotation.ToQuaternion());
+	}
 }
 
 [Serializable]
 public class StructData
 {
 	public string type;
-	public Demand[] buildDemands;
-	public Remove remove;
-
 	public float volume = -1;
+	public Factory factory;
 
 	[Serializable]
-	public struct Demand
+	public class Factory
 	{
-		public string itemType;
-		public int quantity;
+		public float heatRelease;
+		public List<Recipe> recipes;
+
+		[Serializable]
+		public class Recipe
+		{
+			public List<mat> materials;
+			public List<mat> structMaterials;
+			public List<mat> products;
+			public float productionTime;
+
+			public struct mat
+			{
+				public SMType type;
+				public int quantity;
+			}
+		}
 	}
-	[Serializable]
-	public struct Remove
-	{
-		public float time;
-		public Demand[] remains;
-	}
+
+	public bool isFactory_ => factory != null;
+
 	public string mod;
 	public Sprite icon;
 	public bool externIcon;
@@ -232,9 +260,8 @@ public class Bodies
 	public Dictionary<int, obj> objects = new();
 
 	/// <param name="index"></param>
-	/// <param name="loc">relative location</param>
-	/// <param name="cp"></param>
-	public void LoadVoidBody(int index, Loc loc, V3I cp)
+	/// <param name="loc">absolute location</param>
+	public void LoadVoidBody(int index, Loc loc)
 	{
 		datas.Add(index, new body()
 		{
@@ -247,7 +274,7 @@ public class Bodies
 		});
 		var g = GameObject.Instantiate(ct.defualtBody, ct.bodiesParent);
 		g.name = index.ToString();
-		loc.LocateHere(g,cp);
+		loc.LocateHere(g);
 		objects.Add(index, new obj()
 		{
 			self = g,
@@ -258,8 +285,7 @@ public class Bodies
 		});
 	}
 
-	/// <param name="cp">relative location</param>
-	public GameObject LoadStruct(StructState strct, V3I cp, Material material = null, GameObject strobj = null)
+	public GameObject LoadStruct(StructState strct, Material material = null, GameObject strobj = null)
 	{
 		if(strct.type.IsNull())
 			return strobj;
@@ -278,7 +304,7 @@ public class Bodies
 		strobj.tag = "struct";
 		strobj.name = datas[strct.bodyIndex].structs.Count.ToString();
 
-		strct.location.LocateHere(strobj, cp);
+		strct.Locate(strobj);
 		objects[strct.bodyIndex].structs.Add(strobj);
 		strobj.SetActive(true);
 
@@ -308,14 +334,13 @@ public class Bodies
 	}
 
 	public GameObject LoadStruct(float px, float py, float pz,
-		int cx, int cy, int cz,
 		float rx, float ry, float rz, int index, string type, string mod) =>
-		LoadStruct(new V3(px, py, pz), new V3I(cx, cy, cz),new V3(rx, ry, rz),
+		LoadStruct(new V3(px, py, pz),new V3(rx, ry, rz),
 			index, new(type, mod));
 
-	public GameObject LoadStruct(V3 pos, V3I cp, V3 rot,int index , SMType type) =>
-		LoadStruct(pos, cp, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), index, type);
-	public GameObject LoadStruct(V3 pos, V3I cp, Quater rot, int index, SMType type)
+	public GameObject LoadStruct(V3 pos, V3 rot,int index , SMType type) =>
+		LoadStruct(pos, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), index, type);
+	public GameObject LoadStruct(V3 pos, Quater rot, int index, SMType type)
 	{
 		Loc loc = new Loc
 		{
@@ -325,9 +350,9 @@ public class Bodies
 		if (index == -1)
 		{
 			index = ct.curWorldRule.distribuiteBodyIndex;
-			LoadVoidBody(index, loc, cp);
+			LoadVoidBody(index, loc);
 		}
-		return LoadStruct(loc, cp, index,type);
+		return LoadStruct(loc, index,type);
 	}
 
 	/// <summary>
@@ -337,10 +362,10 @@ public class Bodies
 	/// <param name="cp"></param>
 	/// <param name="type"></param>
 	/// <returns></returns>
-	public GameObject LoadStruct(Loc loc, V3I cp, int index, SMType type)
+	public GameObject LoadStruct(Loc loc, int index, SMType type)
 	{
 		//Dictionary<string, Material> mats = ct.materials.GetValueOrDefault(type);
-		return LoadStruct(new StructState { location = loc, type = type, bodyIndex = index}, cp /*, mat*/);
+		return LoadStruct(new StructState { _absLoc = loc, type = type, bodyIndex = index} /*, mat*/);
 	}
 
 
@@ -374,6 +399,22 @@ public class Bodies
 				mr.renderingLayerMask = 1;//00000001
 			}
 		}
+	}
+
+	/// <summary>
+	/// absorb a struct on a other
+	/// </summary>
+	/// <param name="adsorber">data of struct as the anchor</param>
+	/// <param name="adsorbed">data of struct adsorbed on the anchor struct</param>
+	public void Adsorption((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int index, int face) adsorber)
+	{
+		if (!adsorbed.obj)
+			LoadStruct(adsorbed.state , strobj: adsorbed.obj);
+
+		SMesh.Face.AlignFaceToFace(adsorbed.obj,ct.structsInfo.Get(adsorbed.state.bodyIndex).faces, adsorbed.face
+			,adsorber.obj, ct.structsInfo.Get(adsorber.index).faces, adsorber.face);
+
+
 	}
 }
 
@@ -429,7 +470,15 @@ public partial struct V3
 	{
 		return new(p.x + ip.x, p.y + ip.y, p.z + ip.z);
 	}
+	public static V3 operator +(V3 p, V3 pp)
+	{
+		return new(p.x + pp.x, p.y + pp.y, p.z + pp.z);
+	}
 
+	public static V3 operator *(V3 p, float f)
+	{
+		return new(p.x * f, p.y * f, p.z * f);
+	}
 	public static V3 operator /(V3 p, float n)
 	{
 		return new(p.x / n, p.y / n, p.z / n);
@@ -638,6 +687,11 @@ public struct Loc
 		position = pos;
 		rotation = new Quater(rot);
 	}
+	public Loc(V3 pos, Quater rot)
+	{
+		position = pos;
+		rotation = rot;
+	}
 
 	public Location ToLocation()
 	{
@@ -645,17 +699,6 @@ public struct Loc
 		loc.position = position.ToVector3();
 		loc.rotation = rotation.ToQuaternion();
 		return loc;
-	}
-	/// <summary>
-	/// locate here with relative position
-	/// </summary>
-	/// <param name="target"></param>
-	/// <param name="cp">chunk position</param>
-	public void LocateHere(GameObject target, V3I cp)
-	{
-		var t = target.transform;
-		var p = position + cp * ct.setting.chunkUnit;
-		t.SetPositionAndRotation(p.ToVector3(), rotation.ToQuaternion());
 	}
 
 	/// <summary>
@@ -693,6 +736,12 @@ public struct Loc
 
 		return l;
 	}
+
+	public void LocateHere(GameObject target)
+	{
+		var t = target.transform;
+		t.SetPositionAndRotation(position.ToVector3(), rotation.ToQuaternion());
+	}
 }
 [Serializable]
 public class ItemData
@@ -717,4 +766,34 @@ public class MaterialData
 	[JsonIgnore] public string mod;
 
 	public SMType smt => new(type, mod);
+}
+
+public struct SPos
+{
+	public V3 position;
+	public V3 offset;
+	public float power;
+
+	public V3 Get() => position * power + offset;
+
+	public SPos(V3 pos, V3 offset, float power)
+	{
+		position = pos;
+		this.offset = offset;
+		this.power = power;
+	}
+
+	public SPos(V3 pos, V3 offset)
+	{
+		position = pos;
+		this.offset = offset;
+		power = ct.setting.chunkUnit;
+	}
+
+	public SPos(V3 offset)
+	{
+		this.offset = offset;
+		position = V3.zero;
+		power = 0;
+	}
 }

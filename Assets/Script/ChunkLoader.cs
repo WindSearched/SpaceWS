@@ -41,7 +41,7 @@ public class ChunkLoader
                 {
                     foreach (var s in list)
                     {
-                        bodies.LoadVoidBody(s.index,s.location,chunk.position);
+                        bodies.LoadVoidBody(s.index,s.location);
                     }
                 },
                 of++
@@ -57,7 +57,7 @@ public class ChunkLoader
                 {
                     foreach (var state in list)
                     {
-                        bodies.LoadStruct(state, chunk.position ,strobj:structPool. Get());
+                        bodies.LoadStruct(state ,strobj:structPool. Get());
                     }
                 },
                 offset = of++

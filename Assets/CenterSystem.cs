@@ -253,7 +253,6 @@ public class CenterSystem : MonoBehaviour
                 int fid = int.Parse(c.name);
                 string[] ss = c.transform.parent.name.Split(" ");
                 int sid = int.Parse(ss[0]);
-                string type = ss[1];
                 var state = new StructState
                 {
                     bodyIndex = sid,
@@ -262,9 +261,13 @@ public class CenterSystem : MonoBehaviour
                 };
                 if(state.type.IsNull())
                     return;
-                var ng = bodies.LoadStruct(state,pcp);
+                var ng = bodies.LoadStruct(state);
                 var t = ct.buildPage.buildObject.transform;
                 ng.transform.SetPositionAndRotation(t.position, t.rotation);
+
+                //add struct in target state
+                var ts = bodies.datas[int.Parse(t.parent.parent.name)].structs[int.Parse(t.name)];
+
             }
         };
 
