@@ -11,7 +11,8 @@ public class Late : MonoBehaviour
             {
                 Tick.Reg(t =>
                 {
-                    Tick.Cor(Projector.ProjectAsync(ct.structsInfo.Get(SMType.Parse(type)).template, 256, 256, s => { ct.structIcons.Add(type, s); }));
+                    var info = ct.structsInfo.Get(SMType.Parse(type));
+                    Tick.Cor(Projector.ProjectAsync(info.template, 256, 256, s => { ct.structIcons.Add(type, s); }));
                 }, offset++);
             }
             Tick.Reg(_ =>

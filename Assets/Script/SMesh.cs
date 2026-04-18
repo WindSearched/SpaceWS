@@ -184,7 +184,7 @@ public static class SMesh
 			public List<Vector2> uvs = new();
 			public List<Vector3> norms = new();
 			public List<ObjFace> faces = new();
-			public List<ObjFace> connectors = new();
+			public List<int> connectors = new();//index in faces
 		}
 
 		// =========================
@@ -238,7 +238,7 @@ public static class SMesh
 					}
 					case "cf":
 					{
-						data.connectors.Add(data.faces[int.Parse(p[1])]);
+						data.connectors.Add(int.Parse(p[1]));
 						break;
 					}
 				}
@@ -336,7 +336,6 @@ public static class SMesh
 		{
 			var data = Parse(objPath);
 			var fs = Face.BuildRuntimeFaces(data);
-			var cfs = Face.BuildConnectorFaces(data);
 			Mesh mesh = BuildMesh(
 				data,
 				out List<string> subMeshMats
@@ -394,7 +393,17 @@ public static class SMesh
 			GameObject cft = new GameObject(name);
 			cft.transform.SetParent(ct.structFacesTemplateParent);
 			cft.SetActive(false);
-			Face.CreateFace(cfs, ms, cft.transform);
+
+
+			var cfs = new RuntimeFace[data.connectors.Count];
+			for (int i = 0; i < data.connectors.Count; i++)
+			{
+				int j = data.connectors[i];
+				var f =  fs[j];
+				cfs[i] = f;
+
+				Face.CreateFace(f,j.ToString(),ms[j], cft.transform);
+			}
 
 			return new(go, ft, fs, cfs, cft);
 		}
@@ -627,15 +636,18 @@ public static class SMesh
 			return faces;
 		}
 
-		public static RuntimeFace[] BuildConnectorFaces(
+		public static (RuntimeFace[]faces, int[] ids) BuildConnectorFaces(
 			ObjTemp.ObjData obj
 		)
 		{
 			var faces = new RuntimeFace[obj.connectors.Count];
+			var ids = new int[obj.connectors.Count];
 
 			for (int i = 0; i < obj.connectors.Count; i++)
 			{
-				var src = obj.connectors[i];
+				int j = obj.connectors[i];
+
+				var src = obj.faces[j];
 				var verts = new Vector3[src.verts.Count];
 
 				for (int v = 0; v < src.verts.Count; v++)
@@ -646,9 +658,11 @@ public static class SMesh
 					localVerts = verts,
 					localNormal = ComputeFaceNormal(verts)
 				};
+
+				ids[i] = j;
 			}
 
-			return faces;
+			return new(faces, ids);
 		}
 
 		static Vector3 ComputeFaceNormal(Vector3[] verts)
