@@ -204,7 +204,11 @@ public class CenterSystem : MonoBehaviour
                 int strid = int.Parse(c.name);//index of struct in whose body
                 var type = bodies.datas[int.Parse(id)].structs[strid].type;//get object type
                 var g = Instantiate(structsInfo.Get(type).connectorTamplate);
-                g.name = id + " " + type;
+                var lib = g.AddComponent<SLibrary>();
+                lib.Write("bodyIndex", int.Parse(id));
+                lib.Write("type", type);
+                lib.Write("structIndex", strid);
+                g.name = type.ToString();
                 g.SetActive(true);
                 g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
                 c.GetComponent<MeshCollider>().enabled = false;
@@ -250,14 +254,15 @@ public class CenterSystem : MonoBehaviour
             var c = mouseCasted;
             if (c && c.CompareTag("structFace"))
             {
-                int fid = int.Parse(c.name);
-                string[] ss = c.transform.parent.name.Split(" ");
-                int sid = int.Parse(ss[0]);
+                int fid = int.Parse(c.name);//face index
+                SLibrary lib = c.transform.parent.GetComponent<SLibrary>();
+                int bid = lib.ReadValue<int>("bodyIndex");
+                int sid = lib.ReadValue<int>("structIndex");
                 var state = new StructState
                 {
-                    bodyIndex = sid,
+                    bodyIndex = bid,
                     isStruct = true,
-                    type = SMType.Parse(ct.buildPage.buildObjectLibrary.Read("type") as string),
+                    type = ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type")
                 };
                 if(state.type.IsNull())
                     return;
@@ -265,9 +270,8 @@ public class CenterSystem : MonoBehaviour
                 var t = ct.buildPage.buildObject.transform;
                 ng.transform.SetPositionAndRotation(t.position, t.rotation);
 
-                //add struct in target state
-                var ts = bodies.datas[int.Parse(t.parent.parent.name)].structs[int.Parse(t.name)];
-
+                bodies.AdsorptionPostProcess(new(state, 0, ng),
+                    new(bodies.objects[bid].self, bid, sid, fid));
             }
         };
 

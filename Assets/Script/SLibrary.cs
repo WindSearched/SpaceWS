@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,20 +21,21 @@ public class SLibrary : MonoBehaviour
         library[name] = value;
     }
 
-    public object Read(string name)
-    {
-        if(library.ContainsKey(name))
-            return library[name];
-        return null;
-    }
-
-    public T Read<T>(string name)
-    where T : new()
+    public T ReadClass<T>(string name)
+    where T : class, new()
     {
         if(library.ContainsKey(name))
             return (T)library[name];
         return new T();
     }
+    public T ReadValue<T>(string name, T defaultValue = default)
+    {
+        if (library.TryGetValue(name, out var value) && value is T t)
+            return t;
+
+        return defaultValue;
+    }
+
     public void Clear() => library.Clear();
 
     public void Remove(string name)

@@ -73,7 +73,8 @@ public class BuildPage : MonoBehaviour
                             buildStruct.structObject.GetComponent<Outline>().effectDistance = new(0,0);
                         }
                         buildStruct.structObject = g;
-                        buildStruct.name = g.name;//save struct type
+                        int id = int.Parse(g.name);
+                        buildStruct.name = ct.structsInfo.Get(id).data.mod + "/"+ ct.structsInfo.Get(id).data.type;//save struct type
                         Debug.Log(buildStruct.name);
                     };
                     b.onButtonUp += g =>
@@ -104,13 +105,12 @@ public class BuildPage : MonoBehaviour
                     m.material.color -= new Color(0, 0, 0, 0.8f);
                     STool.CopyComponentTo(t.GetComponent<MeshFilter>(), buildObject);
 
-                    buildObjectLibrary.Write("type", s);
+                    buildObjectLibrary.Write("type", SMType.Parse(s));
                 }
 
-                var type = g.transform.parent.name.Split(' ')[1];
+                var type = g.transform.parent.GetComponent<SLibrary>().ReadValue<SMType>("type");
 
-                var ty = buildObjectLibrary.Read("type") as string;
-                SMesh.Face.AlignFaceToFace(buildObject,ct.structsInfo.Get(SMType.Parse(ty)).faces,0,g, ct.structsInfo.Get(SMType.Parse(type)).faces, int.Parse(g.name));
+                SMesh.Face.AlignFaceToFace(buildObject,ct.structsInfo.Get(type).faces,0,g, ct.structsInfo.Get(type).faces, int.Parse(g.name));
             }
         };
 

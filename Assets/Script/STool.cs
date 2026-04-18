@@ -201,6 +201,8 @@ public partial struct SMType
     public static SMType Parse(string s)
     {
         var ss = s.Split('/');
+        if(ss.Length != 2)
+            return new SMType();
         return new SMType(ss[1], ss[0]);
     }
 

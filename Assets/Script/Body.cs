@@ -117,7 +117,7 @@ public partial class StructState : State
 
 	public bool buildable;
 	public Mixture mixture;
-
+	public StuffList stuffList = new();
 	public SMType _setMaterial
 	{
 		set
@@ -176,6 +176,12 @@ public partial class StructState : State
 			sw.Write("}");
 			return sw.ToString();
 		}
+	}
+	[Serializable][MemoryPackable][LuaCallCSharp]
+	public partial class StuffList
+	{
+		public List<(SMType type, int quantity)> items;
+		public List<int> structsid;//index of structs
 	}
 
 	public Loc _absLoc
@@ -402,19 +408,52 @@ public class Bodies
 	}
 
 	/// <summary>
-	/// absorb a struct on a other
+	/// adsorb a struct on a other
 	/// </summary>
 	/// <param name="adsorber">data of struct as the anchor</param>
 	/// <param name="adsorbed">data of struct adsorbed on the anchor struct</param>
-	public void Adsorption((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int index, int face) adsorber)
+	public void Adsorption((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int bid, int sid, int face) adsorber, bool onlyAdssorb = false)
 	{
 		if (!adsorbed.obj)
 			LoadStruct(adsorbed.state , strobj: adsorbed.obj);
 
 		SMesh.Face.AlignFaceToFace(adsorbed.obj,ct.structsInfo.Get(adsorbed.state.bodyIndex).faces, adsorbed.face
-			,adsorber.obj, ct.structsInfo.Get(adsorber.index).faces, adsorber.face);
+			,adsorber.obj, ct.structsInfo.Get(adsorber.bid).faces, adsorber.face);
+
+		if (!onlyAdssorb)
+		{
+			AdsorptionPostProcess(adsorbed, adsorber);
+		}
+	}
+	/// <summary>
+	/// void AdsorptionPostProcess((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int bid, int sid, int face) adsorber)
+	/// </summary>
+	/// <param name="adsorbed"></param>
+	/// <param name="adsorber"></param>
+	public void AdsorptionPostProcess((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int bid, int sid, int face) adsorber)
+	{
+		adsorbed.state.bodyIndex = adsorber.bid;//transfer the struct to adsorber
+		adsorbed.obj.name = (adsorber.sid + 1).ToString();
+		adsorbed.obj.transform.SetParent(adsorber.obj.transform.parent);
+
+		//equilibrating temperature
+		var edb = datas[adsorbed.state.bodyIndex].self;
+		var erb = datas[adsorber.bid].self;
+		edb.structCount--;
+		var ermd = ct.materials.Get(adsorbed.state.material);
+		erb._equilibrateTemperature = new(adsorbed.state.mass, ermd.specificHeat, adsorbed.state.temperature);
+		erb._addSpacificHeat = new(ermd.specificHeat, 1);
+		erb.mass += adsorbed.state.mass;
 
 
+		var erstate = datas[adsorber.bid].structs[adsorber.sid];
+		var erdata = ct.structsInfo.Get(erstate.type).data;
+
+		if (erdata.isFactory_)
+		{
+			erstate.stuffList.structsid.Add(adsorber.sid);
+			Debug.Log(erstate.stuffList.structsid.Count);
+		}
 	}
 }
 

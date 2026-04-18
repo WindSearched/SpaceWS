@@ -52,13 +52,13 @@ public class SCamera: MonoBehaviour
         });
         followmodes.Add("surround", cam =>
         {
-            Vector3 tw = lib.Read<Vector3>("toward");
-            float a = lib.Read<float>("a");
-            int i = lib.Read<int>("i");
+            Vector3 tw = lib.ReadValue<Vector3>("toward");
+            float a = lib.ReadValue<float>("a");
+            int i = lib.ReadValue<int>("i");
 
             Vector3 offset = new Vector3();
 
-            bool smoothing = lib.Read<bool>("smooth");
+            bool smoothing = lib.ReadValue<bool>("smooth");
             if (smoothing)
             {
                 if (changeTarget)

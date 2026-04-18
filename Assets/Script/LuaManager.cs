@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -203,7 +204,7 @@ public class Mod
 
                 try
                 {
-                    var d = Data.ReadJsonFromText<T>(path);
+                    var d = JsonConvert.DeserializeObject<T>(tx);
                     list.Add(d);
                 }
                 catch
@@ -211,8 +212,8 @@ public class Mod
                     return false;
                 }
             }
-            else if  (tk.Type == JTokenType.Array)
-                list = Data.ReadJson<List<T>>(tx);
+            else if (tk.Type == JTokenType.Array)
+                list = JsonConvert.DeserializeObject<List<T>>(tx);
             else
             {
                 list = null;
