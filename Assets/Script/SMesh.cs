@@ -238,7 +238,15 @@ public static class SMesh
 					}
 					case "cf":
 					{
-						data.connectors.Add(int.Parse(p[1]));
+						if (p[1] == "all")
+						{
+							for(int i = 0; i< data.faces.Count; i++)
+								data.connectors.Add(i);
+						}
+						else
+						{
+							data.connectors.Add(int.Parse(p[1]));
+						}
 						break;
 					}
 				}
