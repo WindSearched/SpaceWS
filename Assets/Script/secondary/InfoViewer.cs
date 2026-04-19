@@ -16,7 +16,7 @@ public class InfoViewer : MonoBehaviour
     public RectTransform rect;
     void Start()
     {
-        textTemplate = Resources.Load<GameObject>("infotext");
+        textTemplate = Resources.Load<GameObject>("ui/infotext");
         textParent = transform;
         rect = GetComponent<RectTransform>();
         large = rect.sizeDelta.x;
@@ -26,7 +26,7 @@ public class InfoViewer : MonoBehaviour
     {
         for (int i = 0; i < names.Count; i++)
         {
-            string text = names[i] + " : " + texts[i];
+            string text = names[i] + " : " + views[i];
             if (i < texts.Count)
             {
                 texts[i].text = text;
@@ -34,6 +34,7 @@ public class InfoViewer : MonoBehaviour
             else
                 AddText(text);
         }
+
         rect.sizeDelta = new Vector2(large, names.Count * rheight);
     }
     public void AddText(string text)//text to view
@@ -43,7 +44,7 @@ public class InfoViewer : MonoBehaviour
         g.name = id.ToString();
 
         var r = g.GetComponent<RectTransform>();
-        r.anchoredPosition = new(0, id*rheight);
+        r.anchoredPosition = new(0, -id*rheight);
 
         var t =  g.GetComponent<TextMeshProUGUI>();
         texts.Add(t);
@@ -52,7 +53,7 @@ public class InfoViewer : MonoBehaviour
 
     public void AddView(string name, string view)
     {
-        views.Add(name);
+        views.Add(view);
         names.Add(name);
     }
     /// <summary>

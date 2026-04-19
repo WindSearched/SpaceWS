@@ -24,6 +24,7 @@ public class CenterSystem : MonoBehaviour
     public Transform projectedParent;
     public RenderTexture projectTexture;
     public GameObject player;
+    public InfoViewer infoViewer;
 
     public event Meth WhenIconsFinisheLoading;
     public void IWhenIconsFinisheLoading() => WhenIconsFinisheLoading?.Invoke();
@@ -85,37 +86,6 @@ public class CenterSystem : MonoBehaviour
         });
 
         ct.chunkLoader = new(ct.bodies);
-        // ct.chunkLoader.generators.Add(chunk =>
-        // {
-        //     var cp = chunk.position;
-        //     var cunit = ct.curWorldRule.chunk_unit;
-        //
-        //     V3 p = new(
-        //         ct.curWorldRule.RandFlt(cp.x + cp.y - cp.z,cunit, 0),
-        //         ct.curWorldRule.RandFlt(cp.x - cp.y - cp.z,cunit, 0),
-        //         ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,cunit, 0)
-        //         );
-        //     V3 r = new(
-        //         ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0),
-        //         ct.curWorldRule.RandFlt(cp.x + cp.y + cp.z,360, 0),
-        //         ct.curWorldRule.RandFlt(cp.x - cp.y + cp.z,360, 0)
-        //     );
-        //
-        //     int id = ct.curWorldRule.distribuiteBodyIndex;
-        //     chunk.bodies.Add(new()
-        //     {
-        //         index = id,
-        //         location = new(p,r),
-        //         mass = 10
-        //     });
-        //     chunk.structs.Add(new()
-        //     {
-        //         isStruct =  true,
-        //         location = Loc.zero,
-        //         bodyIndex = id,
-        //         type = ct.structsInfo.GetIndexKey(ct.curWorldRule.RandInt(cp.x - cp.y + cp.z, ct.structTypes.Count, 0))
-        //     });
-        // });
         //needed load
         m_outline.SetColor("_OutlineColour", ct.setting.outlineColor.ToColor());
         m_outline.SetFloat("_Intensity", ct.setting.outlineColorIntensity);
@@ -294,6 +264,34 @@ public class CenterSystem : MonoBehaviour
         {
             ct.onChunkPositionChange += () => ct.chunkLoader.Loader(ct.pcp,ct.curWorldRule.loadRadius);
         }
+
+        var info = ct.action.Add("Info", InputActionType.Button, SAction.keyTable["i"]);
+        info.performed += _ =>
+        {
+            infoViewer.gameObject.SetActive(!infoViewer.gameObject.activeSelf);
+        };
+        mousecast.InCast += o =>
+        {
+            List<string> list = new List<string>
+            {
+                "type","bodyIndex"
+            };
+            if (!o) return;
+            if(!pages.IsPage("main") || !o.CompareTag("struct")) return;
+
+            int bid = int.Parse(o.transform.parent.parent.name);
+            int sid = int.Parse(o.name);
+            var s = bodies.datas[bid].structs[sid];
+            infoViewer.AddViews(s, list);
+            infoViewer.Updating();
+        };
+        mousecast.OutCast += o =>
+        {
+            if (!o) return;
+            if(!pages.IsPage("main") || !o.CompareTag("struct")) return;
+            infoViewer.Clear(true);
+        };
+
         //load a time
         ct.OnChunkPositionChange();
     }
