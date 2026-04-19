@@ -271,7 +271,7 @@ public class CenterSystem : MonoBehaviour
                 ng.transform.SetPositionAndRotation(t.position, t.rotation);
 
                 bodies.AdsorptionPostProcess(new(state, 0, ng),
-                    new(bodies.objects[bid].self, bid, sid, fid));
+                    new(bodies.objects[bid].structs[sid], bid, sid, fid));
             }
         };
 

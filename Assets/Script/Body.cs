@@ -434,7 +434,7 @@ public class Bodies
 	{
 		adsorbed.state.bodyIndex = adsorber.bid;//transfer the struct to adsorber
 		adsorbed.obj.name = (adsorber.sid + 1).ToString();
-		adsorbed.obj.transform.SetParent(adsorber.obj.transform);
+		adsorbed.obj.transform.SetParent(adsorber.obj.transform.parent);
 
 		//equilibrating temperature
 		var edb = datas[adsorbed.state.bodyIndex].self;
