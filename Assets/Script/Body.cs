@@ -269,7 +269,11 @@ public class Bodies
 	/// <param name="loc">absolute location</param>
 	public void LoadVoidBody(int index, Loc loc)
 	{
-		datas.Add(index, new body()
+		if (datas.ContainsKey(index))
+		{
+
+		}
+		datas.TryAdd(index, new body()
 		{
 			structs = new(),
 			faces = new(),
@@ -281,7 +285,7 @@ public class Bodies
 		var g = GameObject.Instantiate(ct.defualtBody, ct.bodiesParent);
 		g.name = index.ToString();
 		loc.LocateHere(g);
-		objects.Add(index, new obj()
+		objects.TryAdd(index, new obj()
 		{
 			self = g,
 			structs = new(),

@@ -82,8 +82,11 @@ public class ChunkLoader
         foreach (var s in chunk.structs)//remove structs of chunk
         {
             var idx = s.bodyIndex;
-            var g = bodies.objects[idx];
-            structPool.Put(g.self);
+            if (bodies.objects.ContainsKey(idx))
+            {
+                var g = bodies.objects[idx];
+                structPool.Put(g.self);
+            }
             bodies.datas.Remove(idx);
             bodies.objects.Remove(idx);
         }
