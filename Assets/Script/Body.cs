@@ -180,8 +180,8 @@ public partial class StructState : State
 	[Serializable][MemoryPackable][LuaCallCSharp]
 	public partial class StuffList
 	{
-		public List<(SMType type, int quantity)> items;
-		public List<int> structsid;//index of structs
+		public List<(SMType type, int quantity)> items = new();
+		public List<int> structsid =new();//index of structs
 	}
 
 	public Loc _absLoc
