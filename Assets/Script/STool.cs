@@ -173,7 +173,70 @@ public static class STool
 
         return current?.ToString();
     }
+    public static class ReflectionUtil
+    {
+        public static List<string> GetMemberValues<T>(T obj, List<string> paths)
+        {
+            var result = new List<string>();
 
+            if (obj == null || paths == null)
+                return result;
+
+            foreach (var path in paths)
+            {
+                var value = GetValueByPath(obj, path);
+                result.Add(value?.ToString());
+            }
+
+            return result;
+        }
+
+        private static object GetValueByPath(object obj, string path)
+        {
+            if (obj == null || string.IsNullOrEmpty(path))
+                return null;
+
+            string[] parts = path.Split('.');
+            object current = obj;
+
+            foreach (var part in parts)
+            {
+                if (current == null)
+                    return null;
+
+                Type type = current.GetType();
+
+                // 1. 先找属性
+                PropertyInfo prop = type.GetProperty(
+                    part,
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase
+                );
+
+                if (prop != null)
+                {
+                    current = prop.GetValue(current);
+                    continue;
+                }
+
+                // 2. 再找字段
+                FieldInfo field = type.GetField(
+                    part,
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase
+                );
+
+                if (field != null)
+                {
+                    current = field.GetValue(current);
+                    continue;
+                }
+
+                // 找不到直接返回 null
+                return null;
+            }
+
+            return current;
+        }
+    }
 }
 
 [MemoryPackable][Serializable]
