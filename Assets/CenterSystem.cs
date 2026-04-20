@@ -279,9 +279,15 @@ public class CenterSystem : MonoBehaviour
             if (!o) return;
             if(!pages.IsPage("main") || !o.CompareTag("struct")) return;
 
+
             int bid = int.Parse(o.transform.parent.parent.name);
             int sid = int.Parse(o.name);
             var s = bodies.datas[bid].structs[sid];
+            var d = ct.structsInfo.Get(s.type).data;
+
+            if(d.isFactory_)
+                list.Add("stuffList");
+
             infoViewer.AddViews(s, list);
             infoViewer.Updating();
         };

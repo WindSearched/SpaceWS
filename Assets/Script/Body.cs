@@ -108,6 +108,7 @@ public partial class StructState : State
 	public SMType type;
 	public Loc relativeLocation;
 	public Loc absoluteLocation;
+	public int structIndex;
 
 	public SMType material;
 	public float temperature;
@@ -196,6 +197,14 @@ public partial class StructState : State
 			}
 		}
 
+		public void AddItems(List<Amount> items)
+		{
+			foreach (var i in items)
+			{
+				AddItem(i.type, i.quantity);
+			}
+		}
+
 		public bool RemoveItem(SMType type, int quantity)
 		{
 			if (ContainItems(type, quantity))
@@ -264,11 +273,11 @@ public partial class StructState : State
 
 		public bool Contain(StructData.Factory.Recipe recipe)
 		{
-			if (recipe.materials.Any(mt => !ContainItems(mt.type, mt.quantity)))
+			if (recipe.materials != null && recipe.materials.Any(mt => !ContainItems(mt.type, mt.quantity)))
 			{
 				return  false;
 			}
-			if (recipe.structMaterials.Any(m => !ContainStructs(m.type, m.quantity)))
+			if (recipe.structMaterials != null && recipe.structMaterials.Any(m => !ContainStructs(m.type, m.quantity)))
 			{
 				return false;
 			}
@@ -278,18 +287,42 @@ public partial class StructState : State
 
 		public bool TryRemove(StructData.Factory.Recipe recipe)
 		{
-			if (!Contain(recipe)) return false;
+			bool mn = recipe.materials == null;
+			bool smn = recipe.structMaterials == null;
 
-			foreach (var m in recipe.materials)
-			{
-				RemoveItem(m.type, m.quantity);
-			}
+			if (recipe == null || (mn && smn) || !Contain(recipe)) return false;
 
-			foreach (var m in recipe.structMaterials)
-			{
-				RemoveStructs(m.type, m.quantity);
-			}
+			if(!mn)
+				foreach (var m in recipe.materials)
+				{
+					RemoveItem(m.type, m.quantity);
+				}
+			if(!smn)
+				foreach (var m in recipe.structMaterials)
+				{
+					RemoveStructs(m.type, m.quantity);
+				}
 			return true;
+		}
+
+		public override string ToString()
+		{
+			StringWriter sw = new();
+			sw.WriteLine("{");
+
+			sw.WriteLine("Items:");
+			foreach (var v in containItems)
+			{
+				sw.WriteLine(v.Value + " : " + v.Key);
+			}
+			sw.WriteLine("Structs:");
+			foreach (var v in containStructs)
+			{
+				sw.WriteLine(v.Value.Count + " : " + v.Key);
+			}
+
+			sw.WriteLine("}");
+			return sw.ToString();
 		}
 	}
 
@@ -559,11 +592,14 @@ public class Bodies
 
 		if (erdata.isFactory_)
 		{
-			erstate.stuffList.AddStrut(erstate.type,adsorber.sid);
+			erstate.stuffList.AddStrut(adsorbed.state.type,adsorbed.state.bodyIndex);
 			TryProduction(erstate, erdata);
 		}
 	}
 
+	/// <summary>
+	/// try to product
+	/// </summary>
 	public void TryProduction(int bid, int sid)
 	{
 		var state = datas[bid].structs[sid];
@@ -582,6 +618,7 @@ public class Bodies
 		var recipe = data.factory.recipes[state.choosedRecipeIndex];
 		if (state.stuffList.TryRemove(recipe))
 		{
+			state.stuffList.AddItems(recipe.products);
 			Tick.Reg(_ => Producing(state, data),(int)(ct.setting.tickPerSecond * recipe.productionTime));
 		}
 
