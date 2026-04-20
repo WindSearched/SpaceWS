@@ -113,7 +113,8 @@ public partial class StructState : State
 	public float temperature;
 	public float mass;
 
-	public float choosedRecipeIndex = 0;
+	public int choosedRecipeIndex = 0;
+	public bool producing;
 
 	public bool buildable;
 	public Mixture mixture;
@@ -180,8 +181,116 @@ public partial class StructState : State
 	[Serializable][MemoryPackable][LuaCallCSharp]
 	public partial class StuffList
 	{
-		public List<(SMType type, int quantity)> items = new();
-		public List<int> structsid =new();//index of structs
+		public Dictionary<SMType, int> containItems = new();
+		public Dictionary<SMType, List<int>> containStructs = new();// the int value is index of struct
+
+		public void AddItem(SMType type, int quantity)
+		{
+			if (containItems.ContainsKey(type))
+			{
+				containItems[type] += quantity;
+			}
+			else
+			{
+				containItems.Add(type, quantity);
+			}
+		}
+
+		public bool RemoveItem(SMType type, int quantity)
+		{
+			if (ContainItems(type, quantity))
+			{
+				containItems.Remove(type);
+				return true;
+			}
+			return false;
+		}
+		public bool ContainItems(SMType type, int quantity)
+		{
+			if (containItems.ContainsKey(type))
+			{
+				if (containItems[type] >= quantity)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public bool ContainItem(SMType type)
+		{
+			return containItems.ContainsKey(type) && containItems[type] > 0;
+		}
+
+		public void AddStrut(SMType type, int sid)
+		{
+			if (containStructs.ContainsKey(type))
+			{
+				containStructs[type].Add(sid);
+			}
+			else
+			{
+				containStructs.Add(type, new(){sid});
+			}
+		}
+		public bool ContainStruct(SMType type)
+		{
+			return containStructs.ContainsKey(type) && containStructs[type].Count > 0;
+		}
+
+		public bool ContainStructs(SMType type, int quantity)
+		{
+			return containStructs.ContainsKey(type) && containStructs[type].Count >= quantity;
+		}
+
+		public bool RemoveAStruct(SMType type)
+		{
+			if (!ContainStruct(type)) return false;
+			containStructs[type].RemoveAt(0);
+			return true;
+		}
+
+		public bool RemoveStructs(SMType type, int quantity)
+		{
+			if (ContainStructs(type, quantity))
+			{
+				containStructs[type].RemoveRange(0, quantity);
+				return true;
+			}
+
+			return false;
+		}
+
+
+		public bool Contain(StructData.Factory.Recipe recipe)
+		{
+			if (recipe.materials.Any(mt => !ContainItems(mt.type, mt.quantity)))
+			{
+				return  false;
+			}
+			if (recipe.structMaterials.Any(m => !ContainStructs(m.type, m.quantity)))
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		public bool TryRemove(StructData.Factory.Recipe recipe)
+		{
+			if (!Contain(recipe)) return false;
+
+			foreach (var m in recipe.materials)
+			{
+				RemoveItem(m.type, m.quantity);
+			}
+
+			foreach (var m in recipe.structMaterials)
+			{
+				RemoveStructs(m.type, m.quantity);
+			}
+			return true;
+		}
 	}
 
 	public Loc _absLoc
@@ -215,16 +324,11 @@ public class StructData
 		[Serializable]
 		public class Recipe
 		{
-			public List<mat> materials;
-			public List<mat> structMaterials;
-			public List<mat> products;
+			public List<Amount> materials;
+			public List<Amount> structMaterials;
+			public List<Amount> products;
 			public float productionTime;
 
-			public struct mat
-			{
-				public SMType type;
-				public int quantity;
-			}
 		}
 	}
 
@@ -455,9 +559,33 @@ public class Bodies
 
 		if (erdata.isFactory_)
 		{
-			erstate.stuffList.structsid.Add(adsorber.sid);
-			Debug.Log(erstate.stuffList.structsid.Count);
+			erstate.stuffList.AddStrut(erstate.type,adsorber.sid);
+			TryProduction(erstate, erdata);
 		}
+	}
+
+	public void TryProduction(int bid, int sid)
+	{
+		var state = datas[bid].structs[sid];
+		var data = ct.structsInfo.Get(state.type).data;
+
+		if(!data.isFactory_) return;
+		TryProduction(state,data);
+	}
+
+	public void TryProduction(StructState state, StructData data) =>
+		Tick.Reg(_ => Producing(state, data),
+			(int)(ct.setting.tickPerSecond * data.factory.recipes[state.choosedRecipeIndex].productionTime));
+
+	public void Producing(StructState state, StructData data)
+	{
+		var recipe = data.factory.recipes[state.choosedRecipeIndex];
+		if (state.stuffList.TryRemove(recipe))
+		{
+			Tick.Reg(_ => Producing(state, data),(int)(ct.setting.tickPerSecond * recipe.productionTime));
+		}
+
+		state.producing = false;
 	}
 }
 
@@ -839,4 +967,10 @@ public struct SPos
 		position = V3.zero;
 		power = 0;
 	}
+}
+[Serializable]
+public struct Amount
+{
+	public SMType type;
+	public int quantity;
 }
