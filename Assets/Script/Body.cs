@@ -105,280 +105,7 @@ public partial class BodyState
 		return s;
 	}
 }
-[Serializable][MemoryPackable][LuaCallCSharp]
-public partial class StructState : State
-{
-	public SMType type;
-	public Loc relativeLocation;
-	public Loc absoluteLocation;
-	public int structIndex;
 
-	public SMType material;
-	public float temperature;
-	public float mass;
-
-	public int choosedRecipeIndex = 0;
-	public bool producing;
-
-	public bool buildable;
-	public Mixture mixture;
-	public StuffList stuffList = new();
-	public Depository stuffs = new();
-	public Depository products = new();
-	public SMType _setMaterial
-	{
-		set
-		{
-			material = value;
-			var md = ct.materials.Get(value.type, value.mod);
-			StructData sd;
-			if (!ct.structsInfo.TryGet(type, out var val))
-			{
-				string s = $"the struct data of '{type}' is not exists";
-				ct.log.Write("StructState._setMaterial",s);
-				sd = new();
-			}
-			else
-			{
-				sd = val.data;
-			}
-
-			mass = sd.volume * md.density;
-		}
-	}
-
-	public bool isMixture_ => mixture == null;
-
-	[Serializable][MemoryPackable][LuaCallCSharp]
-	public partial class Mixture
-	{
-		public List<(SMType type, float proportion)> mixture = new();
-		private float sum = 0;
-
-		public void Add(SMType type, float proportion)
-		{
-			mixture.Add((type, proportion));
-			sum +=  proportion;
-		}
-
-		/// <summary>
-		/// calculate proportion with their sum as 1
-		/// </summary>
-		/// <param name="prop"></param>
-		/// <returns></returns>
-		public float GetProportion(float prop) => prop / sum;
-
-		public float getSum_ => sum;
-		public override string ToString()
-		{
-			StringWriter sw = new();
-			sw.Write("{");
-			foreach (var m in mixture)
-			{
-				sw.Write(m.type);
-				sw.Write(",");
-				sw.Write(m.proportion);
-				sw.Write(";");
-			}
-			sw.Write("}");
-			return sw.ToString();
-		}
-	}
-	[Serializable][MemoryPackable][LuaCallCSharp]
-	public partial class StuffList
-	{
-		public Depositor containItems = new();
-		public Dictionary<SMType, List<int>> containStructs = new();// the int value is index of struct
-
-		public bool AddItem(SMType type, int quantity) => containItems.Deposites(type, quantity);
-
-		public void AddItems(List<Amount> items)
-		{
-			foreach (var i in items)
-			{
-				AddItem(i.type, i.quantity);
-			}
-		}
-
-		public bool RemoveItem(SMType type, int quantity) => containItems.TakeOut(type, quantity);
-		public bool ContainItems(SMType type, int quantity) => containItems.Contains(type, quantity);
-
-		public bool ContainItem(SMType type) => containItems.Contains(type);
-
-		public void AddStrut(SMType type, int sid)
-		{
-			if (containStructs.ContainsKey(type))
-			{
-				containStructs[type].Add(sid);
-			}
-			else
-			{
-				containStructs.Add(type, new(){sid});
-			}
-		}
-		public bool ContainStruct(SMType type)
-		{
-			return containStructs.ContainsKey(type) && containStructs[type].Count > 0;
-		}
-
-		public bool ContainStructs(SMType type, int quantity)
-		{
-			return containStructs.ContainsKey(type) && containStructs[type].Count >= quantity;
-		}
-
-		public bool RemoveAStruct(SMType type)
-		{
-			if (!ContainStruct(type)) return false;
-			containStructs[type].RemoveAt(0);
-			return true;
-		}
-
-		public bool RemoveStructs(SMType type, int quantity)
-		{
-			if (ContainStructs(type, quantity))
-			{
-				containStructs[type].RemoveRange(0, quantity);
-				return true;
-			}
-
-			return false;
-		}
-
-
-		public bool Contain(StructData.Factory.Recipe recipe)
-		{
-			if (recipe.materials != null && recipe.materials.Any(mt => !ContainItems(mt.type, mt.quantity)))
-			{
-				return  false;
-			}
-			if (recipe.structMaterials != null && recipe.structMaterials.Any(m => !ContainStructs(m.type, m.quantity)))
-			{
-				return false;
-			}
-
-			return true;
-		}
-
-		public bool TryRemove(StructData.Factory.Recipe recipe)
-		{
-			bool mn = recipe.materials == null;
-			bool smn = recipe.structMaterials == null;
-
-			if (recipe == null || (mn && smn) || !Contain(recipe)) return false;
-
-			if(!mn)
-				foreach (var m in recipe.materials)
-				{
-					RemoveItem(m.type, m.quantity);
-				}
-			if(!smn)
-				foreach (var m in recipe.structMaterials)
-				{
-					RemoveStructs(m.type, m.quantity);
-				}
-			return true;
-		}
-
-		public override string ToString()
-		{
-			StringWriter sw = new();
-			sw.WriteLine("{");
-
-			sw.WriteLine("Items:");
-			sw.WriteLine(containItems);
-			sw.WriteLine("Structs:");
-			foreach (var v in containStructs)
-			{
-				sw.WriteLine(v.Value.Count + " : " + v.Key);
-			}
-
-			sw.WriteLine("}");
-			return sw.ToString();
-		}
-	}
-	[Serializable][MemoryPackable][LuaCallCSharp]
-	public partial class Depositor
-	{
-		public Dictionary<SMType, int> cells = new();
-		public List<SMType> unlocks = new();
-		public bool unlockAll;
-		public int max;
-
-		public bool Deposites(SMType type, int quantity)
-		{
-			if (!unlockAll && !unlocks.Contains(type)) return false;
-			if (!Contains(type))
-			{
-				cells.Add(type, 0);
-			}
-			var sum =  cells[type] + quantity;
-			if (sum > max) return false;
-			cells[type] = sum;
-			return true;
-		}
-
-		public void Deposites(SMType type, int quantity, out int remain)
-		{
-			remain = quantity;
-			if (!unlockAll && !unlocks.Contains(type)) return;
-			if (!Contains(type))
-			{
-				cells.Add(type, 0);
-			}
-			int sum =  cells[type] + quantity;
-			if (sum > max)
-			{
-				remain = sum - max;
-				cells[type] = max;
-			}
-			else
-			{
-				remain = 0;
-				cells[type] = sum;
-			}
-		}
-
-		public bool TakeOut(SMType type, int quantity)
-		{
-			if(!unlockAll && !unlocks.Contains(type) && !Contains(type, quantity)) return false;
-			cells[type] -= quantity;
-			return true;
-		}
-
-		public bool Contains(SMType type) => cells.ContainsKey(type);
-
-		public bool Contains(SMType type, int quantity) => Contains(type, quantity) && cells[type] >= quantity;
-
-		public bool IsFull(SMType type) => Contains(type) && cells[type] >= max;
-		public override string ToString()
-		{
-			StringWriter sw = new();
-			sw.WriteLine("{");
-
-			foreach (var v in cells)
-			{
-				sw.WriteLine(v.Value + " : " + v.Key);
-			}
-
-			sw.WriteLine("}");
-			return sw.ToString();
-		}
-	}
-
-	public Loc _absLoc
-	{
-		set
-		{
-			absoluteLocation = value;
-			relativeLocation = new(value.position / ct.setting.chunkUnit, value.rotation);
-		}
-	}
-
-	public void Locate(GameObject g)
-	{
-		g.transform.SetPositionAndRotation(absoluteLocation.position.ToVector3(), absoluteLocation.rotation.ToQuaternion());
-	}
-}
 
 [Serializable]
 public class StructData
@@ -391,7 +118,7 @@ public class StructData
 	public class Factory
 	{
 		public float heatRelease;
-		public List<Recipe> recipes;
+		public List<Recipe> recipes = new();
 
 		[Serializable]
 		public class Recipe
@@ -404,7 +131,8 @@ public class StructData
 		}
 	}
 
-	public bool isFactory_ => factory != null;
+	public bool isFactory_ => factory != null && factory.recipes.Count > 0;
+	public bool isContainer;
 
 	public string mod;
 	public Sprite icon;
@@ -1054,6 +782,8 @@ public struct Amount
 {
 	public SMType type;
 	public int quantity;
+
+
 }
 [Serializable][LuaCallCSharp][MemoryPackable]
 public partial class Depository

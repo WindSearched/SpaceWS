@@ -271,4 +271,8 @@ public partial struct SMType
 
 
     public bool IsNull() => type == null && mod == null;
+
+    public static bool operator ==(SMType a, SMType b) => a.type == b.type && a.mod == b.mod;
+    public static bool operator !=(SMType a, SMType b) => !(a == b);
+
 }
