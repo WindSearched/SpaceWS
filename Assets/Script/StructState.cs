@@ -57,7 +57,10 @@ public partial class StructState : State
 			stuffList = new();
 			stuffList.containItems.UnlockAdapt(data.factory.recipes[choosedRecipeIndex].materials);
 		}
-		if
+		else if(data.)
+		{
+
+		}
 	}
 
 	[Serializable][MemoryPackable][LuaCallCSharp]

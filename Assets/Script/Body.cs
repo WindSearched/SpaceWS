@@ -113,6 +113,7 @@ public class StructData
 	public string type;
 	public float volume = -1;
 	public Factory factory;
+	public Container container;
 
 	[Serializable]
 	public class Factory
@@ -130,9 +131,15 @@ public class StructData
 
 		}
 	}
+	[Serializable]
+	public class Container
+	{
+		public int cellNum;
+		public int cellSize;
+	}
 
 	public bool isFactory_ => factory != null && factory.recipes.Count > 0;
-	public bool isContainer;
+	public bool isContainer_ => container != null;
 
 	public string mod;
 	public Sprite icon;
