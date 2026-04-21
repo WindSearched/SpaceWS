@@ -123,6 +123,8 @@ public partial class StructState : State
 	public bool buildable;
 	public Mixture mixture;
 	public StuffList stuffList = new();
+	public Depository stuffs = new();
+	public Depository products = new();
 	public SMType _setMaterial
 	{
 		set
@@ -185,20 +187,10 @@ public partial class StructState : State
 	[Serializable][MemoryPackable][LuaCallCSharp]
 	public partial class StuffList
 	{
-		public Dictionary<SMType, int> containItems = new();
+		public Depositor containItems = new();
 		public Dictionary<SMType, List<int>> containStructs = new();// the int value is index of struct
 
-		public void AddItem(SMType type, int quantity)
-		{
-			if (containItems.ContainsKey(type))
-			{
-				containItems[type] += quantity;
-			}
-			else
-			{
-				containItems.Add(type, quantity);
-			}
-		}
+		public bool AddItem(SMType type, int quantity) => containItems.Deposites(type, quantity);
 
 		public void AddItems(List<Amount> items)
 		{
@@ -208,31 +200,10 @@ public partial class StructState : State
 			}
 		}
 
-		public bool RemoveItem(SMType type, int quantity)
-		{
-			if (ContainItems(type, quantity))
-			{
-				containItems.Remove(type);
-				return true;
-			}
-			return false;
-		}
-		public bool ContainItems(SMType type, int quantity)
-		{
-			if (containItems.ContainsKey(type))
-			{
-				if (containItems[type] >= quantity)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
+		public bool RemoveItem(SMType type, int quantity) => containItems.TakeOut(type, quantity);
+		public bool ContainItems(SMType type, int quantity) => containItems.Contains(type, quantity);
 
-		public bool ContainItem(SMType type)
-		{
-			return containItems.ContainsKey(type) && containItems[type] > 0;
-		}
+		public bool ContainItem(SMType type) => containItems.Contains(type);
 
 		public void AddStrut(SMType type, int sid)
 		{
@@ -314,14 +285,79 @@ public partial class StructState : State
 			sw.WriteLine("{");
 
 			sw.WriteLine("Items:");
-			foreach (var v in containItems)
-			{
-				sw.WriteLine(v.Value + " : " + v.Key);
-			}
+			sw.WriteLine(containItems);
 			sw.WriteLine("Structs:");
 			foreach (var v in containStructs)
 			{
 				sw.WriteLine(v.Value.Count + " : " + v.Key);
+			}
+
+			sw.WriteLine("}");
+			return sw.ToString();
+		}
+	}
+	[Serializable][MemoryPackable][LuaCallCSharp]
+	public partial class Depositor
+	{
+		public Dictionary<SMType, int> cells = new();
+		public List<SMType> unlocks = new();
+		public bool unlockAll;
+		public int max;
+
+		public bool Deposites(SMType type, int quantity)
+		{
+			if (!unlockAll && !unlocks.Contains(type)) return false;
+			if (!Contains(type))
+			{
+				cells.Add(type, 0);
+			}
+			var sum =  cells[type] + quantity;
+			if (sum > max) return false;
+			cells[type] = sum;
+			return true;
+		}
+
+		public void Deposites(SMType type, int quantity, out int remain)
+		{
+			remain = quantity;
+			if (!unlockAll && !unlocks.Contains(type)) return;
+			if (!Contains(type))
+			{
+				cells.Add(type, 0);
+			}
+			int sum =  cells[type] + quantity;
+			if (sum > max)
+			{
+				remain = sum - max;
+				cells[type] = max;
+			}
+			else
+			{
+				remain = 0;
+				cells[type] = sum;
+			}
+		}
+
+		public bool TakeOut(SMType type, int quantity)
+		{
+			if(!unlockAll && !unlocks.Contains(type) && !Contains(type, quantity)) return false;
+			cells[type] -= quantity;
+			return true;
+		}
+
+		public bool Contains(SMType type) => cells.ContainsKey(type);
+
+		public bool Contains(SMType type, int quantity) => Contains(type, quantity) && cells[type] >= quantity;
+
+		public bool IsFull(SMType type) => Contains(type) && cells[type] >= max;
+		public override string ToString()
+		{
+			StringWriter sw = new();
+			sw.WriteLine("{");
+
+			foreach (var v in cells)
+			{
+				sw.WriteLine(v.Value + " : " + v.Key);
 			}
 
 			sw.WriteLine("}");
@@ -1018,4 +1054,36 @@ public struct Amount
 {
 	public SMType type;
 	public int quantity;
+}
+[Serializable][LuaCallCSharp][MemoryPackable]
+public partial class Depository
+{
+	public Dictionary<SMType, int> cells;
+	public int max;
+
+	public bool Deposite(SMType itemType, int quantity)
+	{
+		if (!cells.ContainsKey(itemType))
+			cells.Add(itemType, 0);
+		var sum = cells[itemType] + quantity;
+		if(sum > max)
+			return false;
+		cells[itemType] = sum;
+		return true;
+	}
+
+	public bool TakeOut(SMType type, int quantity)
+	{
+		bool b = QuantityExists(type, quantity);
+		if (b)
+			cells[type] -= quantity;
+		return b;
+	}
+
+	public bool QuantityExists(SMType type, int quantity) => cells.ContainsKey(type) && cells[type] >= quantity;
+
+	public Depository()
+	{
+		cells = new();
+	}
 }
