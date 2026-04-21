@@ -56,7 +56,6 @@ public partial class BodyState
 	{
 		set
 		{
-			structCount += value.structNumber;
 			sumSpecif1icHeat += value.specifcHeat;
 			averageSpecif1icHeat = sumSpecif1icHeat / structCount;
 		}
@@ -83,6 +82,10 @@ public partial class BodyState
 			temperature += value / (averageSpecif1icHeat * mass);
 		}
 	}
+
+	public int getNewStructIndex_ => curstrid++;
+
+	public int curstrid;
 	public static implicit operator byte[](BodyState s)
 	{
 		using var ms = new MemoryStream();
@@ -446,10 +449,13 @@ public class Bodies
 				return null;
 			}
 		}
+		var bs = datas[strct.bodyIndex].self;
+
+		strct.structIndex = bs.getNewStructIndex_;//registries index of struct
 
 		strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
 		strobj.tag = "struct";
-		strobj.name = datas[strct.bodyIndex].structs.Count.ToString();
+		strobj.name = strct.structIndex.ToString();
 
 		strct.Locate(strobj);
 		objects[strct.bodyIndex].structs.Add(strobj);
@@ -464,9 +470,9 @@ public class Bodies
 			var t = ct.materials.dict.Values.First().Values.First();
 			strct._setMaterial = new(t.type, t.mod);
 		}
-		var bs = datas[strct.bodyIndex].self;
 		var md = ct.materials.Get(strct.material.type, strct.material.mod);
 		bs._equilibrateTemperature = new(strct.mass, md.specificHeat, strct.temperature);
+		bs.structCount++;
 		bs._addSpacificHeat = new(md.specificHeat, 1);
 		bs.mass += strct.mass;
 
@@ -580,9 +586,11 @@ public class Bodies
 		//equilibrating temperature
 		var edb = datas[adsorbed.state.bodyIndex].self;
 		var erb = datas[adsorber.bid].self;
+		adsorbed.state.structIndex = erb.getNewStructIndex_;
 		edb.structCount--;
 		var ermd = ct.materials.Get(adsorbed.state.material);
 		erb._equilibrateTemperature = new(adsorbed.state.mass, ermd.specificHeat, adsorbed.state.temperature);
+		erb.structCount++;
 		erb._addSpacificHeat = new(ermd.specificHeat, 1);
 		erb.mass += adsorbed.state.mass;
 
