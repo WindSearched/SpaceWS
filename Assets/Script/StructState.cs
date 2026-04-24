@@ -307,7 +307,7 @@ public partial class StructState : State
 		g.transform.SetPositionAndRotation(absoluteLocation.position.ToVector3(), absoluteLocation.rotation.ToQuaternion());
 	}
 }
-
+[Obsolete("the full value can not fixed")]
 public class Inventory : Container
 {
 	public Inventory(int cellnum, int cellmax)
@@ -473,8 +473,12 @@ public class CacheQueue : Container
 	}
 	public override bool Add(SMType type)
 	{
-		if(queue.Count >= count) return false;
-
+		if (queue.Count >= count)
+		{
+			full = true;
+			return false;
+		};
+		full = false;
 		queue.Enqueue(type);
 		return true;
 	}
@@ -496,7 +500,12 @@ public class CacheQueue : Container
 	/// <returns></returns>
 	public override bool Remove(SMType type)
 	{
-		if(queue.Count >= count || queue.First() != type) return false;
+		if(queue.Count >= count || queue.First() != type)
+		{
+			full = true;
+			return false;
+		}
+		full = false;
 		queue.Dequeue();
 		return true;
 	}
@@ -518,6 +527,8 @@ public class CacheQueue : Container
 		type = queue.Dequeue();
 		return true;
 	}
+
+	public override bool IsFull(SMType _) => full;
 }
 
 [Serializable][MemoryPackable][LuaCallCSharp]
@@ -530,30 +541,37 @@ public partial class Container
 
 	public virtual bool Add(SMType type)
 	{
+		full = true;
 		return false;
 	}
 
 	public virtual bool Add(SMType type, int quantity, out int remain)
 	{
+		full = true;
 		remain = quantity;
 		return false;
 	}
 
 	public virtual bool Remove(SMType type)
 	{
+		full = true;
 		return false;
 	}
 	public virtual bool Remove(SMType type, int quantity, out int remain)
 	{
+		full = true;
 		remain = quantity;
 		return false;
 	}
 
 	public virtual bool RemoveFirst(out SMType type)
 	{
+		full = true;
 		type = new();
 		return false;
 	}
+
+	public virtual bool IsFull(SMType tyoe) => true;
 
 	public enum Tag
 	{

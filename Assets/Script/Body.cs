@@ -883,9 +883,9 @@ public partial class Depository : Container
 
 	public bool Contains(SMType type) => cells.ContainsKey(type);
 
-	public bool Contains(SMType type, int quantity) => Contains(type, quantity) && cells[type] >= quantity;
+	public bool Contains(SMType type, int quantity) => Contains(type) && cells[type] >= quantity;
 
-	public bool IsFull(SMType type) => Contains(type) && cells[type] >= max;
+	public override bool IsFull(SMType type) => Contains(type) && cells[type] >= max;
 
 	public void UnlockAdapt(List<Amount> list)
 	{
