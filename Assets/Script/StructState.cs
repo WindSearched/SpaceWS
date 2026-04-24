@@ -23,8 +23,7 @@ public partial class StructState : State
 
 	public bool buildable;
 	public Mixture mixture;
-	public StuffList stuffList;
-	public Depositor depositor;
+	public Contain container;
 	public SMType _setMaterial
 	{
 		set
@@ -54,12 +53,7 @@ public partial class StructState : State
 		var data = ct.structsInfo.Get(type).data;
 		if (data.isFactory_)
 		{
-			stuffList = new();
-			stuffList.containItems.UnlockAdapt(data.factory.recipes[choosedRecipeIndex].materials);
-		}
-		else if(data.)
-		{
-
+			container = new Contain();
 		}
 	}
 
@@ -101,16 +95,22 @@ public partial class StructState : State
 	[Serializable][MemoryPackable][LuaCallCSharp]
 	public partial class StuffList
 	{
-		public Depositor containItems = new();
-		public Dictionary<SMType, List<int>> containStructs = new();// the int value is index of struct
+		public Depository containItems;
+		public Dictionary<SMType, List<StructIdPath>> containStructs;// the int value is index of struct
+
+		[MemoryPackConstructor]
+		public StuffList(){}
+		public StuffList(int size)
+		{
+			containItems = new();
+			containStructs = new();
+
+			containItems.max = size;
+		}
 
 		public bool AddItem(SMType type, int quantity) => containItems.Deposites(type, quantity);
 
-		public bool AddItem(SMType type, int quantity, out int remain)
-		{
-			containItems.Deposites(type, quantity, out remain);
-			return remain == 0;
-		}
+		public bool AddItem(SMType type, int quantity, out int remain) => containItems.Deposites(type, quantity, out remain);
 
 		public void AddItems(List<Amount> items)
 		{
@@ -121,21 +121,25 @@ public partial class StructState : State
 		}
 
 		public bool RemoveItem(SMType type, int quantity) => containItems.TakeOut(type, quantity);
+
+		public bool RemoveItem(SMType type, int quantity, out int remain) =>  containItems.TakeOut(type, quantity, out remain);
 		public bool ContainItems(SMType type, int quantity) => containItems.Contains(type, quantity);
 
 		public bool ContainItem(SMType type) => containItems.Contains(type);
 
-		public void AddStrut(SMType type, int sid)
+		public void AddStrut(SMType type, int sid, int bid) => AddStrut(type, new StructIdPath(bid, sid));
+		public void AddStrut(SMType type, StructIdPath idp)
 		{
 			if (containStructs.ContainsKey(type))
 			{
-				containStructs[type].Add(sid);
+				containStructs[type].Add(idp);
 			}
 			else
 			{
-				containStructs.Add(type, new(){sid});
+				containStructs.Add(type, new(){idp});
 			}
 		}
+
 		public bool ContainStruct(SMType type)
 		{
 			return containStructs.ContainsKey(type) && containStructs[type].Count > 0;
@@ -146,9 +150,11 @@ public partial class StructState : State
 			return containStructs.ContainsKey(type) && containStructs[type].Count >= quantity;
 		}
 
-		public bool RemoveAStruct(SMType type)
+		public bool RemoveAStruct(SMType type, out StructIdPath idp)
 		{
+			idp = StructIdPath.nul;
 			if (!ContainStruct(type)) return false;
+		 	idp = containStructs[type].First();
 			containStructs[type].RemoveAt(0);
 			return true;
 		}
@@ -216,82 +222,75 @@ public partial class StructState : State
 			return sw.ToString();
 		}
 	}
-	[Serializable][MemoryPackable][LuaCallCSharp]
-	public partial class Depositor
-	{
-		public Dictionary<SMType, int> cells = new();
-		public List<SMType> unlocks = new();
-		public bool unlockAll;
-		public int max;
 
-		public bool Deposites(SMType type, int quantity)
+	[Serializable][MemoryPackable][LuaCallCSharp]
+	public partial class Contain
+	{
+		public StuffList stuffList;
+		public Container container;
+
+		[MemoryPackConstructor]
+		public Contain(){}
+		public Contain(StructData data, StructState state)
 		{
-			if (!unlockAll && !unlocks.Contains(type)) return false;
-			if (!Contains(type))
+			if(!data.isContainer_) return;
+			var c = data.container;
+
+			switch (c.tag)
 			{
-				cells.Add(type, 0);
+				case Container.Tag.factory:
+					stuffList = new StuffList(data.factory.size);
+					container = new Depository(data.factory.size,data.factory.recipes[state.choosedRecipeIndex]);
+					break;
+				case Container.Tag.depository:
+					container = new Depository(data.container.size);
+					break;
+				case Container.Tag.cacheQueue:
+					container = new CacheQueue(c.count);
+					break;
 			}
-			var sum =  cells[type] + quantity;
-			if (sum > max) return false;
-			cells[type] = sum;
-			return true;
 		}
 
-		public void Deposites(SMType type, int quantity, out int remain)
+		public bool AddItem(SMType type, int quantity, out int remain) => container.Add(type, quantity, out remain);
+
+		public bool AddItems(List<Amount> list, out List<Amount> remain)
+		{
+			remain = list;
+			foreach (var e in list)
+			{
+				var rs = remain.First();
+				if (AddItem(e.type, e.quantity, out rs.quantity))
+				{
+					remain.RemoveAt(0);
+				}
+				else
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		public bool RemoveItem(SMType type, int quantity, out int remain) => container.Remove(type, quantity, out remain);
+
+		public bool AddStuff(SMType type, int quantity, out int remain)
 		{
 			remain = quantity;
-			if (!unlockAll && !unlocks.Contains(type)) return;
-			if (!Contains(type))
-			{
-				cells.Add(type, 0);
-			}
-			int sum =  cells[type] + quantity;
-			if (sum > max)
-			{
-				remain = sum - max;
-				cells[type] = max;
-			}
-			else
-			{
-				remain = 0;
-				cells[type] = sum;
-			}
+			if (stuffList == null) return false;
+			return stuffList.AddItem(type, quantity, out remain);
 		}
-
-		public bool TakeOut(SMType type, int quantity)
+		public bool RemoveStuff(SMType type, int quantity, out int remain)
 		{
-			if(!unlockAll && !unlocks.Contains(type) && !Contains(type, quantity)) return false;
-			cells[type] -= quantity;
-			return true;
+			remain = quantity;
+			if (stuffList == null) return false;
+			return stuffList.RemoveItem(type, quantity, out remain);
 		}
 
-		public bool Contains(SMType type) => cells.ContainsKey(type);
-
-		public bool Contains(SMType type, int quantity) => Contains(type, quantity) && cells[type] >= quantity;
-
-		public bool IsFull(SMType type) => Contains(type) && cells[type] >= max;
-
-		public void UnlockAdapt(List<Amount> list)
+		public void AddStruct(SMType type, StructIdPath idp)
 		{
-			unlocks.Clear();
-			foreach (var m in list)
-			{
-				unlocks.Add(m.type);
-			}
+			stuffList.AddStrut(type, idp);
 		}
-		public override string ToString()
-		{
-			StringWriter sw = new();
-			sw.WriteLine("{");
 
-			foreach (var v in cells)
-			{
-				sw.WriteLine(v.Value + " : " + v.Key);
-			}
-
-			sw.WriteLine("}");
-			return sw.ToString();
-		}
+		public bool RemoveStruct(SMType type, out StructIdPath idp) => stuffList.RemoveAStruct(type, out idp);
 	}
 
 	public Loc _absLoc
@@ -309,273 +308,24 @@ public partial class StructState : State
 	}
 }
 
-// public class Inventory
-// {
-//     public List<Grid> invt = new();
-//     public event Update WhenInvChange;
-//
-//     public bool full = false;
-//
-//     public Inventory() { }
-//     public Grid GetGrid(int index)
-//     {
-//         return invt[index];
-//     }
-//     /// <summary>
-//     /// add never use the index, it can auto look for it
-//     /// </summary>
-//     /// <param name="item"></param>
-//     /// <param name="amt"></param>
-//     /// <param name="full">if return 0, the inventory is full</param>
-//     public void Add(string item, int amt, out int full)
-//     {
-//         Grid grid = new(amt, item);
-//         Add(grid, out full);
-//     }
-//     public void Add(int index, int amt, out int full)
-//     {
-//         Grid g = GetGrid(index);
-//         g.Add(amt, out full);
-//         Invchange();
-//     }
-//     /// <summary>
-//     ///
-//     /// </summary>
-//     /// <param name="grid"></param>
-//     /// <param name="add">if would remove input -1</param>
-//     public void Add(Grid grid, out int full, int add = 1)
-//     {
-//         Grid g = SearchItemGrid(grid.item);
-//         g ??= SearchEmptyGrid(grid.item);
-//         if (g == null)
-//         {
-//             full = grid.amt;
-//             this.full = true;
-//             return;
-//         }
-//         else
-//         {
-//             this.full = false;
-//         }
-//
-//         g.Add(grid.amt * add, out int f2);
-//         if (f2 > 0)
-//         {
-//             grid.amt = f2;
-//             Add(grid, out int f3, add);
-//             if (f3 > 0)
-//             {
-//                 full = f3;
-//                 g.durab = SetTool(grid.item);
-//                 Invchange();
-//                 return;
-//             }
-//         }
-//         full = 0;
-//         g.durab = SetTool(grid.item);
-//         Invchange();
-//
-//     }
-//     public void Switch(int index, Grid from, out Grid to)
-//     {
-//         to = invt[index];
-//         invt[index] = from;
-//         Invchange();
-//     }
-//     /// <summary>
-//     /// search the grid,if have not the item grid return null
-//     /// </summary>
-//     /// <param name="item"></param>
-//     /// <param name="searchfullgrid"></param>
-//     /// <returns></returns>
-//     public Grid SearchItemGrid(string item, bool searchfullgrid = false)
-//     {
-//         for (int ind = 0; ind < invt.Count; ind++)
-//         {
-//             if (invt[ind].item == item)
-//             {
-//                 if (!searchfullgrid && invt[ind].amt < Item.GetData(item).maxAmt)
-//                 {
-//                     return invt[ind];
-//                 }
-//                 else if (searchfullgrid)
-//                     return invt[ind];
-//                 else
-//                     continue;
-//             }
-//         }
-//         return null;
-//     }
-//     public bool HasFreeItemGrid(string item)
-//     {
-//         foreach (Grid grid in invt)
-//         {
-//             if (grid.item == item && grid.amt < Item.GetData(item).maxAmt)
-//                 return true;
-//         }
-//         return false;
-//     }
-//     public Grid SearchEmptyGrid(string insertItem = "n")
-//     {
-//         for (int ind = 0; ind < invt.Count; ind++)
-//         {
-//             if (invt[ind].item == "n")
-//             {
-//                 invt[ind].item = insertItem;
-//                 return invt[ind];
-//             }
-//         }
-//         return null;
-//     }
-//     public Inventory(int grids)
-//     {
-//         while (grids-- > 0)
-//         {
-//             invt.Add(new());
-//         }
-//     }
-//     [Serializable]
-//     [MessagePackObject]
-//     public class Grid
-//     {
-//         /// <summary>
-//         /// amount
-//         /// </summary>
-//         public int amt;
-//         /// <summary>
-//         /// type of item
-//         /// </summary>
-//         [Key(1)] public string item = "n";
-//         /// <summary>
-//         /// durability
-//         /// </summary>
-//         [Key(2)] public int durab = -1;
-//
-//         /// <summary>
-//         /// add in the grid, if it is full return surplus, if the grid is empty return full complete
-//         /// remove in the grid, if it is <0 return full = -amtT
-//         /// </summary>
-//         public void Add(int amt, out int full)
-//         {
-//             if (item == "n")
-//             {
-//                 full = amt;
-//                 return;
-//             }
-//
-//             full = 0;
-//             int max = Item.GetData(item).maxAmt;
-//             this.amt += amt;
-//             switch (this.amt)
-//             {
-//                 case int i when i > max:
-//                     full = this.amt - max;
-//                     this.amt = max;
-//                     break;
-//                 case 0:
-//                     item = "n";
-//                     durab = -1;
-//                     break;
-//                 case < 0:
-//                     full = -this.amt;
-//                     this.amt = max;
-//                     item = "n";
-//                     durab = -1;
-//                     break;
-//             }
-//         }
-//         public void Fray(int frayed)
-//         {
-//             durab -= frayed;
-//             if (durab <= 0)
-//             {
-//                 amt -= 1;
-//                 durab = Item.GetData(item).tool.durability;
-//                 if (amt <= 0)
-//                     item = "n";
-//             }
-//
-//         }
-//
-//         public void Insert(Grid grid, out Grid ot)
-//         {
-//             if (grid.item == item)//add to
-//             {
-//                 Add(grid.amt, out int full);
-//                 if (full > 0)
-//                 {
-//                     ot = new(full, grid.item, grid.durab);
-//                 }
-//                 else
-//                     ot = new();
-//             }
-//             else//switch
-//             {
-//                 ot = this;
-//
-//                 item = grid.item;
-//                 amt = grid.amt; ;
-//                 durab = grid.durab;
-//             }
-//         }
-//         public Grid() { }
-//         public Grid(int amt = 0, string item = "n", int durab = -1)
-//         {
-//             this.amt = amt;
-//             this.item = item;
-//             this.durab = durab;
-//         }
-//         public override string ToString()
-//         {
-//             string s = $"{amt},{item},{durab}";
-//             return SPack.Paking(s);
-//         }
-//         public void Parse(string data)
-//         {
-//             var l = SPack.Depack(data);
-//             amt = int.Parse(l[0]);
-//             item = l[1];
-//             durab = int.Parse(l[2]);
-//         }
-//     }
-//     public void Invchange()
-//     {
-//         WhenInvChange?.Invoke(this);
-//     }
-//     /// <summary>
-//     ///
-//     /// </summary>
-//     /// <param name="item"></param>
-//     /// <returns>return burability of item if it is a tool</returns>
-//     public static int SetTool(string item)
-//     {
-//         if (Item.IsTool(item))
-//             return Item.GetData(item).tool.durability;
-//         else return -1;
-//     }
-//
-//     public delegate void Update(Inventory inv);
-// }
-public class Container
+public class Inventory : Container
 {
-	public Container(int cellnum, int cellmax)
+	public Inventory(int cellnum, int cellmax)
 	{
-		cellCount = cellnum;
+		count = cellnum;
 		cells = new();
 		while (cellnum-- > 0)
 		{
 			cells.Add(new());
 		}
-		cellMax = cellmax;
+		max = cellmax;
 	}
 
 	public List<Cell> cells;
-	public int cellMax;
-	public int cellCount;
 
 	public int FindVoidCell()
 	{
-		for (int i = 0; i < cellCount; i++)
+		for (int i = 0; i < count; i++)
 		{
 			if(cells[i].IsVoid())
 				return i;
@@ -585,7 +335,7 @@ public class Container
 
 	public int FindSameCell(SMType type)
 	{
-		for(int i = 0; i< cellMax; i++)
+		for(int i = 0; i< max; i++)
 		{
 			if(cells[i].IsSame(type))
 				return i;
@@ -602,7 +352,7 @@ public class Container
 
 		cell.type = type;
 		int sum = cell.quantity + quantity;
-		if (sum <= cellMax)
+		if (sum <= max)
 		{
 			remain = 0;
 			cell.quantity = sum;
@@ -610,13 +360,13 @@ public class Container
 		}
 		else
 		{
-			remain = sum - cellMax;
-			cell.quantity = cellMax;
+			remain = sum - max;
+			cell.quantity = max;
 			return false;
 		}
 	}
 
-	public bool TakeOut(int cellid, SMType type, int quantity, out int remain)
+	public bool TakeOut(int cellid, int quantity, out int remain)
 	{
 		var cell = cells[cellid];
 		remain = quantity;
@@ -636,7 +386,7 @@ public class Container
 		}
 	}
 
-	public void Add(SMType type, int quantity, out int remain)
+	public override bool Add(SMType type, int quantity, out int remain)
 	{
 		remain = quantity;
 		while (true)
@@ -655,12 +405,17 @@ public class Container
 					Insert(id, type, quantity, out remain);
 					if (remain > 0) continue;
 				}
+				else
+				{
+					return false;
+				}
 			}
 			break;
 		}
+		return true;
 	}
 
-	public void Remove(SMType type, int quantity, out int remain)
+	public override bool Remove(SMType type, int quantity, out int remain)
 	{
 		remain = quantity;
 		while (true)
@@ -668,7 +423,7 @@ public class Container
 			int id = FindSameCell(type);
 			if (id != -1)
 			{
-				TakeOut(id, type, quantity, out remain);
+				TakeOut(id, quantity, out remain);
 				if (remain > 0) continue;
 			}
 			else //if there are just void cell
@@ -676,12 +431,17 @@ public class Container
 				id = FindVoidCell();
 				if (id != -1)
 				{
-					TakeOut(id, type, quantity, out remain);
+					TakeOut(id, quantity, out remain);
 					if (remain > 0) continue;
+				}
+				else
+				{
+					return false;
 				}
 			}
 			break;
 		}
+		return true;
 	}
 
 	public class Cell
@@ -698,4 +458,121 @@ public class Container
 		public bool IsVoid() => quantity < 0;
 		public bool IsSame(SMType type) => this.type == type;
 	}
+}
+
+
+public class CacheQueue : Container
+{
+	public Queue<SMType> queue = new();
+
+	public CacheQueue(int count)
+	{
+		tag = Tag.cacheQueue;
+		max = 1;
+		this.count = count;
+	}
+	public override bool Add(SMType type)
+	{
+		if(queue.Count >= count) return false;
+
+		queue.Enqueue(type);
+		return true;
+	}
+
+	public override bool Add(SMType type, int quantity, out int remain)
+	{
+		remain = quantity;
+		while (remain-- > 0)
+		{
+			if(!Add(type)) return false;
+		}
+		return true;
+	}
+
+	/// <summary>
+	/// check the first item is this type
+	/// </summary>
+	/// <param name="type"></param>
+	/// <returns></returns>
+	public override bool Remove(SMType type)
+	{
+		if(queue.Count >= count || queue.First() != type) return false;
+		queue.Dequeue();
+		return true;
+	}
+
+	public override bool Remove(SMType type, int quantity, out int remain)
+	{
+		remain = quantity;
+		while (remain-- > 0)
+		{
+			if(!Remove(type)) return false;
+		}
+		return true;
+	}
+
+	public override bool RemoveFirst(out SMType type)
+	{
+		type = new();
+		if (queue.Count == 0) return false;
+		type = queue.Dequeue();
+		return true;
+	}
+}
+
+[Serializable][MemoryPackable][LuaCallCSharp]
+public partial class Container
+{
+	public bool full;
+	public int max;
+	public int count;
+	public Tag tag;
+
+	public virtual bool Add(SMType type)
+	{
+		return false;
+	}
+
+	public virtual bool Add(SMType type, int quantity, out int remain)
+	{
+		remain = quantity;
+		return false;
+	}
+
+	public virtual bool Remove(SMType type)
+	{
+		return false;
+	}
+	public virtual bool Remove(SMType type, int quantity, out int remain)
+	{
+		remain = quantity;
+		return false;
+	}
+
+	public virtual bool RemoveFirst(out SMType type)
+	{
+		type = new();
+		return false;
+	}
+
+	public enum Tag
+	{
+		nul,inventory, depository, cacheQueue, cacheStack, factory
+	}
+	public bool Is(Tag tag) => this.tag == tag;
+}
+
+public struct StructIdPath
+{
+	public int bodyIndex;
+	public int structIndex;
+
+	public bool IsNull() => bodyIndex == -1 || structIndex == -1;
+
+	public StructIdPath(int bid, int sid)
+	{
+		bodyIndex = bid;
+		structIndex = sid;
+	}
+	public static StructIdPath nul = new(){ bodyIndex = -1, structIndex = -1 };
 }

@@ -113,13 +113,14 @@ public class StructData
 	public string type;
 	public float volume = -1;
 	public Factory factory;
-	public Container container;
+	public Contain container;
 
 	[Serializable]
 	public class Factory
 	{
 		public float heatRelease;
 		public List<Recipe> recipes = new();
+		public int size;
 
 		[Serializable]
 		public class Recipe
@@ -132,10 +133,11 @@ public class StructData
 		}
 	}
 	[Serializable]
-	public class Container
+	public class Contain
 	{
-		public int cellNum;
-		public int cellSize;
+		public Container.Tag tag;
+		public int count;
+		public int size;
 	}
 
 	public bool isFactory_ => factory != null && factory.recipes.Count > 0;
@@ -371,7 +373,7 @@ public class Bodies
 
 		if (erdata.isFactory_)
 		{
-			erstate.stuffList.AddStrut(adsorbed.state.type,adsorbed.state.bodyIndex);
+			erstate.container.AddStruct(adsorbed.state.type,new(adsorbed.state.bodyIndex, adsorbed.state.structIndex));
 			TryProduction(erstate, erdata);
 		}
 	}
@@ -395,10 +397,12 @@ public class Bodies
 	public void Producing(StructState state, StructData data)
 	{
 		var recipe = data.factory.recipes[state.choosedRecipeIndex];
-		if (state.stuffList.TryRemove(recipe))
+		if (state.container.stuffList.TryRemove(recipe))
 		{
-			state.stuffList.AddItems(recipe.products);
-			Tick.Reg(_ => Producing(state, data),(int)(ct.setting.tickPerSecond * recipe.productionTime));
+			if (state.container.AddItems(recipe.products, out var list))
+			{
+				Tick.Reg(_ => Producing(state, data),(int)(ct.setting.tickPerSecond * recipe.productionTime));
+			}
 		}
 
 		state.producing = false;
@@ -792,35 +796,116 @@ public struct Amount
 
 
 }
-[Serializable][LuaCallCSharp][MemoryPackable]
-public partial class Depository
+[Serializable][MemoryPackable][LuaCallCSharp]
+public partial class Depository : Container
 {
-	public Dictionary<SMType, int> cells;
-	public int max;
+	public Dictionary<SMType, int> cells = new();
+	public List<SMType> unlocks = new();
+	public bool unlockAll;
 
-	public bool Deposite(SMType itemType, int quantity)
+	[MemoryPackConstructor]
+	public Depository(){}
+
+	public Depository(int size)
 	{
-		if (!cells.ContainsKey(itemType))
-			cells.Add(itemType, 0);
-		var sum = cells[itemType] + quantity;
-		if(sum > max)
-			return false;
-		cells[itemType] = sum;
+		max = size;
+	}
+
+	public Depository(int size, StructData.Factory.Recipe recipe)
+	{
+		max = size;
+		UnlockAdapt(recipe.materials);
+	}
+	public bool Deposites(SMType type, int quantity)
+	{
+		if (!unlockAll && !unlocks.Contains(type)) return false;
+		if (!Contains(type))
+		{
+			cells.Add(type, 0);
+		}
+		var sum =  cells[type] + quantity;
+		if (sum > max) return false;
+		cells[type] = sum;
 		return true;
 	}
 
+	public override bool Add(SMType type, int quantity, out int remain)
+	{
+		remain = quantity;
+		if (!unlockAll && !unlocks.Contains(type)) return false;
+		if (!Contains(type))
+		{
+			cells.Add(type, 0);
+		}
+		int sum =  cells[type] + quantity;
+		if (sum > max)
+		{
+			remain = sum - max;
+			cells[type] = max;
+			return false;
+		}
+		else
+		{
+			remain = 0;
+			cells[type] = sum;
+			return true;
+		}
+	}
+	public bool Deposites(SMType type, int quantity, out int remain) => Add(type, quantity, out remain);
+
 	public bool TakeOut(SMType type, int quantity)
 	{
-		bool b = QuantityExists(type, quantity);
-		if (b)
-			cells[type] -= quantity;
-		return b;
+		if(!unlockAll && !unlocks.Contains(type) && !Contains(type, quantity)) return false;
+		cells[type] -= quantity;
+		return true;
 	}
 
-	public bool QuantityExists(SMType type, int quantity) => cells.ContainsKey(type) && cells[type] >= quantity;
+	public bool TakeOut(SMType type, int quantity, out int remain) => Remove(type, quantity, out remain);
 
-	public Depository()
+	public override bool Remove(SMType type, int quantity, out int remain)
 	{
-		cells = new();
+		remain = quantity;
+		if (!unlockAll && !unlocks.Contains(type)) return false;
+		int dis = cells[type] - quantity;
+		if (dis > 0)
+		{//over
+			remain = -dis;
+			cells[type] = 0;
+			return false;
+		}
+		else
+		{
+			remain = 0;
+			cells[type] = dis;
+			return true;
+		}
+	}
+
+	public bool Contains(SMType type) => cells.ContainsKey(type);
+
+	public bool Contains(SMType type, int quantity) => Contains(type, quantity) && cells[type] >= quantity;
+
+	public bool IsFull(SMType type) => Contains(type) && cells[type] >= max;
+
+	public void UnlockAdapt(List<Amount> list)
+	{
+		unlocks.Clear();
+		foreach (var m in list)
+		{
+			unlocks.Add(m.type);
+		}
+	}
+	public override string ToString()
+	{
+		StringWriter sw = new();
+		sw.WriteLine("{");
+
+		foreach (var v in cells)
+		{
+			sw.WriteLine(v.Value + " : " + v.Key);
+		}
+
+		sw.WriteLine("}");
+		return sw.ToString();
 	}
 }
