@@ -173,6 +173,25 @@ public static class ct
             Application.Quit();
         #endif
     }
+
+    public static StructState GetState(StructIdPath idp)
+    {
+        return bodies.datas[idp.bodyIndex].structs[idp.structIndex];
+    }
+
+    public static bool TryGetState(StructIdPath idp, out StructState state)
+    {
+        state = null;
+        if (idp.IsNull())
+            return false;
+        state = GetState(idp);
+        return true;
+    }
+
+    public static StructData GetData(StructState state)
+    {
+        return structsInfo.Get(state.type).data;
+    }
 }
 public delegate void Meth();
 
@@ -369,4 +388,6 @@ public class StructInfo
     public GameObject facesTamplate;
     public GameObject connectorTamplate;
     public StructData data;
+    public Updater updater;
+    public Sprite sprite;
 }

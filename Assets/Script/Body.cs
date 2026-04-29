@@ -164,6 +164,7 @@ public class Bodies
 		public List<FaceState> faces;
 		public BodyState self;
 	}
+
 	public struct obj
 	{
 		public GameObject self;
@@ -172,7 +173,9 @@ public class Bodies
 		public List<GameObject> structs;
 		public List<GameObject> faces;
 	}
-	public Dictionary<int,body> datas = new();
+
+	public Dictionary<int, body> datas = new();
+
 	/// <summary>
 	/// body
 	/// </summary>
@@ -186,6 +189,7 @@ public class Bodies
 		{
 
 		}
+
 		datas.TryAdd(index, new body()
 		{
 			structs = new(),
@@ -210,11 +214,11 @@ public class Bodies
 
 	public GameObject LoadStruct(StructState strct, Material material = null, GameObject strobj = null)
 	{
-		if(strct.type.IsNull())
+		if (strct.type.IsNull())
 			return strobj;
 		if (!strobj || strobj.name == "new")
 		{
-			if(ct.structsInfo.TryGet(strct.type, out var info))
+			if (ct.structsInfo.TryGet(strct.type, out var info))
 				strobj = Object.Instantiate(info.template);
 			else
 			{
@@ -222,9 +226,10 @@ public class Bodies
 				return null;
 			}
 		}
+
 		var bs = datas[strct.bodyIndex].self;
 
-		strct.structIndex = bs.getNewStructIndex_;//registries index of struct
+		strct.structIndex = bs.getNewStructIndex_; //registries index of struct
 
 		strobj.transform.SetParent(objects[strct.bodyIndex].str.transform);
 		strobj.tag = "struct";
@@ -243,6 +248,7 @@ public class Bodies
 			var t = ct.materials.dict.Values.First().Values.First();
 			strct._setMaterial = new(t.type, t.mod);
 		}
+
 		var md = ct.materials.Get(strct.material.type, strct.material.mod);
 		bs._equilibrateTemperature = new(strct.mass, md.specificHeat, strct.temperature);
 		bs.structCount++;
@@ -261,11 +267,12 @@ public class Bodies
 
 	public GameObject LoadStruct(float px, float py, float pz,
 		float rx, float ry, float rz, int index, string type, string mod) =>
-		LoadStruct(new V3(px, py, pz),new V3(rx, ry, rz),
+		LoadStruct(new V3(px, py, pz), new V3(rx, ry, rz),
 			index, new(type, mod));
 
-	public GameObject LoadStruct(V3 pos, V3 rot,int index , SMType type) =>
+	public GameObject LoadStruct(V3 pos, V3 rot, int index, SMType type) =>
 		LoadStruct(pos, new Quater(Quaternion.Euler(rot.x, rot.y, rot.z)), index, type);
+
 	public GameObject LoadStruct(V3 pos, Quater rot, int index, SMType type)
 	{
 		Loc loc = new Loc
@@ -278,7 +285,8 @@ public class Bodies
 			index = ct.curWorldRule.distribuiteBodyIndex;
 			LoadVoidBody(index, loc);
 		}
-		return LoadStruct(loc, index,type);
+
+		return LoadStruct(loc, index, type);
 	}
 
 	/// <summary>
@@ -291,7 +299,7 @@ public class Bodies
 	public GameObject LoadStruct(Loc loc, int index, SMType type)
 	{
 		//Dictionary<string, Material> mats = ct.materials.GetValueOrDefault(type);
-		return LoadStruct(new StructState { _absLoc = loc, type = type, bodyIndex = index} /*, mat*/);
+		return LoadStruct(new StructState { _absLoc = loc, type = type, bodyIndex = index } /*, mat*/);
 	}
 
 
@@ -310,6 +318,7 @@ public class Bodies
 		Debug.Log(bs.temperature);
 
 	}
+
 	/// <summary>
 	/// Render for gameobject its outline
 	/// </summary>
@@ -318,11 +327,11 @@ public class Bodies
 	{
 		if (g.TryGetComponent<MeshRenderer>(out var mr))
 		{
-			if(active)
-				mr.renderingLayerMask = 3;//00000011
+			if (active)
+				mr.renderingLayerMask = 3; //00000011
 			else
 			{
-				mr.renderingLayerMask = 1;//00000001
+				mr.renderingLayerMask = 1; //00000001
 			}
 		}
 	}
@@ -332,27 +341,30 @@ public class Bodies
 	/// </summary>
 	/// <param name="adsorber">data of struct as the anchor</param>
 	/// <param name="adsorbed">data of struct adsorbed on the anchor struct</param>
-	public void Adsorption((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int bid, int sid, int face) adsorber, bool onlyAdssorb = false)
+	public void Adsorption((StructState state, int face, GameObject obj) adsorbed,
+		(GameObject obj, int bid, int sid, int face) adsorber, bool onlyAdssorb = false)
 	{
 		if (!adsorbed.obj)
-			LoadStruct(adsorbed.state , strobj: adsorbed.obj);
+			LoadStruct(adsorbed.state, strobj: adsorbed.obj);
 
-		SMesh.Face.AlignFaceToFace(adsorbed.obj,ct.structsInfo.Get(adsorbed.state.bodyIndex).faces, adsorbed.face
-			,adsorber.obj, ct.structsInfo.Get(adsorber.bid).faces, adsorber.face);
+		SMesh.Face.AlignFaceToFace(adsorbed.obj, ct.structsInfo.Get(adsorbed.state.bodyIndex).faces, adsorbed.face
+			, adsorber.obj, ct.structsInfo.Get(adsorber.bid).faces, adsorber.face);
 
 		if (!onlyAdssorb)
 		{
 			AdsorptionPostProcess(adsorbed, adsorber);
 		}
 	}
+
 	/// <summary>
 	/// void AdsorptionPostProcess((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int bid, int sid, int face) adsorber)
 	/// </summary>
 	/// <param name="adsorbed"></param>
 	/// <param name="adsorber"></param>
-	public void AdsorptionPostProcess((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int bid, int sid, int face) adsorber)
+	public void AdsorptionPostProcess((StructState state, int face, GameObject obj) adsorbed,
+		(GameObject obj, int bid, int sid, int face) adsorber)
 	{
-		adsorbed.state.bodyIndex = adsorber.bid;//transfer the struct to adsorber
+		adsorbed.state.bodyIndex = adsorber.bid; //transfer the struct to adsorber
 		adsorbed.obj.name = (adsorber.sid + 1).ToString();
 		adsorbed.obj.transform.SetParent(adsorber.obj.transform.parent);
 
@@ -373,7 +385,7 @@ public class Bodies
 
 		if (erdata.isFactory_)
 		{
-			erstate.container.AddStruct(adsorbed.state.type,new(adsorbed.state.bodyIndex, adsorbed.state.structIndex));
+			erstate.container.AddStruct(adsorbed.state.type, new(adsorbed.state.bodyIndex, adsorbed.state.structIndex));
 			TryProduction(erstate, erdata);
 		}
 	}
@@ -386,8 +398,8 @@ public class Bodies
 		var state = datas[bid].structs[sid];
 		var data = ct.structsInfo.Get(state.type).data;
 
-		if(!data.isFactory_) return;
-		TryProduction(state,data);
+		if (!data.isFactory_) return;
+		TryProduction(state, data);
 	}
 
 	public void TryProduction(StructState state, StructData data) =>
@@ -401,11 +413,42 @@ public class Bodies
 		{
 			if (state.container.AddItems(recipe.products, out var list))
 			{
-				Tick.Reg(_ => Producing(state, data),(int)(ct.setting.tickPerSecond * recipe.productionTime));
+				Tick.Reg(_ => Producing(state, data), (int)(ct.setting.tickPerSecond * recipe.productionTime));
 			}
 		}
 
 		state.producing = false;
+	}
+
+	public Updater defaultUpdater = (idp, state, data) => {
+
+	};
+
+	public void Update(StructIdPath idp)
+	{
+		var s = ct.GetState(idp);
+		var d = ct.GetData(s);
+
+		if (d.isFactory_)
+		{
+
+		}
+
+		if (d.isContainer_)
+		{
+			s.container.Update(s,d);
+		}
+
+		//
+		// var u = ct.structsInfo.Get(s.type).updater;
+		// if (u == null)
+		// {
+		// 	defaultUpdater.Invoke(idp, s,d);
+		// }
+		// else
+		// {
+		// 	u?.Invoke(idp, s, d);
+		// }
 	}
 }
 
@@ -908,4 +951,35 @@ public partial class Depository : Container
 		sw.WriteLine("}");
 		return sw.ToString();
 	}
+
+	public bool RemoveFirst(out SMType type)
+	{
+		type = new();
+		foreach (var unlock in unlocks)
+		{
+			if (!Contains(unlock)) continue;
+			if (!Remove(unlock, 1, out _)) continue;
+			type = unlock;
+			return true;
+		}
+		return false;
+	}
+
+	public override void Update(StructState state, StructData data)
+	{
+		var c = state.container;
+		var proc = c.prechain;
+
+		if(!ct.TryGetState(proc, out var st))
+			return;
+		var procs = st.container;
+
+		RemoveFirst(out SMType type);
+		if (procs.AddItem(type, 1, out _))
+		{
+			ct.bodies.Update(proc);
+		}
+	}
 }
+
+public delegate void Updater(StructIdPath idp, StructState state, StructData data);

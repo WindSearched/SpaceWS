@@ -51,9 +51,9 @@ public partial class StructState : State
 	public StructState()
 	{
 		var data = ct.structsInfo.Get(type).data;
-		if (data.isFactory_)
+		if (data.isContainer_)
 		{
-			container = new Contain();
+			container = new Contain(data,this);
 		}
 	}
 
@@ -228,6 +228,8 @@ public partial class StructState : State
 	{
 		public StuffList stuffList;
 		public Container container;
+		public StructIdPath prechain;
+		public StructIdPath prochain;
 
 		[MemoryPackConstructor]
 		public Contain(){}
@@ -291,6 +293,11 @@ public partial class StructState : State
 		}
 
 		public bool RemoveStruct(SMType type, out StructIdPath idp) => stuffList.RemoveAStruct(type, out idp);
+
+		public void Update(StructState state, StructData data)
+		{
+			container.Update(state, data);
+		}
 	}
 
 	public Loc _absLoc
@@ -510,6 +517,7 @@ public class CacheQueue : Container
 		return true;
 	}
 
+
 	public override bool Remove(SMType type, int quantity, out int remain)
 	{
 		remain = quantity;
@@ -529,6 +537,19 @@ public class CacheQueue : Container
 	}
 
 	public override bool IsFull(SMType _) => full;
+	public override void Update(StructState state, StructData data)
+	{
+		var c = state.container;
+		var proc = c.prechain;
+
+		if(!ct.TryGetState(proc, out var st))
+			return;
+		var pros = st.container;
+
+		if (pros.container.full) return;
+		RemoveFirst(out SMType type);
+		pros.AddItem(type, 1, out _);
+	}
 }
 
 [Serializable][MemoryPackable][LuaCallCSharp]
@@ -578,6 +599,11 @@ public partial class Container
 		nul,inventory, depository, cacheQueue, cacheStack, factory
 	}
 	public bool Is(Tag tag) => this.tag == tag;
+
+	public virtual void Update(StructState state, StructData data)
+	{
+
+	}
 }
 
 public struct StructIdPath
