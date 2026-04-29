@@ -42,7 +42,8 @@ public class Player : MonoBehaviour
         });
         cMvMd = moveModes["CameraFrontDirectionMove"];
 
-        Tick.Reg(new() { offset = 1, onTick = (TickReg reg) => {
+        Tick.Reg(_ =>
+        {
             if (ct.playerMove.loosing)
             {
                 if(moving)
@@ -50,8 +51,7 @@ public class Player : MonoBehaviour
                 else
                     OnStop(ct.wasdDirection);
             }
-            Tick.Reg(reg);
-        } });
+        }, 0, -1, 1);
 
         SMesh.CreatePolygonMesh(new List<Vector3>()
         {
@@ -83,19 +83,17 @@ public class Player : MonoBehaviour
 
     public void OnMove(Vector2 dir)
     {
-        Tick.Reg(new() { offset = 1, onTick = (TickReg reg) => {
-            cMvMd.OnMove(dir, entity.rig); 
-        } });
+        Tick.Reg(_ =>
+        {
+            cMvMd.OnMove(dir, entity.rig);
+        }, 1);
     }
     public void OnStop(Vector2 dir)
     {
-        Tick.Reg(new()
+        Tick.Reg(_ =>
         {
-            offset = 1,
-            onTick = (TickReg reg) => {
-                cMvMd.OnStop(entity.rig);
-            }
-        });
+            cMvMd.OnStop(entity.rig);
+        }, 1);
     }
 
     /// <summary>

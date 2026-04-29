@@ -13,6 +13,8 @@ public partial class StructState : State
 	public Loc relativeLocation;
 	public Loc absoluteLocation;
 	public int structIndex;
+	[MemoryPackIgnore][NonSerialized]
+	public bool processed;
 
 	public SMType material;
 	public float temperature;
@@ -48,8 +50,15 @@ public partial class StructState : State
 
 	public bool isMixture_ => mixture == null;
 
-	public StructState()
+	[MemoryPackConstructor]
+	public StructState(){}
+	public StructState(SMType type)
 	{
+		PostProcess();
+	}
+	public void PostProcess()
+	{
+
 		var data = ct.structsInfo.Get(type).data;
 		if (data.isContainer_)
 		{

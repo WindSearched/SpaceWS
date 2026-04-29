@@ -68,10 +68,7 @@ public class CenterSystem : MonoBehaviour
 
         ct.curWorldRule = Data.ReadJson<Rule>(ct.setting.exRulePath);
 
-        Tick.Reg(new()//update position every tick
-        {
-            offset = 1,
-            onTick = (TickReg reg) =>
+        Tick.Reg( _ =>
             {
                 ct.UpdatePerTick();
 
@@ -80,10 +77,8 @@ public class CenterSystem : MonoBehaviour
                 ct.wasdDirection = p;
 
                 ct.fps = 1f / Time.unscaledDeltaTime;
-
-                Tick.Reg(reg);
-            }
-        });
+            }, 1, -1, 1
+            );
 
         ct.chunkLoader = new(ct.bodies);
         //needed load
@@ -119,7 +114,7 @@ public class CenterSystem : MonoBehaviour
             return $"{p.x} {p.y}";
         }, "mouse delta");
         debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
-        debugInfo.LeftAdd(() => Tick.ticksym.tick.ToString(), "tick");
+        debugInfo.LeftAdd(() => Tick.tickS.wheel.getTick_.ToString(), "tick");
 
         inputRegistering:
         modes.Register("esc", new Mode("esc",() => false, active =>
@@ -234,6 +229,8 @@ public class CenterSystem : MonoBehaviour
                     isStruct = true,
                     type = ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type")
                 };
+                state.PostProcess();
+
                 if(state.type.IsNull())
                     return;
                 var ng = bodies.LoadStruct(state);

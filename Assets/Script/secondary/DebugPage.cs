@@ -73,10 +73,8 @@ public class DebugPage : MonoBehaviour
     {
         Tick.Reg(rg =>
         {
-            if (active)
-                Tick.Reg(rg);
-            else
-                rg.repeattime = 0;
+            if (!active)
+                rg.loop = 0;
 
             for (int i = 0; i < linesNumber; i++)
             {
@@ -103,7 +101,7 @@ public class DebugPage : MonoBehaviour
                     rrt.text = t;
                 }
             }
-        },1, -100, 1);
+        },1, -1, 1);
     }
 
     private void OnRectTransformDimensionsChange()

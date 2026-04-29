@@ -37,32 +37,26 @@ public class ChunkLoader
         var bodytPT = SMath.SliptList(chunk.bodies,ct.setting.loadobjectsPerTick);
         foreach (var list in bodytPT)
         {
-            Tick.Reg(new (_ =>
+            Tick.Reg(_ =>
+            {
+                foreach (var s in list)
                 {
-                    foreach (var s in list)
-                    {
-                        bodies.LoadVoidBody(s.index,s.location);
-                    }
-                },
-                of++
-            ));
+                    bodies.LoadVoidBody(s.index,s.location);
+                }
+            }, 0);
+            of++;
         }
 
         var structPT = SMath.SliptList(chunk.structs,ct.setting.loadobjectsPerTick);
         foreach (var list in structPT)
         {
-            TickReg reg = new TickReg()
+            Tick.Reg(_ =>
             {
-                onTick = (TickReg _) =>
+                foreach (var state in list)
                 {
-                    foreach (var state in list)
-                    {
-                        bodies.LoadStruct(state ,strobj:structPool. Get());
-                    }
-                },
-                offset = of++
-            };
-            Tick.Reg(reg);
+                    bodies.LoadStruct(state ,strobj:structPool. Get());
+                }
+            }, of++);
         }
     }
     public void LoadChunk(V3I cp) => LoadChunk(GetChunk(cp));

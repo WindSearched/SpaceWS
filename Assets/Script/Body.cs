@@ -299,7 +299,9 @@ public class Bodies
 	public GameObject LoadStruct(Loc loc, int index, SMType type)
 	{
 		//Dictionary<string, Material> mats = ct.materials.GetValueOrDefault(type);
-		return LoadStruct(new StructState { _absLoc = loc, type = type, bodyIndex = index } /*, mat*/);
+		var s = new StructState { _absLoc = loc, type = type, bodyIndex = index };
+		s.PostProcess();
+		return LoadStruct(s /*, mat*/);
 	}
 
 
@@ -383,7 +385,7 @@ public class Bodies
 		var erstate = datas[adsorber.bid].structs[adsorber.sid];
 		var erdata = ct.structsInfo.Get(erstate.type).data;
 
-		if (erdata.isFactory_)
+		if (erdata.isFactory_ && erdata.isContainer_)
 		{
 			erstate.container.AddStruct(adsorbed.state.type, new(adsorbed.state.bodyIndex, adsorbed.state.structIndex));
 			TryProduction(erstate, erdata);

@@ -17,12 +17,32 @@ public class Tick : MonoBehaviour
         tickS = this;
 
         tps = ct.setting.tickPerSecond;
-        t = 1 / tps;
+        t = 1f / tps;
         wheel = new TimeWheel(tps);
+
+        Cor(routine());
     }
 
     public static void Reg(Action<TimeWheel.TimerTask> action, int delay, int loop = 0, int interval = 0)
         => tickS.wheel.Add(action, delay, loop, interval);
+
+    IEnumerator routine()
+    {
+        while (true)
+        {
+            wheel.Tick();
+            yield return new WaitForSeconds(t);
+        }
+    }
+
+    public static Coroutine Cor(IEnumerator routine)
+    {
+        return tickS.StartCoroutine(routine);
+    }
+    public static void StopCor(Coroutine routine)
+    {
+        tickS.StopCoroutine(routine);
+    }
 }
 
 public class TimeWheel
@@ -38,6 +58,8 @@ public class TimeWheel
     private readonly List<TimerTask>[] _wheel;
     private readonly int _size;
     private int _current;
+
+    public int getTick_ => _current;
 
     public TimeWheel(int size)
     {
