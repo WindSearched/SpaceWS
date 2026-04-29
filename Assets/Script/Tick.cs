@@ -1,137 +1,117 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class Tick : MonoBehaviour
 {
-    public static Tick ticksym;
-    public int tickPerSecond => ct.setting.tickPerSecond;
-    public int tick;
-    public float tickInterval;
-    public Dictionary<int, List<TickReg>> tickEvents = new();
+    public TimeWheel wheel;
+    public static Tick tickS;
+    public int tps;
+    public float t;
+
     private void Start()
     {
-        ticksym = this;
-        tickInterval = 1f / tickPerSecond;
+        tickS = this;
 
-        StartCoroutine(TickRoutine());
-
-        TickEv e = (TickReg reg) =>
-        {
-            Reg(reg);
-        };
-        TickReg reg = new(e,5, 0);
-        Reg(reg);
+        tps = ct.setting.tickPerSecond;
+        t = 1 / tps;
+        wheel = new TimeWheel(tps);
     }
 
-    // ReSharper disable Unity.PerformanceAnalysis
-    IEnumerator TickRoutine()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(tickInterval);
-
-            if(tickEvents.TryGetValue(tick, out List<TickReg> regs))//try get tick events
-            {
-                foreach (var t in regs)
-                {
-                    var reg = t;
-                    reg.onTick.Invoke(reg);
-
-                    reg.repeattime--;
-                    if (reg.repeattime >= 1)
-                        Reg(reg);
-
-                    else if(reg.repeattime == -100)
-                        Reg(reg, tick + 1 + reg.interval);
-                }
-            }
-
-            tickEvents.Remove(tick);
-            tick++;
-        }
-    }
-
-    public static void Reg(TickReg reg)
-    {
-        int t = ticksym.tick + reg.offset;
-        Reg(reg,t);
-    }
-
-    public static void Reg(TickReg reg, int tick)
-    {
-        while (true)
-        {
-            if (tick < ticksym.tick) return;
-            if (ticksym.tickEvents.ContainsKey(tick))
-            {
-                ticksym.tickEvents[tick].Add(reg);
-            }
-            else
-            {
-                ticksym.tickEvents[tick] = new List<TickReg>() { reg };
-            }
-
-            if (reg.repeattime <= 0) return;
-            reg.repeattime--;
-            var reg1 = reg;
-            tick = tick + reg1.interval;
-        }
-    }
-
-    public static void Reg(TickEv ev, int offset, int repeat = 0, int interval = 0)
-    {
-        Reg(new(ev, offset, repeat, interval));
-    }
-
-    /// <summary>
-    /// register batch with a interval
-    /// </summary>
-    /// <param name="regs"></param>
-    /// <param name="interval"></param>
-    public static void Reg(List<TickReg> regs, int interval)
-    {
-        int curoffset = 0;
-        foreach (var reg in regs)
-        {
-            Reg(new ()
-            {
-                onTick =  reg.onTick,
-                repeattime = reg.repeattime,
-                offset = reg.offset + curoffset
-            });
-            curoffset += interval;
-        }
-    }
-
-    public static Coroutine Cor(IEnumerator routine)
-    {
-        return ticksym.StartCoroutine(routine);
-    }
-    public static void StopCor(Coroutine routine)
-    {
-        ticksym.StopCoroutine(routine);
-    }
+    public static void Reg(Action<TimeWheel.TimerTask> action, int delay, int loop = 0, int interval = 0)
+        => tickS.wheel.Add(action, delay, loop, interval);
 }
-public delegate void TickEv(TickReg reg);
-/// <summary>
-/// tick event register
-/// </summary>
-public struct TickReg
+
+public class TimeWheel
 {
-    public TickEv onTick;
-    public int offset;
-    public int repeattime;
-    public int interval;
-
-    public TickReg(TickEv onTick, int offset, int repeat = 0, int interval = 0)
+    public class TimerTask
     {
-        this.onTick = onTick;
-        this.offset = offset;
-        this.repeattime = repeat;
-        this.interval = interval;
+        public int round;
+        public int interval;
+        public int loop; // 0=不重复，>0=剩余次数，-1=无限
+        public Action<TimerTask> action;
+    }
+
+    private readonly List<TimerTask>[] _wheel;
+    private readonly int _size;
+    private int _current;
+
+    public TimeWheel(int size)
+    {
+        _size = size;
+        _wheel = new List<TimerTask>[size];
+
+        for (int i = 0; i < size; i++)
+            _wheel[i] = new List<TimerTask>(4);
+    }
+
+    // ================= 添加任务 =================
+
+    public void Add([CanBeNull] Action<TimerTask> action, int delay, int loop = 0, int interval = 0)
+    {
+        var task = new TimerTask
+        {
+            action = action,
+            loop = loop,
+            interval = interval > 0 ? interval : delay
+        };
+
+        Schedule(task, delay);
+    }
+
+    private void Schedule(TimerTask task, int delay)
+    {
+        int index = (_current + delay) % _size;
+        int round = delay / _size;
+
+        task.round = round;
+
+        _wheel[index].Add(task);
+    }
+
+    // ================= Tick =================
+
+    public void Tick()
+    {
+        var list = _wheel[_current];
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            var task = list[i];
+
+            if (task.round > 0)
+            {
+                task.round--;
+                continue;
+            }
+
+            // 执行
+            task.action?.Invoke(task);
+
+            // 从当前槽移除
+            list.RemoveAt(i);
+            i--;
+
+            // ================= 重复逻辑 =================
+
+            if (task.loop == 0)
+            {
+                // 不再重复，直接结束
+                continue;
+            }
+
+            if (task.loop > 0)
+            {
+                task.loop--; // 执行后减少次数
+            }
+
+            // loop == -1 或 loop > 0 都会走到这里
+            Schedule(task, task.interval);
+        }
+
+        _current = (_current + 1) % _size;
     }
 }
-
-public delegate void ObjEv(Object obj);
-public delegate void TransfEv(Transform transform);
