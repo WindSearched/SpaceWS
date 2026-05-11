@@ -125,7 +125,7 @@ public class Mod
                         foreach (var i in items)
                         {
                             i.mod = name;
-                            ct.structsInfo.GetAbs(i.smt).data = i;
+                            ct.structsInfo.GetAbs(i.smt, () => new StructInfo()).data = i;
                         }
                     }
                     else
@@ -251,7 +251,7 @@ public class Mod
 
         ct.structTypes.Add(name);
         var t = SMesh.ObjTemp.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p), name);
-        var i = ct.structsInfo.GetAbs(SMType.Parse(name));
+        var i = ct.structsInfo.GetAbs(SMType.Parse(name), () => new StructInfo());
         i.template = t.template;
         i.faces = t.faces;
         i.facesTamplate = t.facesTemp;

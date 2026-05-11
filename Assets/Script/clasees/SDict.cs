@@ -62,27 +62,29 @@ public class SDict<TKey, TVal>
     /// <summary>
     /// if not present create one automatically
     /// </summary>
-    public TVal GetAbs(TKey key, TKey tag)
+    public TVal GetAbs(TKey key, TKey tag, Func<TVal> createFunc)
     {
-        if (ExistsLocation(key, tag))
-        {
-            return Get(key, tag);
-        }
-
-        TVal v;
-
-        if (ValueFactory != null)
-        {
-            v = ValueFactory();
-        }
-        else
-        {
-            v = default;
-        }
-
-        Set(key, tag, v);
-
-        return v;
+        Set(key, tag, createFunc.Invoke(), false);
+        return Get(key, tag);
+        // if (ExistsLocation(key, tag))
+        // {
+        //     return Get(key, tag);
+        // }
+        //
+        // TVal v;
+        //
+        // if (ValueFactory != null)
+        // {
+        //     v = ValueFactory();
+        // }
+        // else
+        // {
+        //     v = default;
+        // }
+        //
+        // Set(key, tag, v);
+        //
+        // return v;
     }
 
     public TVal Get(TKey key)
@@ -156,7 +158,7 @@ public class SMTDict<TVal> : SDict<string, TVal>
         return Get(smt.type, smt.mod);
     }
 
-    public TVal GetAbs(SMType smt) => GetAbs(smt.type, smt.mod);
+    public TVal GetAbs(SMType smt, Func<TVal> createFunc) => GetAbs(smt.type, smt.mod, createFunc);
     public bool TryGet(SMType smt, out TVal value) => TryGet(smt.type, smt.mod, out value);
 
     public SMType GetFirstKey(string key)
