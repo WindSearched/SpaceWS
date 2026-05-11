@@ -53,6 +53,11 @@ public class TimeWheel
         public int interval;
         public int loop; // 0=不重复，>0=剩余次数，-1=无限
         public Action<TimerTask> action;
+
+        public void Stop()
+        {
+            loop = 0;
+        }
     }
 
     private readonly List<TimerTask>[] _wheel;

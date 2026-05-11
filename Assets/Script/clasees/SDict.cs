@@ -2,29 +2,36 @@
 using System.Collections.Generic;
 using System.Linq;
 
-public class SDict<Tkey, Tval> where Tval : class, new()
+public class SDict<TKey, TVal> where TVal : new()
 {
     public int valueCount;
-    public Dictionary<Tkey, Dictionary<Tkey, Tval>> dict = new();
+
+    public Dictionary<TKey, Dictionary<TKey, TVal>> dict = new();
 
     /// <summary>
     /// Set val in dict
     /// </summary>
-    /// <param name="overwrite">if has already contained the value overwrite them</param>
-    public void
-        Set(Tkey key, Tkey tag, Tval value, bool overwrite = true)
+    /// <param name="overwrite">
+    /// if has already contained the value overwrite them
+    /// </param>
+    public void Set(
+        TKey key,
+        TKey tag,
+        TVal value,
+        bool overwrite = true)
     {
-        if (!dict.TryGetValue(key, out Dictionary<Tkey, Tval> line))
+        if (!dict.TryGetValue(key, out var line))
         {
-            line = new Dictionary<Tkey, Tval>();
+            line = new Dictionary<TKey, TVal>();
             line.Add(tag, value);
             dict.Add(key, line);
         }
         else
         {
             if (!line.TryAdd(tag, value))
-            {// if contains tag
-                if(overwrite)
+            {
+                // already contains tag
+                if (overwrite)
                     line[tag] = value;
             }
         }
@@ -32,23 +39,29 @@ public class SDict<Tkey, Tval> where Tval : class, new()
         valueCount++;
     }
 
-    public Tval Get(Tkey key, Tkey tag) => dict.TryGetValue(key, out Dictionary<Tkey, Tval> line) ? line.GetValueOrDefault(tag) : null;
+    public TVal Get(TKey key, TKey tag)
+    {
+        if (dict.TryGetValue(key, out var line) &&
+            line.TryGetValue(tag, out var value))
+        {
+            return value;
+        }
+
+        return default;
+    }
 
     /// <summary>
-    /// if is not present this location create to that a new
+    /// if not present create a new value
     /// </summary>
-    /// <param name="key"></param>
-    /// <param name="tag"></param>
-    /// <returns></returns>
-    public Tval GetAbs(Tkey key, Tkey tag)
+    public TVal GetAbs(TKey key, TKey tag)
     {
         if (ExistsLocation(key, tag))
         {
-            return Get(key);
+            return Get(key, tag);
         }
         else
         {
-            Tval v = new();
+            TVal v = new();
             Set(key, tag, v);
             return v;
         }
@@ -57,60 +70,70 @@ public class SDict<Tkey, Tval> where Tval : class, new()
     /// <summary>
     /// get the first val in line
     /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
-    public Tval Get(Tkey key)
+    public TVal Get(TKey key)
     {
-        return dict.TryGetValue(key, out Dictionary<Tkey, Tval> line) ? line.First().Value : null;
+        if (dict.TryGetValue(key, out var line) &&
+            line.Count > 0)
+        {
+            return line.First().Value;
+        }
+
+        return default;
     }
 
-    public Tval Get(int index)
+    public TVal Get(int index)
     {
         return Get(GetIndexKey(index));
     }
 
-    public List<Tval> Gets(Tkey tag)
+    public List<TVal> Gets(TKey tag)
     {
-        var list = new List<Tval>();
+        var list = new List<TVal>();
+
         foreach (var line in dict.Values)
         {
-            if (line.TryGetValue(tag, out Tval value))
+            if (line.TryGetValue(tag, out var value))
             {
                 list.Add(value);
             }
         }
+
         return list;
     }
 
-    public int GetKeyIndex(Tkey key)
+    public int GetKeyIndex(TKey key)
     {
         return dict.Keys.ToList().IndexOf(key);
     }
-    public Tkey GetIndexKey(int index)
+
+    public TKey GetIndexKey(int index)
     {
         return dict.Keys.ToList()[index];
     }
 
-    public bool ExistsLocation(Tkey key, Tkey tag)
+    public bool ExistsLocation(TKey key, TKey tag)
     {
-        return dict.TryGetValue(key, out Dictionary<Tkey, Tval> line) && line.ContainsKey(tag);
+        return dict.TryGetValue(key, out var line)
+               && line.ContainsKey(tag);
     }
-    public bool TryGet(Tkey key, Tkey tag, out Tval value)
+
+    public bool TryGet(
+        TKey key,
+        TKey tag,
+        out TVal value)
     {
-        if (ExistsLocation(key, tag))
+        if (dict.TryGetValue(key, out var line) &&
+            line.TryGetValue(tag, out value))
         {
-            value = Get(key);
             return true;
         }
 
-        value = null;
+        value = default;
         return false;
     }
-
-
 }
 
-public class SMTDict<TVal> : SDict<string, TVal> where TVal : class, new()
+public class SMTDict<TVal> : SDict<string, TVal> where TVal : new()
 {
     public TVal Get(SMType smt)
     {

@@ -129,10 +129,75 @@ public class SCamera: MonoBehaviour
             // ʼ�ճ�������
             cam.LookAt(target.transform.position + offset);
         });
+        followmodes.Add("orbitByVectorRotation", cam =>
+        {
+            var obj = cam;
+            var target = this.target.transform;
+            var momentum = ct.mouseDirection * new Vector2(1,-1);
+
+            Vector3 dir = (obj.position - target.position).normalized;
+
+            // === 1. 构建稳定 tangent basis ===
+            Vector3 up = dir; // 球面法线（关键！不是 world up）
+
+            Vector3 right = Vector3.Cross(Vector3.up, up);
+            if (right.sqrMagnitude < 0.0001f)
+                right = obj.right;
+
+            right.Normalize();
+
+            Vector3 forward = Vector3.Cross(up, right);
+
+            if (Vector3.Dot((transform.position - target.position).normalized, Vector3.up) < 0f)
+            {
+                momentum = -momentum;
+            }
+            // === 2. momentum 在切线空间里作用 ===
+            Vector3 tangentMove =
+                right * momentum.x +
+                forward * momentum.y;
+
+            // === 3. 在球面上“旋转 dir” ===
+            Vector3 newDir = (dir + tangentMove * Time.deltaTime).normalized;
+
+            // === 4. 写回位置 ===
+            obj.position = target.position + newDir * radius;
+
+            obj.LookAt(target.position);
+        });
+        followmodes.Add("test", cam =>
+        {
+            var target = this.target.transform;
+            var input = ct.mouseDirection;
+
+            var planetCenter = target.position;
+            Vector3 dir = (cam.position - planetCenter).normalized;
+
+            // 行星 up（核心）
+            Vector3 up = dir;
+
+            // 构建切线空间
+            Vector3 right = Vector3.Cross(Vector3.up, dir).normalized;
+            Vector3 forward = Vector3.Cross(dir, right);
+
+            // 在球面移动
+            Vector3 move =
+                right * input.x +
+                forward * input.y;
+
+            dir = (dir + move * Time.deltaTime).normalized;
+
+            // 更新位置
+            cam.position = planetCenter + dir * radius;
+
+            // 始终朝向目标
+            cam.rotation = Quaternion.LookRotation(
+                target.position - cam.position,
+                dir
+            );
+        });
 
         followmode = followmodes["surround"];
-
-        
     }
     private void LateUpdate()
     {

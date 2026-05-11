@@ -44,5 +44,26 @@ public class SButton : Button
         OnButtonExit?.Invoke();
         onButtonExit?.Invoke(gameObject);
     }
+
+    public void ClearDown()
+    {
+        onButtonDown = null;
+        OnButtonDown = null;
+    }
+    public void ClearUp()
+    {
+        onButtonUp = null;
+        OnButtonUp = null;
+    }
+    public void ClearEnter()
+    {
+        onButtonEnter = null;
+        OnButtonEnter = null;
+    }
+    public void ClearExit()
+    {
+        onButtonExit = null;
+        OnButtonExit = null;
+    }
 }
 public delegate void sButtonMeth(GameObject g);

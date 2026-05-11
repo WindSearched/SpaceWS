@@ -24,6 +24,7 @@ public static class ct
     public static PageStm pages = new();
     public static DebugPage dePa => ctsym.debugPage;
     public static BuildPage buildPage;
+    public static ViewPage viewPage;
 
     public static ModeStm modes = new();
     public static Dictionary<string,InputAction> acts = new();
