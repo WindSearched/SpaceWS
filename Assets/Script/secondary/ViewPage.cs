@@ -5,6 +5,7 @@ using UnityEngine;
 public class ViewPage : MonoBehaviour
 {
     public SMTDict<ViewElementBase> elementbases = new();
+    public SMTDict<Func<object,List<ViewElementBase>>> modifiers = new ();
     public List<ViewElement> elements = new();
     /// <summary>
     /// index of obj that be removed in next refresh
@@ -19,6 +20,11 @@ public class ViewPage : MonoBehaviour
         ct.viewPage = this;
         elTemp = Resources.Load<GameObject>("ui/ViewElement");
 
+        modifiers.Set(new("container", "main"), (o) =>
+        {
+            var con = o as StructState.Contain;
+            return null;
+        });
     }
 
     public void Add(ViewElementBase b, bool singleupdate = true)

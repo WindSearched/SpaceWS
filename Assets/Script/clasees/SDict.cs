@@ -1,19 +1,27 @@
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public class SDict<TKey, TVal> where TVal : new()
+public class SDict<TKey, TVal>
 {
     public int valueCount;
 
     public Dictionary<TKey, Dictionary<TKey, TVal>> dict = new();
 
     /// <summary>
+    /// factory used when auto create value
+    /// </summary>
+    public Func<TVal> ValueFactory { get; set; }
+
+    public SDict(Func<TVal> valueFactory = null)
+    {
+        ValueFactory = valueFactory;
+    }
+
+    /// <summary>
     /// Set val in dict
     /// </summary>
-    /// <param name="overwrite">
-    /// if has already contained the value overwrite them
-    /// </param>
     public void Set(
         TKey key,
         TKey tag,
@@ -23,14 +31,15 @@ public class SDict<TKey, TVal> where TVal : new()
         if (!dict.TryGetValue(key, out var line))
         {
             line = new Dictionary<TKey, TVal>();
+
             line.Add(tag, value);
+
             dict.Add(key, line);
         }
         else
         {
             if (!line.TryAdd(tag, value))
             {
-                // already contains tag
                 if (overwrite)
                     line[tag] = value;
             }
@@ -51,7 +60,7 @@ public class SDict<TKey, TVal> where TVal : new()
     }
 
     /// <summary>
-    /// if not present create a new value
+    /// if not present create one automatically
     /// </summary>
     public TVal GetAbs(TKey key, TKey tag)
     {
@@ -59,17 +68,23 @@ public class SDict<TKey, TVal> where TVal : new()
         {
             return Get(key, tag);
         }
+
+        TVal v;
+
+        if (ValueFactory != null)
+        {
+            v = ValueFactory();
+        }
         else
         {
-            TVal v = new();
-            Set(key, tag, v);
-            return v;
+            v = default;
         }
+
+        Set(key, tag, v);
+
+        return v;
     }
 
-    /// <summary>
-    /// get the first val in line
-    /// </summary>
     public TVal Get(TKey key)
     {
         if (dict.TryGetValue(key, out var line) &&
@@ -129,11 +144,12 @@ public class SDict<TKey, TVal> where TVal : new()
         }
 
         value = default;
+
         return false;
     }
 }
 
-public class SMTDict<TVal> : SDict<string, TVal> where TVal : new()
+public class SMTDict<TVal> : SDict<string, TVal>
 {
     public TVal Get(SMType smt)
     {
