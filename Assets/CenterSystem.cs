@@ -215,23 +215,22 @@ public class CenterSystem : MonoBehaviour
         var rm = rightMouse_act = action.Add("rightMouse", InputActionType.Button, SAction.keyTable["rightMouse"]);
         rm.performed += _ =>
         {
-            if (!pages.IsPage("build")) return;
             var c = mouseCasted;
-            if (c && c.CompareTag("structFace"))
+            if (pages.IsPage("build"))
             {
-                int fid = int.Parse(c.name);//face index
+                if (!c || !c.CompareTag("structFace")) return;
+                int fid = int.Parse(c.name); //face index
                 SLibrary lib = c.transform.parent.GetComponent<SLibrary>();
                 int bid = lib.ReadValue<int>("bodyIndex");
                 int sid = lib.ReadValue<int>("structIndex");
-                var state = new StructState
+                var state = new StructState(ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type"))
                 {
                     bodyIndex = bid,
-                    isStruct = true,
-                    type = ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type")
+                    isStruct = true
                 };
                 state.PostProcess();
 
-                if(state.type.IsNull())
+                if (state.type.IsNull())
                     return;
                 var ng = bodies.LoadStruct(state);
                 var t = ct.buildPage.buildObject.transform;
@@ -239,6 +238,23 @@ public class CenterSystem : MonoBehaviour
 
                 bodies.AdsorptionPostProcess(new(state, 0, ng),
                     new(bodies.objects[bid].structs[sid], bid, sid, fid));
+            }
+            else if (pages.IsPage("main"))
+            {
+                if (c && c.CompareTag("struct"))
+                {
+                    dLog("Enter in meth");
+                    int sid = int.Parse(c.name);
+                    int bid = int.Parse(c.transform.parent.parent.name);
+                    StructIdPath iph = new(bid, sid);
+
+                    var state = ct.GetState(iph);
+                    if (!ct.GetData(state).isContainer_) return;
+                    var elements = ct.viewPage.modifiers.Get("container", "main").Invoke(state.container);
+                    ct.viewPage.Add(elements);
+                    viewPage.lib.Write("idpath", iph);
+                    pages.Swap("view");
+                }
             }
         };
 

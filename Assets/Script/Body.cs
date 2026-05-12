@@ -180,7 +180,6 @@ public class Bodies
 	/// body
 	/// </summary>
 	public Dictionary<int, obj> objects = new();
-
 	/// <param name="index"></param>
 	/// <param name="loc">absolute location</param>
 	public void LoadVoidBody(int index, Loc loc)
@@ -298,8 +297,7 @@ public class Bodies
 	/// <returns></returns>
 	public GameObject LoadStruct(Loc loc, int index, SMType type)
 	{
-		//Dictionary<string, Material> mats = ct.materials.GetValueOrDefault(type);
-		var s = new StructState { _absLoc = loc, type = type, bodyIndex = index };
+		var s = new StructState(type) { _absLoc = loc, bodyIndex = index };
 		s.PostProcess();
 		return LoadStruct(s /*, mat*/);
 	}
@@ -839,7 +837,19 @@ public struct Amount
 	public SMType type;
 	public int quantity;
 
+	public Amount(SMType type)
+	{
+		this.type = type;
+		quantity = 1;
+	}
 
+	public Amount(SMType type, int quantity)
+	{
+		this.type = type;
+		this.quantity = quantity;
+	}
+
+	public override string ToString() => $"({quantity} : {type})";
 }
 [Serializable][MemoryPackable][LuaCallCSharp]
 public partial class Depository : Container
@@ -861,6 +871,12 @@ public partial class Depository : Container
 		max = size;
 		UnlockAdapt(recipe.materials);
 	}
+
+	public override List<Amount> GetList()
+	{
+		return (from unlock in unlocks let quantity = cells[unlock] select new Amount(unlock, quantity)).ToList();
+	}
+
 	public bool Deposites(SMType type, int quantity)
 	{
 		if (!unlockAll && !unlocks.Contains(type)) return false;
@@ -980,6 +996,20 @@ public partial class Depository : Container
 		if (procs.AddItem(type, 1, out _))
 		{
 			ct.bodies.Update(proc);
+		}
+	}
+
+	public override void SetUnlock(SMType tyoe, bool unlocking)
+	{
+		if (unlocks.Contains(tyoe))
+		{
+			if(!unlocking)
+				unlocks.Add(tyoe);
+		}
+		else
+		{
+			if(unlocking)
+				unlocks.Add(tyoe);
 		}
 	}
 }

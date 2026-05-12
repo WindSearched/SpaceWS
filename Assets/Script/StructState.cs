@@ -51,14 +51,18 @@ public partial class StructState : State
 	public bool isMixture_ => mixture == null;
 
 	[MemoryPackConstructor]
-	public StructState(){}
+	public StructState()
+	{
+		if(!type.IsNull())
+			PostProcess();
+	}
 	public StructState(SMType type)
 	{
+		this.type = type;
 		PostProcess();
 	}
 	public void PostProcess()
 	{
-
 		var data = ct.structsInfo.Get(type).data;
 		if (data.isContainer_)
 		{
@@ -481,6 +485,16 @@ public class CacheQueue : Container
 {
 	public Queue<SMType> queue = new();
 
+	public override List<Amount> GetList()
+	{
+		var list = new List<Amount>();
+		foreach (var t in queue)
+		{
+			list.Add(new());
+		}
+		return list;
+	}
+
 	public CacheQueue(int count)
 	{
 		tag = Tag.cacheQueue;
@@ -610,6 +624,16 @@ public partial class Container
 	public bool Is(Tag tag) => this.tag == tag;
 
 	public virtual void Update(StructState state, StructData data)
+	{
+
+	}
+
+	public virtual List<Amount> GetList()
+	{
+		return null;
+	}
+
+	public virtual void SetUnlock(SMType tyoe, bool unlocking)
 	{
 
 	}

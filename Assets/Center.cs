@@ -193,6 +193,16 @@ public static class ct
     {
         return structsInfo.Get(state.type).data;
     }
+
+    public static void Log(object message)
+    {
+        log.Write(message.ToString());
+    }
+
+    public static void dLog(object message)
+    {
+        Debug.Log(message);
+    }
 }
 public delegate void Meth();
 

@@ -21,13 +21,13 @@ public class SButton : Button
     public override void OnPointerDown(PointerEventData eventData)
     {
         base.OnPointerDown(eventData);
-        OnButtonDown.Invoke();
+        OnButtonDown?.Invoke();
         onButtonDown?.Invoke(gameObject);
     }
     public override void OnPointerUp(PointerEventData eventData)
     {
         base.OnPointerUp(eventData);
-        OnButtonUp.Invoke();
+        OnButtonUp?.Invoke();
         onButtonUp?.Invoke(gameObject);
     }
 

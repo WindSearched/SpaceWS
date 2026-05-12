@@ -33,6 +33,7 @@ public class Mod
         public SMType smType(string type, string mod) => new SMType(type, mod);
         public StructState.Mixture structMixture() => new();
         public StructState structState() => new();
+        public StructState structState(SMType type) => new(type);
     }
 
     public Dictionary<string, LuaTable> mods = new();

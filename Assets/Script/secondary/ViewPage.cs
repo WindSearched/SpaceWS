@@ -13,7 +13,7 @@ public class ViewPage : MonoBehaviour
     public List<int> removed;
 
     private GameObject elTemp;
-
+    public SLib lib = new();
 
     private void Start()
     {
@@ -23,8 +23,81 @@ public class ViewPage : MonoBehaviour
         modifiers.Set(new("container", "main"), (o) =>
         {
             var con = o as StructState.Contain;
-            return null;
+            List<ViewElementBase> lb = new();
+
+            ViewElementBase base_ = new();
+            var l = con.container.GetList();
+            Vector2 init = new(-200, 200);
+            int size = 20;
+            int linecount = 10;
+
+            for (int i = 0; i < l.Count; i++)
+            {
+                var am = l[i];
+                var iy = i / linecount;
+                var ix = i % linecount;
+
+                ViewElementBase b = new();
+                b.position = init;
+                b.textColor = Color.black;
+                b.backColor =  Color.white;
+                b.size = new Vector2(size, size);
+                b.offset = new Vector2(ix, -iy) * size;
+                b.pivot = new(-1, 1);
+                b.text = am.ToString();
+
+                lb.Add(b);
+            }
+            ViewElementBase but = new();
+            but.textColor = Color.black;
+            but.backColor =  Color.white;
+            but.position = new(0, 210);
+            but.size = new(100, 10);
+            but.pivot = new(0.5f, 0.5f);
+            but.text = "add a test item";
+            but.downInput = (e, g) =>
+            {
+                var iph = lib.ReadValue<StructIdPath>("idpath");
+                var state = ct.GetState(iph);
+                var data = ct.GetData(state);
+
+                if (data.isContainer_)
+                {
+                    SMType t = new("testitem", "main");
+                    state.container.container.SetUnlock(t, true);
+                    state.container.AddItem(t, 1, out _);
+                }
+                ct.viewPage.Clear(false);
+                ct.viewPage.Add(new("container", "main"), o,false);
+                ct.viewPage.Refresh();
+            };
+            lb.Add(but);
+
+            return lb;
         });
+
+        ct.pages.Register("view", new(
+            g =>
+            {
+                ct.playerMove.AddPin("viewpage");
+                ct.cameraMove.AddPin("viewpage");
+                ct.MouseLocking(false);
+
+                gameObject.SetActive(true);
+                Refresh();
+                ct.viewPage.gameObject.SetActive(true);
+            },
+            g =>
+            {
+                ct.playerMove.RemovePin("viewpage");
+                ct.cameraMove.RemovePin("viewpage");
+                ct.MouseLocking(false);
+
+                gameObject.SetActive(true);
+                ct.viewPage.Clear(false);
+                ct.viewPage.gameObject.SetActive(false);
+            }
+            ));
     }
 
     public void Add(ViewElementBase b, bool singleupdate = true)
@@ -32,6 +105,18 @@ public class ViewPage : MonoBehaviour
         var g = Instantiate(elTemp, transform);
         var e = g.GetComponent<ViewElement>();
         e.SetBase(b, singleupdate);
+        elements.Add(e);
+    }
+
+    public void Add(List<ViewElementBase> list, bool singleupdate = true)
+    {
+        foreach (var e in list)
+            Add(e, singleupdate);
+    }
+
+    public void Add(SMType type, object obj, bool singleupdate = true)
+    {
+        Add(modifiers.Get(type)?.Invoke(obj), singleupdate);
     }
 
     public void Refresh()
@@ -80,9 +165,12 @@ public struct ViewElementBase
 {
     public Vector2 size;
     public Vector2 position;
+    public Vector2 offset;
     public Vector2 pivot;
 
     public string text;
+    public Color textColor;
+    public Color backColor;
     public Sprite sprite;
 
     public Action<ViewElement, GameObject> enterInput;
