@@ -168,7 +168,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   elements: []
-  removed: 
+  removed: []
+  loadCount: 0
 --- !u!1 &41288892
 GameObject:
   m_ObjectHideFlags: 0
