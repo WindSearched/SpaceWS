@@ -90,6 +90,7 @@ public class SAction
             {"mouseDelta","<Mouse>/delta"},
             {"leftMouse", "<Mouse>/leftButton"},
             {"rightMouse", "<Mouse>/rightButton"},
+            {"mScroll", "<Mouse>/scroll"},
         };
     public Dictionary<string,InputAction> acts = new();
 

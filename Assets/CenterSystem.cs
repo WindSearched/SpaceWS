@@ -11,6 +11,14 @@ public class CenterSystem : MonoBehaviour
     public static InputAction move;
     public static InputAction mouseD;
     public static InputAction mouseP;
+    public static InputAction mouseWheel;
+    public int wheelV;
+    public int wCount;
+    private bool wheelTiking;
+    /// <summary>
+    /// can invoke every 5 tick
+    /// </summary>
+    public event Action<int> WhenWhellPerTicks;
 
     public Material m_outline;
     public Material trasparentMat;
@@ -49,6 +57,8 @@ public class CenterSystem : MonoBehaviour
         mouseD = ct.action.Add("mouseDelta",InputActionType.Value);
         ct.action.AddBiding(mouseD,SAction.keyTable["mouseDelta"]);
         mouseP = action.Add("mouse",InputActionType.Value, SAction.keyTable["mouse"]);
+
+        mouseWheel = action.Add("wheel",InputActionType.Value, SAction.keyTable["mScroll"]);
 
         //load setting data
         fp = Application.persistentDataPath + "/setpath";
@@ -114,7 +124,11 @@ public class CenterSystem : MonoBehaviour
             return $"{p.x} {p.y}";
         }, "mouse delta");
         debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
-        debugInfo.LeftAdd(() => Tick.tickS.wheel.getTick_.ToString(), "tick");
+        debugInfo.LeftAdd(() => Tick.tickCount.ToString(), "tick");
+        debugInfo.LeftAdd(() => wheelV.ToString() , "mouseWheel");
+        debugInfo.LeftAdd(() => wCount.ToString() , "wheelCount");
+
+        WhenWhellPerTicks += i => wCount += i;
 
         inputRegistering:
         modes.Register("esc", new Mode("esc",() => false, active =>
@@ -328,10 +342,23 @@ public class CenterSystem : MonoBehaviour
         {
             ct.mousecast.Casting();
         }
-    }
-    private void Awake()
-    {
-        //ct.act = new Actions();
+
+        wheelV = (int)mouseWheel.ReadValue<Vector2>().y;
+
+        if (!wheelTiking && wheelV != 0)
+        {
+            wheelTiking = true;
+            WhenWhellPerTicks?.Invoke(wheelV);
+            Tick.Reg(t =>
+            {
+                if (wheelV == 0)
+                {
+                    wheelTiking = false;
+                    t.Stop();
+                }
+                WhenWhellPerTicks?.Invoke(wheelV);
+            }, 1, -1, 1);
+        }
     }
     private void OnEnable()
     {

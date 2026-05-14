@@ -9,6 +9,7 @@ public class Tick : MonoBehaviour
 {
     public TimeWheel wheel;
     public static Tick tickS;
+    public static int tickCount;
     public int tps;
     public float t;
 
@@ -31,6 +32,7 @@ public class Tick : MonoBehaviour
         while (true)
         {
             wheel.Tick();
+            tickCount++;
             yield return new WaitForSeconds(t);
         }
     }
