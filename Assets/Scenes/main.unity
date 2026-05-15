@@ -1190,6 +1190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b175d8849d0a194f92f60c795a6590b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  wheelV: 0
   m_outline: {fileID: 2100000, guid: f2f0ae1fef959cd41816c78a145d45ae, type: 2}
   trasparentMat: {fileID: 2100000, guid: 47cfbc88076f6e945b03585fff45ba15, type: 2}
   templateParent: {fileID: 1551771583}
@@ -3387,6 +3388,7 @@ MonoBehaviour:
   sbuttonTemplate: {fileID: 0}
   buildStructButtonTemplate: {fileID: 0}
   buildObject: {fileID: 2085190334}
+  wheel: 0
 --- !u!1 &1772409257
 GameObject:
   m_ObjectHideFlags: 0

@@ -421,90 +421,149 @@ public static class SMesh
 	public static class Face
 	{
 		public static bool AlignFaceToFace(
-			GameObject objectA,
-			RuntimeFace[] facesA,
-			int faceIndexA,
+		    GameObject objectA,
+		    RuntimeFace[] facesA,
+		    int faceIndexA,
 
-			GameObject objectB,
-			RuntimeFace[] facesB,
-			int faceIndexB
+		    GameObject objectB,
+		    RuntimeFace[] facesB,
+		    int faceIndexB
 		)
 		{
-			if (!objectA|| !objectB) return false;
-			if (facesA == null || facesB == null) return false;
-			if (faceIndexA < 0 || faceIndexA >= facesA.Length) return false;
-			if (faceIndexB < 0 || faceIndexB >= facesB.Length) return false;
+		    if (!objectA || !objectB) return false;
+		    if (facesA == null || facesB == null) return false;
+		    if (faceIndexA < 0 || faceIndexA >= facesA.Length) return false;
+		    if (faceIndexB < 0 || faceIndexB >= facesB.Length) return false;
 
-			RuntimeFace faceA = facesA[faceIndexA];
-			RuntimeFace faceB = facesB[faceIndexB];
+		    RuntimeFace faceA = facesA[faceIndexA];
+		    RuntimeFace faceB = facesB[faceIndexB];
 
-			Transform tA = objectA.transform;
-			Transform tB = objectB.transform;
+		    Transform tA = objectA.transform;
+		    Transform tB = objectB.transform;
 
-			Vector3 normalA = tA.TransformDirection(faceA.localNormal).normalized;
-			Vector3 normalB = tB.TransformDirection(faceB.localNormal).normalized;
+		    // 世界法线
+		    Vector3 normalA =
+		        tA.TransformDirection(faceA.localNormal).normalized;
 
-			Vector3[] worldA = TransformVerts(tA, faceA.localVerts);
-			Vector3[] worldB = TransformVerts(tB, faceB.localVerts);
+		    Vector3 normalB =
+		        tB.TransformDirection(faceB.localNormal).normalized;
 
-			Vector3 centerA = GetFaceCenter(worldA);
-			Vector3 centerB = GetFaceCenter(worldB);
+		    // 世界顶点
+		    Vector3[] worldA =
+		        TransformVerts(tA, faceA.localVerts);
 
-			// ---------- 1. 法线对齐 ----------
-			Quaternion alignRotation =
-				Quaternion.FromToRotation(normalA, -normalB);
+		    Vector3[] worldB =
+		        TransformVerts(tB, faceB.localVerts);
 
-			Quaternion newRotation = alignRotation * tA.rotation;
-			tA.rotation = newRotation;
-			
-			// 重新计算
-			worldA = TransformVerts(tA, faceA.localVerts);
-			normalA = tA.TransformDirection(faceA.localNormal).normalized;
+		    // 面中心
+		    Vector3 centerA =
+		        GetFaceCenter(worldA);
 
-			float[] edgesA = GetEdgeLengths(worldA);
-			float[] edgesB = GetEdgeLengths(worldB);
+		    Vector3 centerB =
+		        GetFaceCenter(worldB);
 
-			bool edgeMatch = MatchEdgeSequence(edgesA, edgesB);
+		    // =========================================================
+		    // 1. 法线对齐（以 face center 为旋转中心）
+		    // =========================================================
 
-			bool perfectFit = false;
+		    Quaternion alignRotation =
+		        Quaternion.FromToRotation(normalA, -normalB);
 
-			if (edgeMatch)
-			{
-				perfectFit = TryPerfectFaceAlign(
-					tA,
-					worldA,
-					worldB,
-					normalA
-				);
-			}
+		    // 使用 face center 作为临时 pivot
+		    Vector3 pivot = centerA;
 
-			MeshFilter mfA = objectA.GetComponent<MeshFilter>();
-			if (mfA != null && mfA.sharedMesh != null)
-			{
-				Mesh mesh = mfA.sharedMesh; // 如果不想影响其他物体，用 mfA.mesh (会实例化)
-				Vector3[] vertices = mesh.vertices;
+		    // 保存 pivot -> object 的偏移
+		    Vector3 pivotToObject =
+		        tA.position - pivot;
 
-				// 计算当前面中心在物体 A 局部坐标系下的位置
-				Vector3 localFaceCenter = GetFaceCenter(faceA.localVerts);
+		    // 旋转偏移
+		    Vector3 rotatedOffset =
+		        alignRotation * pivotToObject;
 
-				// 将网格所有顶点向相反方向平移，使面中心变成局部坐标的 (0,0,0)
-				for (int i = 0; i < vertices.Length; i++)
-				{
-					vertices[i] -= localFaceCenter;
-				}
-				mesh.vertices = vertices;
-				mesh.RecalculateBounds(); // 彻底修复包围盒，使其不再无故消失！
+		    // 应用旋转
+		    tA.rotation =
+		        alignRotation * tA.rotation;
 
-				// 由于网格顶点的局部坐标变了，你需要同步更新 faceA.localVerts 和物体的世界坐标
-				// 逻辑较复杂，建议优先使用上面的【方案 A】
-			}
+		    // 恢复位置
+		    tA.position =
+		        pivot + rotatedOffset;
 
-			// ---------- 2. 中心对齐 ----------
-			Vector3 newCenterA = GetFaceCenter(worldA);
-			Vector3 offset = centerB - newCenterA;
-			tA.position += offset;
+		    // =========================================================
+		    // 2. 重新计算
+		    // =========================================================
 
-			return perfectFit;
+		    worldA =
+		        TransformVerts(tA, faceA.localVerts);
+
+		    normalA =
+		        tA.TransformDirection(faceA.localNormal).normalized;
+
+		    float[] edgesA =
+		        GetEdgeLengths(worldA);
+
+		    float[] edgesB =
+		        GetEdgeLengths(worldB);
+
+		    bool edgeMatch =
+		        MatchEdgeSequence(edgesA, edgesB);
+
+		    bool perfectFit = false;
+
+		    // =========================================================
+		    // 3. 边顺序对齐
+		    // =========================================================
+
+		    if (edgeMatch)
+		    {
+		        perfectFit = TryPerfectFaceAlign(
+		            tA,
+		            worldA,
+		            worldB,
+		            normalA
+		        );
+		    }
+
+		    // =========================================================
+		    // 4. 中心点对齐
+		    // =========================================================
+
+		    Vector3 newCenterA =
+		        GetFaceCenter(
+		            TransformVerts(tA, faceA.localVerts)
+		        );
+
+		    Vector3 offset =
+		        centerB - newCenterA;
+
+		    tA.position += offset;
+
+		    var mf = objectA.GetComponent<MeshFilter>();
+		    var r = objectA.GetComponent<Renderer>();
+
+		    if (mf != null && mf.sharedMesh != null)
+		    {
+			    mf.sharedMesh.RecalculateNormals();
+			    mf.sharedMesh.RecalculateBounds();
+		    }
+		    var smr = objectA.GetComponent<SkinnedMeshRenderer>();
+
+		    if (smr != null)
+		    {
+			    smr.sharedMesh.RecalculateBounds();
+			    smr.localBounds = smr.sharedMesh.bounds;
+		    }
+			// 强制刷新 renderer
+		    if (r != null)
+		    {
+			    r.enabled = false;
+			    r.enabled = true;
+		    }
+
+		    Debug.Log(r.bounds);
+		    Debug.Log(objectA.GetComponent<Renderer>().GetType());
+		    Debug.Log(objectA.transform.position);
+
+		    return perfectFit;
 		}
 		static bool MatchEdgeSequence(float[] a, float[] b, float tolerance = 0.001f)
 		{
@@ -601,16 +660,23 @@ public static class SMesh
 			// 尝试所有循环匹配
 			for (int shift = 0; shift < n; shift++)
 			{
-				Quaternion rot = Quaternion.FromToRotation(a[0], b[shift]);
+				Quaternion rot =
+					Quaternion.FromToRotation(
+						a[0],
+						b[shift]
+					);
 
 				bool match = true;
 
 				for (int i = 0; i < n; i++)
 				{
 					Vector3 ra = rot * a[i];
-					Vector3 rb = b[(i + shift) % n];
 
-					if ((ra - rb).sqrMagnitude > tolerance * tolerance)
+					Vector3 rb =
+						b[(i + shift) % n];
+
+					if ((ra - rb).sqrMagnitude >
+					    tolerance * tolerance)
 					{
 						match = false;
 						break;
@@ -619,7 +685,24 @@ public static class SMesh
 
 				if (match)
 				{
-					tA.rotation = rot * tA.rotation;
+					// =================================================
+					// 使用 face center 作为旋转中心
+					// =================================================
+
+					Vector3 pivot = centerA;
+
+					Vector3 pivotToObject =
+						tA.position - pivot;
+
+					Vector3 rotatedOffset =
+						rot * pivotToObject;
+
+					tA.rotation =
+						rot * tA.rotation;
+
+					tA.position =
+						pivot + rotatedOffset;
+
 					return true;
 				}
 			}

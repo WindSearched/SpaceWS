@@ -117,10 +117,46 @@ public class BuildPage : MonoBehaviour
                 {
                     var s = buildStruct.name;
                     var t = ct.structsInfo.Get(SMType.Parse(s)).template;
-                    var m = STool.CopyComponentTo(t.GetComponent<MeshRenderer>(), buildObject);
-                    m.material = ct.trasparentMat;
-                    m.material.color -= new Color(0, 0, 0, 0.8f);
-                    STool.CopyComponentTo(t.GetComponent<MeshFilter>(), buildObject);
+
+                    // ================================
+                    // 1. MeshRenderer：只复制材质
+                    // ================================
+                    var srcMR = t.GetComponent<MeshRenderer>();
+                    var dstMR = buildObject.GetComponent<MeshRenderer>();
+
+                    if (srcMR != null)
+                    {
+                        if (dstMR == null)
+                            dstMR = buildObject.AddComponent<MeshRenderer>();
+
+                        dstMR.sharedMaterials = srcMR.sharedMaterials;
+
+                        // 如果你要透明效果
+                        if (ct.trasparentMat != null)
+                        {
+                            dstMR.material = ct.trasparentMat;
+                            dstMR.material.color -= new Color(0, 0, 0, 0.8f);
+                        }
+                    }
+
+                    // ================================
+                    // 2. MeshFilter：只复制 mesh 引用
+                    // ================================
+                    var srcMF = t.GetComponent<MeshFilter>();
+                    var dstMF = buildObject.GetComponent<MeshFilter>();
+
+                    if (srcMF != null)
+                    {
+                        if (dstMF == null)
+                            dstMF = buildObject.AddComponent<MeshFilter>();
+
+                        // 关键：不要 CopyComponentTo
+                        dstMF.sharedMesh = srcMF.sharedMesh;
+
+                        // 如果你会 runtime 改 mesh（建议）
+                        // dstMF.mesh = Object.Instantiate(srcMF.sharedMesh);
+                        // dstMF.mesh.RecalculateBounds();
+                    }
 
                     buildObjectLibrary.Write("type", SMType.Parse(s));
                 }
