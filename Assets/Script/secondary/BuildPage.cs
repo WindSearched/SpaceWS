@@ -15,12 +15,29 @@ public class BuildPage : MonoBehaviour
     public (string name, GameObject structObject) buildStruct;
     public GameObject buildObject;
     public SLibrary buildObjectLibrary =>  buildObject.GetComponent<SLibrary>();
+
+    public int wheel;
+
+    public void FixWheel(int i)
+    {
+        wheel += i;
+    }
+
+    public int GetWheelIndex(int id, int max)
+    {
+        int a = id % max;
+        return a < 0 ? max + a : a;
+    }
+
     private void Start()
     {
         ct.buildPage = this;
         sbuttonTemplate = Resources.Load<GameObject>("ui/SButton");
 
         buildScroll = builScrollParent.GetComponent<SScroll>();
+
+
+        ct.debugInfo.LeftAdd(() => wheel.ToString() , "wheel");
 
         {//create build struct button template
             var o = buildStructButtonTemplate = Instantiate(sbuttonTemplate, ct.templateParent);

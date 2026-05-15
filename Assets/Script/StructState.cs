@@ -300,9 +300,11 @@ public partial class StructState : State
 			return stuffList.RemoveItem(type, quantity, out remain);
 		}
 
-		public void AddStruct(SMType type, StructIdPath idp)
+		public bool AddStruct(SMType type, StructIdPath idp)
 		{
+			if (stuffList == null) return  false;
 			stuffList.AddStrut(type, idp);
+			return true;
 		}
 
 		public bool RemoveStruct(SMType type, out StructIdPath idp) => stuffList.RemoveAStruct(type, out idp);

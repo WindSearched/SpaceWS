@@ -13,7 +13,6 @@ public class CenterSystem : MonoBehaviour
 	public static InputAction mouseP;
 	public static InputAction mouseWheel;
 	public int wheelV;
-	public int wCount;
 	private bool wheelTiking;
 	/// <summary>
 	/// can invoke every 5 tick
@@ -126,9 +125,6 @@ public class CenterSystem : MonoBehaviour
 		debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
 		debugInfo.LeftAdd(() => Tick.tickCount.ToString(), "tick");
 		debugInfo.LeftAdd(() => wheelV.ToString() , "mouseWheel");
-		debugInfo.LeftAdd(() => wCount.ToString() , "wheelCount");
-
-		WhenWhellPerTicks += i => wCount += i;
 
 		inputRegistering:
 		modes.Register("esc", new Mode("esc",() => false, active =>
@@ -192,6 +188,9 @@ public class CenterSystem : MonoBehaviour
 				g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
 				c.GetComponent<MeshCollider>().enabled = false;
 				ct.sCamera.ChangeTarget(g);
+
+				ct.buildPage.wheel = 0;
+				WhenWhellPerTicks += ct.buildPage.FixWheel;
 				//save
 				s.storer.Add("str", c);//save true struct
 				s.storer.Add("faced", g);// the fake(faced) struct
@@ -209,6 +208,8 @@ public class CenterSystem : MonoBehaviour
 			str.GetComponent<MeshCollider>().enabled = true;
 			faced.SetActive(false);
 			Destroy(faced);
+
+			WhenWhellPerTicks -= ct.buildPage.FixWheel;
 
 			sCamera.ChangeTarget(ct.player);
 
@@ -250,7 +251,10 @@ public class CenterSystem : MonoBehaviour
 				var t = ct.buildPage.buildObject.transform;
 				ng.transform.SetPositionAndRotation(t.position, t.rotation);
 
-				bodies.AdsorptionPostProcess(new(state, 0, ng),
+				var ids = ct.structsInfo.Get(state.type).connectorFaceIndexes;
+				var id = ct.buildPage.GetWheelIndex(ct.buildPage.wheel, ids.Length);
+				Debug.Log(ids[id]);
+				bodies.AdsorptionPostProcess(new(state, ids[id], ng),
 					new(bodies.objects[bid].structs[sid], bid, sid, fid));
 			}
 			else if (pages.IsPage("main"))
@@ -349,14 +353,17 @@ public class CenterSystem : MonoBehaviour
 		{
 			wheelTiking = true;
 			WhenWhellPerTicks?.Invoke(wheelV);
+
 			Tick.Reg(t =>
 			{
 				if (wheelV == 0)
 				{
 					wheelTiking = false;
 					t.Stop();
+
 				}
-				WhenWhellPerTicks?.Invoke(wheelV);
+				else
+					WhenWhellPerTicks?.Invoke(wheelV);
 			}, 1, -1, 1);
 		}
 	}

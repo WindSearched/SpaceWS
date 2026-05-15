@@ -386,7 +386,7 @@ public static class SMath
             Vector2? pivot = null)
         {
             sprite = LoadFromPNG(filePath, pixelsPerUnit, pivot);
-            return sprite != null;
+            return !sprite;
         }
     }
 }
@@ -395,7 +395,7 @@ public class StructInfo
 {
     public GameObject template;
     public SMesh.RuntimeFace[]  faces;
-    public SMesh.RuntimeFace[] connectorFaces;
+    public int[] connectorFaceIndexes;
     public GameObject facesTamplate;
     public GameObject connectorTamplate;
     public StructData data;

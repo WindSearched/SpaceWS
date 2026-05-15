@@ -339,7 +339,7 @@ public static class SMesh
 		static Vector3 ParseVec3(string[] p) =>
 			new Vector3(ParseFloat(p[1]), ParseFloat(p[2]), ParseFloat(p[3]));
 
-		public static (GameObject template, GameObject facesTemp, RuntimeFace[] faces, RuntimeFace[] connectors, GameObject connectorsTemplate)
+		public static (GameObject template, GameObject facesTemp, RuntimeFace[] faces, int[] connectorIndexes, GameObject connectorsTemplate)
 			CreateTemplate(string objPath, string mtlPath, string textureRoot, string name)
 		{
 			var data = Parse(objPath);
@@ -413,7 +413,7 @@ public static class SMesh
 				Face.CreateFace(f,j.ToString(),ms[j], cft.transform);
 			}
 
-			return new(go, ft, fs, cfs, cft);
+			return new(go, ft, fs, data.connectors.ToArray(), cft);
 		}
 	}
 
@@ -476,6 +476,27 @@ public static class SMesh
 					worldB,
 					normalA
 				);
+			}
+
+			MeshFilter mfA = objectA.GetComponent<MeshFilter>();
+			if (mfA != null && mfA.sharedMesh != null)
+			{
+				Mesh mesh = mfA.sharedMesh; // 如果不想影响其他物体，用 mfA.mesh (会实例化)
+				Vector3[] vertices = mesh.vertices;
+
+				// 计算当前面中心在物体 A 局部坐标系下的位置
+				Vector3 localFaceCenter = GetFaceCenter(faceA.localVerts);
+
+				// 将网格所有顶点向相反方向平移，使面中心变成局部坐标的 (0,0,0)
+				for (int i = 0; i < vertices.Length; i++)
+				{
+					vertices[i] -= localFaceCenter;
+				}
+				mesh.vertices = vertices;
+				mesh.RecalculateBounds(); // 彻底修复包围盒，使其不再无故消失！
+
+				// 由于网格顶点的局部坐标变了，你需要同步更新 faceA.localVerts 和物体的世界坐标
+				// 逻辑较复杂，建议优先使用上面的【方案 A】
 			}
 
 			// ---------- 2. 中心对齐 ----------
