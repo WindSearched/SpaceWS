@@ -12,7 +12,7 @@ public class BuildPage : MonoBehaviour
 
     public GameObject sbuttonTemplate;
     public GameObject buildStructButtonTemplate;
-    public (string name, GameObject structObject) buildStruct;
+    public (string name, int id, GameObject structObject) buildStruct;
     public GameObject buildObject;
     public SLibrary buildObjectLibrary =>  buildObject.GetComponent<SLibrary>();
 
@@ -90,7 +90,7 @@ public class BuildPage : MonoBehaviour
                             buildStruct.structObject.GetComponent<Outline>().effectDistance = new(0,0);
                         }
                         buildStruct.structObject = g;
-                        int id = int.Parse(g.name);
+                        int id = buildStruct.id = int.Parse(g.name);
                         buildStruct.name = ct.structsInfo.Get(id).data.mod + "/"+ ct.structsInfo.Get(id).data.type;//save struct type
                         Debug.Log(buildStruct.name);
                     };
@@ -163,7 +163,9 @@ public class BuildPage : MonoBehaviour
 
                 var type = g.transform.parent.GetComponent<SLibrary>().ReadValue<SMType>("type");
 
-                SMesh.Face.AlignFaceToFace(buildObject,ct.structsInfo.Get(type).faces,0,g, ct.structsInfo.Get(type).faces, int.Parse(g.name));
+                var ids = ct.structsInfo.Get(buildStruct.id).connectorFaceIndexes;
+                var id = ct.buildPage.GetWheelIndex(ct.buildPage.wheel, ids.Length);
+                SMesh.Face.AlignFaceToFace(buildObject,ct.structsInfo.Get(buildStruct.id).faces,ids[id],g, ct.structsInfo.Get(type).faces, int.Parse(g.name));
             }
         };
 
