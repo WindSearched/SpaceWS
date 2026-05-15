@@ -537,32 +537,6 @@ public static class SMesh
 
 		    tA.position += offset;
 
-		    var mf = objectA.GetComponent<MeshFilter>();
-		    var r = objectA.GetComponent<Renderer>();
-
-		    if (mf != null && mf.sharedMesh != null)
-		    {
-			    mf.sharedMesh.RecalculateNormals();
-			    mf.sharedMesh.RecalculateBounds();
-		    }
-		    var smr = objectA.GetComponent<SkinnedMeshRenderer>();
-
-		    if (smr != null)
-		    {
-			    smr.sharedMesh.RecalculateBounds();
-			    smr.localBounds = smr.sharedMesh.bounds;
-		    }
-			// 强制刷新 renderer
-		    if (r != null)
-		    {
-			    r.enabled = false;
-			    r.enabled = true;
-		    }
-
-		    Debug.Log(r.bounds);
-		    Debug.Log(objectA.GetComponent<Renderer>().GetType());
-		    Debug.Log(objectA.transform.position);
-
 		    return perfectFit;
 		}
 		static bool MatchEdgeSequence(float[] a, float[] b, float tolerance = 0.001f)
