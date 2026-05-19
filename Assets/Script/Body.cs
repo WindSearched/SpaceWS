@@ -114,6 +114,7 @@ public class StructData
 	public float volume = -1;
 	public Factory factory;
 	public Contain container;
+	public ChainFaces chainFaces;
 
 	[Serializable]
 	public class Factory
@@ -140,8 +141,15 @@ public class StructData
 		public int size;
 	}
 
+	public class ChainFaces
+	{
+		public int[] profaces;
+		public int[] prefaces;
+	}
+
 	public bool isFactory_ => factory != null && factory.recipes.Count > 0;
 	public bool isContainer_ => container != null;
+	public bool isChain_ => chainFaces != null;
 
 	public string mod;
 	public Sprite icon;

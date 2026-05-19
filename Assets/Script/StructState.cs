@@ -26,6 +26,7 @@ public partial class StructState : State
 	public bool buildable;
 	public Mixture mixture;
 	public Contain container;
+	public Chain chain;
 	public SMType _setMaterial
 	{
 		set
@@ -49,6 +50,7 @@ public partial class StructState : State
 	}
 
 	public bool isMixture_ => mixture == null;
+	public bool isChain => chain == null;
 
 	[MemoryPackConstructor]
 	public StructState()
@@ -67,6 +69,11 @@ public partial class StructState : State
 		if (data.isContainer_)
 		{
 			container = new Contain(data,this);
+		}
+
+		if (data.isChain_)
+		{
+			chain = new(data.chainFaces.prefaces.Length, data.chainFaces.profaces.Length);
 		}
 	}
 
@@ -235,7 +242,6 @@ public partial class StructState : State
 			return sw.ToString();
 		}
 	}
-
 	[Serializable][MemoryPackable][LuaCallCSharp]
 	public partial class Contain
 	{
@@ -314,6 +320,29 @@ public partial class StructState : State
 			container.Update(state, data);
 		}
 	}
+	[Serializable][MemoryPackable][LuaCallCSharp]
+	public partial class Chain
+	{
+		/// <summary>
+		/// struct that is before of this struct
+		/// </summary>
+		public StructIdPath[] prechains;
+		/// <summary>
+		/// struct ths if after of this struct, is the ward of chain
+		/// </summary>
+		public StructIdPath[] prochains;
+
+		public int GetProCount() => prochains.Length;
+		public int GetPreCount() => prechains.Length;
+
+		[MemoryPackConstructor]
+		public Chain (){}
+		public Chain (int preCount, int proCount)
+		{
+			prechains = new StructIdPath[preCount];
+			prochains = new StructIdPath[proCount];
+		}
+	}
 
 	public Loc _absLoc
 	{
@@ -328,6 +357,7 @@ public partial class StructState : State
 	{
 		g.transform.SetPositionAndRotation(absoluteLocation.position.ToVector3(), absoluteLocation.rotation.ToQuaternion());
 	}
+
 }
 [Obsolete("the full value can not fixed")]
 public class Inventory : Container
