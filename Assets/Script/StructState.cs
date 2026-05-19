@@ -342,6 +342,7 @@ public partial class StructState : State
 			prechains = new StructIdPath[preCount];
 			prochains = new StructIdPath[proCount];
 		}
+
 	}
 
 	public Loc _absLoc
@@ -358,6 +359,7 @@ public partial class StructState : State
 		g.transform.SetPositionAndRotation(absoluteLocation.position.ToVector3(), absoluteLocation.rotation.ToQuaternion());
 	}
 
+	public StructIdPath _idPath => new(bodyIndex, structIndex);
 }
 [Obsolete("the full value can not fixed")]
 public class Inventory : Container

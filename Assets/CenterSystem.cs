@@ -243,19 +243,11 @@ public class CenterSystem : MonoBehaviour
 					bodyIndex = bid,
 					isStruct = true
 				};
-				state.PostProcess();
-
-				if (state.type.IsNull())
-					return;
-				var ng = bodies.LoadStruct(state);
-				var t = ct.buildPage.buildObject.transform;
-				ng.transform.SetPositionAndRotation(t.position, t.rotation);
 
 				var ids = ct.structsInfo.Get(state.type).connectorFaceIndexes;
 				var id = ct.buildPage.GetWheelIndex(ct.buildPage.wheel, ids.Length);
-				Debug.Log(ids[id]);
-				bodies.AdsorptionPostProcess(new(state, ids[id], ng),
-					new(bodies.objects[bid].structs[sid], bid, sid, fid));
+
+				bodies.LoadStructOn(new(bid, sid),state,fid, ids[id]);
 			}
 			else if (pages.IsPage("main"))
 			{

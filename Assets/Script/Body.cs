@@ -145,6 +145,26 @@ public class StructData
 	{
 		public int[] profaces;
 		public int[] prefaces;
+
+		/// <returns>1 is proface; 0 is not chain face; -1 is preface</returns>
+		public int Parse(int faceid, out int parsed)
+		{
+			if (prefaces.Contains(faceid))
+			{
+				parsed = -1;
+				return prefaces[faceid];
+			}
+			if(profaces.Contains(faceid))
+			{
+				parsed = 1;
+				return profaces[faceid];
+			}
+			else
+			{
+				parsed = 0;
+				return 0;
+			}
+		}
 	}
 
 	public bool isFactory_ => factory != null && factory.recipes.Count > 0;
@@ -457,6 +477,70 @@ public class Bodies
 		// {
 		// 	u?.Invoke(idp, s, d);
 		// }
+	}
+
+	/// <summary>
+	/// Load a struct on a face of struct
+	/// </summary>
+	/// <param name="idp">index path of connected</param>
+	/// <param name="state">state not load of loaded</param>
+	/// <param name="faceId">face to connect of connected</param>
+	/// <param name="ldFace">face to connect of loaded</param>
+	public void LoadStructOn(StructIdPath idp, StructState state, int faceId, int ldFace)
+	{
+		if (state.type.IsNull())
+			return;
+		var ng = LoadStruct(state);
+		var t = ct.buildPage.buildObject.transform;
+		ng.transform.SetPositionAndRotation(t.position, t.rotation);
+
+		Concatenating(ct.GetState(idp), faceId, state, ldFace);
+
+		AdsorptionPostProcess(new(state, ldFace, ng),
+			new(objects[idp.bodyIndex].structs[idp.structIndex], idp.bodyIndex, idp.structIndex, faceId));
+	}
+
+	public void Concatenating(StructState state, int idpre, int idpro,
+		StructState prestate = null, int preIdpro = -1,
+		StructState prostate = null, int proIdpre = -1)
+	{
+		if (state != null && state.isChain)
+		{
+			if (idpre != -1 && idpre < state.chain.GetPreCount())
+				state.chain.prechains[idpre] = prestate._idPath;
+			if(idpro != -1 && idpro < state.chain.GetProCount())
+				state.chain.prochains[idpro] = prostate._idPath;
+		}
+
+		if (prestate != null && prestate.isChain && preIdpro != -1 && preIdpro < state.chain.GetPreCount())
+			prestate.chain.prochains[preIdpro] = state._idPath;
+
+		if (prostate != null && prostate.isChain && proIdpre != -1 && proIdpre < state.chain.GetProCount())
+			prostate.chain.prechains[proIdpre] = state._idPath;
+	}
+
+	public bool Concatenating(StructState connected, int connectedFace, StructState connector, int connectorFace)
+	{
+		var connectorData = ct.GetData(connected);
+		var connectedData = ct.GetData(connector);
+
+		if (connectorData.isChain_)
+		{
+			int orid = connectorData.chainFaces.Parse(connectorFace, out var parsed);
+			int edid = connectedData.chainFaces.Parse(connectedFace, out var i);
+			if (parsed == 1)
+			{
+				if(i != -1) return true;
+				Concatenating(connector, -1, orid, prostate: connected, proIdpre: edid);
+			}
+			else if (parsed == -1)
+			{
+				if(i != 1) return false;
+				Concatenating(connector, orid, -1, prestate: connector, preIdpro: edid);
+			}
+			return true;
+		}
+		return false;
 	}
 }
 
