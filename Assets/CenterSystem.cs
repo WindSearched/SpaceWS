@@ -262,6 +262,7 @@ public class CenterSystem : MonoBehaviour
 					if (!ct.GetData(state).isContainer_) return;
 					var elements = ct.viewPage.modifiers.Get("container", "main").Invoke(state.container);
 					ct.viewPage.Add(elements);
+					ct.viewPage.targetPath = iph;
 					viewPage.lib.Write("idpath", iph);
 					pages.Swap("view");
 				}

@@ -49,8 +49,8 @@ public partial class StructState : State
 		}
 	}
 
-	public bool isMixture_ => mixture == null;
-	public bool isChain => chain == null;
+	public bool isMixture_ => mixture != null;
+	public bool isChain => chain != null;
 
 	[MemoryPackConstructor]
 	public StructState()
@@ -247,8 +247,6 @@ public partial class StructState : State
 	{
 		public StuffList stuffList;
 		public Container container;
-		public StructIdPath prechain;
-		public StructIdPath prochain;
 
 		[MemoryPackConstructor]
 		public Contain(){}
@@ -340,7 +338,10 @@ public partial class StructState : State
 		public Chain (int preCount, int proCount)
 		{
 			prechains = new StructIdPath[preCount];
+			Array.Fill(prechains, StructIdPath.nul);
 			prochains = new StructIdPath[proCount];
+			Array.Fill(prochains, StructIdPath.nul);
+
 		}
 
 	}
@@ -596,16 +597,45 @@ public class CacheQueue : Container
 	public override bool IsFull(SMType _) => full;
 	public override void Update(StructState state, StructData data)
 	{
-		var c = state.container;
-		var proc = c.prechain;
+		Tick.Reg(_ =>
+		{
+			var c = state.container;
+			var procId = c.container.ChooseProChainIndex(state);
+			var proc = state.chain.prochains[procId];
 
-		if(!ct.TryGetState(proc, out var st))
-			return;
-		var pros = st.container;
+			if(!ct.TryGetState(proc, out var st))
+				return;
+			var pros = st.container;
 
-		if (pros.container.full) return;
-		RemoveFirst(out SMType type);
-		pros.AddItem(type, 1, out _);
+			if (pros.container.full) return;
+			RemoveFirst(out SMType type);
+			pros.AddItem(type, data.container.convenyor.transportAmount, out int _);
+
+			pros.Update(st, ct.GetData(st));
+
+			var precId = c.container.ChoosePreChainIndex(state);
+			var prec = state.chain.prechains[precId];
+			ct.bodies.Update(prec);
+		}, data.container.convenyor.timeTicks);
+
+	}
+
+	private int procid, precid;
+	public override int ChooseProChainIndex(StructState state)
+	{
+		int max = state.chain.prochains.Length;
+		int r = procid++;
+		if (r >= max)
+			r = 0;
+		return r;
+	}
+	public override int ChoosePreChainIndex(StructState state)
+	{
+		int max = state.chain.prechains.Length;
+		int r = precid++;
+		if (r >= max)
+			r = 0;
+		return r;
 	}
 }
 
@@ -671,6 +701,15 @@ public partial class Container
 	{
 
 	}
+
+	public virtual int ChooseProChainIndex(StructState state)
+	{
+		return 0;
+	}
+	public virtual int ChoosePreChainIndex(StructState state)
+	{
+		return 0;
+	}
 }
 
 public struct StructIdPath
@@ -686,4 +725,10 @@ public struct StructIdPath
 		structIndex = sid;
 	}
 	public static StructIdPath nul = new(){ bodyIndex = -1, structIndex = -1 };
+
+	public static bool operator ==(StructIdPath a, StructIdPath b)
+		=> a.bodyIndex == b.bodyIndex && a.structIndex == b.structIndex;
+
+	public static bool operator !=(StructIdPath a, StructIdPath b) => !(a == b);
+
 }

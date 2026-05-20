@@ -139,6 +139,7 @@ public class StructData
 		public Container.Tag tag;
 		public int count;
 		public int size;
+		public Convenyor convenyor;
 	}
 
 	public class ChainFaces
@@ -152,12 +153,12 @@ public class StructData
 			if (prefaces.Contains(faceid))
 			{
 				parsed = -1;
-				return prefaces[faceid];
+				return Array.IndexOf(prefaces, faceid);
 			}
 			if(profaces.Contains(faceid))
 			{
 				parsed = 1;
-				return profaces[faceid];
+				return Array.IndexOf(profaces, faceid);
 			}
 			else
 			{
@@ -166,10 +167,22 @@ public class StructData
 			}
 		}
 	}
+	public class Convenyor
+	{
+		/// <summary>
+		/// ticks of a time
+		/// </summary>
+		public int timeTicks;
+		/// <summary>
+		/// amount to transport in a time
+		/// </summary>
+		public int transportAmount = 1;
+	}
 
 	public bool isFactory_ => factory != null && factory.recipes.Count > 0;
 	public bool isContainer_ => container != null;
 	public bool isChain_ => chainFaces != null;
+	public bool isConvaenyor_ => isContainer_ && container.convenyor != null;
 
 	public string mod;
 	public Sprite icon;
@@ -399,7 +412,7 @@ public class Bodies
 		//equilibrating temperature
 		var edb = datas[adsorbed.state.bodyIndex].self;
 		var erb = datas[adsorber.bid].self;
-		adsorbed.state.structIndex = erb.getNewStructIndex_;
+		//adsorbed.state.structIndex = erb.getNewStructIndex_;
 		edb.structCount--;
 		var ermd = ct.materials.Get(adsorbed.state.material);
 		erb._equilibrateTemperature = new(adsorbed.state.mass, ermd.specificHeat, adsorbed.state.temperature);
@@ -467,16 +480,11 @@ public class Bodies
 			s.container.Update(s,d);
 		}
 
-		//
-		// var u = ct.structsInfo.Get(s.type).updater;
-		// if (u == null)
-		// {
-		// 	defaultUpdater.Invoke(idp, s,d);
-		// }
-		// else
-		// {
-		// 	u?.Invoke(idp, s, d);
-		// }
+		if (idp == ct.viewPage.targetPath)
+		{
+			ct.viewPage.Refresh();
+		}
+
 	}
 
 	/// <summary>
@@ -1077,18 +1085,26 @@ public partial class Depository : Container
 
 	public override void Update(StructState state, StructData data)
 	{
-		var c = state.container;
-		var proc = c.prechain;
-
-		if(!ct.TryGetState(proc, out var st))
-			return;
-		var procs = st.container;
-
-		RemoveFirst(out SMType type);
-		if (procs.AddItem(type, 1, out _))
+		Tick.Reg(_ =>
 		{
-			ct.bodies.Update(proc);
-		}
+			var c = state.container;
+			var procId = c.container.ChooseProChainIndex(state);
+			var proc = state.chain.prochains[procId];
+
+			if(!ct.TryGetState(proc, out var st))
+				return;
+			var procs = st.container;
+
+			RemoveFirst(out SMType type);
+			if (procs.AddItem(type, data.container.convenyor.transportAmount, out int _))
+			{
+				ct.bodies.Update(proc);
+			}
+
+			var precId = c.container.ChoosePreChainIndex(state);
+			var prec = state.chain.prechains[precId];
+			ct.bodies.Update(prec);
+		},data.container.convenyor.timeTicks);
 	}
 
 	public override void SetUnlock(SMType tyoe, bool unlocking)
@@ -1103,6 +1119,38 @@ public partial class Depository : Container
 			if(unlocking)
 				unlocks.Add(tyoe);
 		}
+	}
+
+	public int proci;
+	public int preci;
+	public override int ChooseProChainIndex(StructState state)
+	{
+		if(!state.isChain) return -1;
+		var c = state.chain;
+
+		for (int i = 0; i < c.prochains.Length; i++)
+		{
+			var id = c.prochains[i];
+			if(id.IsNull()) continue;
+			var s = ct.GetState(id);
+			if(s.container.container.full) continue;
+			return i;
+		}
+		return -1;
+	}
+	public override int ChoosePreChainIndex(StructState state)
+	{
+		if(!state.isChain) return -1;
+		var c = state.chain;
+
+		for (int i = 0; i < c.prechains.Length; i++)
+		{
+			var id = c.prechains[i];
+			var s = ct.GetState(id);
+			if(s.container.container.full) continue;
+			return i;
+		}
+		return -1;
 	}
 }
 

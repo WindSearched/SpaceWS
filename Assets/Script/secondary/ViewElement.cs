@@ -70,8 +70,6 @@ public class ViewElement : MonoBehaviour
                 t.loop = 0;
             }
         },1, -1);
-
-        ct.dLog("refresh");
     }
 
     public void SetBase(ViewElementBase element,bool refresh)

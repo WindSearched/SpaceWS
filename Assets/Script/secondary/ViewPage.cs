@@ -16,6 +16,8 @@ public class ViewPage : MonoBehaviour
 	private GameObject elTemp;
 	public SLib lib = new();
 
+	public StructIdPath targetPath;
+
 	private void Start()
 	{
 		ct.viewPage = this;
@@ -67,6 +69,7 @@ public class ViewPage : MonoBehaviour
 					SMType t = new("testitem", "main");
 					state.container.container.SetUnlock(t, true);
 					state.container.AddItem(t, 1, out _);
+					ct.bodies.Update(state._idPath);
 				}
 				ct.viewPage.Clear(false);
 				ct.viewPage.Add(new("container", "main"), o,false);
