@@ -68,8 +68,9 @@ public class ViewPage : MonoBehaviour
 				{
 					SMType t = new("testitem", "main");
 					state.container.container.SetUnlock(t, true);
+					state.container.container.SetUnlock(t,true);
 					state.container.AddItem(t, 1, out _);
-					ct.bodies.Update(state._idPath);
+					ct.bodies.Update(state._idPath, 0);
 				}
 				ct.viewPage.Clear(false);
 				ct.viewPage.Add(new("container", "main"), o,false);

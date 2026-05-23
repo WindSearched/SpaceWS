@@ -465,26 +465,29 @@ public class Bodies
 
 	};
 
-	public void Update(StructIdPath idp)
+	/// <param name="tick">after this tick execute</param>
+	public void Update(StructIdPath idp, int tick)
 	{
-		var s = ct.GetState(idp);
-		var d = ct.GetData(s);
-
-		if (d.isFactory_)
+		Tick.Reg(_ =>
 		{
+			var s = ct.GetState(idp);
+			var d = ct.GetData(s);
 
-		}
+			if (d.isFactory_)
+			{
 
-		if (d.isContainer_)
-		{
-			s.container.Update(s,d);
-		}
+			}
 
-		if (idp == ct.viewPage.targetPath)
-		{
-			ct.viewPage.Refresh();
-		}
+			if (d.isContainer_)
+			{
+				s.container.Update(s,d);
+			}
 
+			if (idp == ct.viewPage.targetPath)
+			{
+				ct.viewPage.Refresh();
+			}
+		}, tick);
 	}
 
 	/// <summary>
@@ -494,7 +497,7 @@ public class Bodies
 	/// <param name="state">state not load of loaded</param>
 	/// <param name="faceId">face to connect of connected</param>
 	/// <param name="ldFace">face to connect of loaded</param>
-	public void LoadStructOn(StructIdPath idp, StructState state, int faceId, int ldFace)
+	public void LoadStructOn(StructState state, int faceId, int ldFace)
 	{
 		if (state.type.IsNull())
 			return;
@@ -502,10 +505,11 @@ public class Bodies
 		var t = ct.buildPage.buildObject.transform;
 		ng.transform.SetPositionAndRotation(t.position, t.rotation);
 
+		var idp = state._idPath;
 		Concatenating(ct.GetState(idp), faceId, state, ldFace);
 
-		AdsorptionPostProcess(new(state, ldFace, ng),
-			new(objects[idp.bodyIndex].structs[idp.structIndex], idp.bodyIndex, idp.structIndex, faceId));
+		// AdsorptionPostProcess(new(state, ldFace, ng),
+		// 	new(objects[idp.bodyIndex].structs[idp.structIndex], idp.bodyIndex, idp.structIndex, faceId));
 	}
 
 	public void Concatenating(StructState state, int idpre, int idpro,
@@ -529,10 +533,10 @@ public class Bodies
 
 	public bool Concatenating(StructState connected, int connectedFace, StructState connector, int connectorFace)
 	{
-		var connectorData = ct.GetData(connected);
-		var connectedData = ct.GetData(connector);
+		var connectorData = ct.GetData(connector);
+		var connectedData = ct.GetData(connected);
 
-		if (connectorData.isChain_)
+		if (connectorData.isChain_ && connectedData.isChain_)
 		{
 			int orid = connectorData.chainFaces.Parse(connectorFace, out var parsed);
 			int edid = connectedData.chainFaces.Parse(connectedFace, out var i);
@@ -541,7 +545,7 @@ public class Bodies
 				if(i != -1) return true;
 				Concatenating(connector, -1, orid, prostate: connected, proIdpre: edid);
 			}
-			else if (parsed == -1)
+			else if (parsed == -1)//face is pre
 			{
 				if(i != 1) return false;
 				Concatenating(connector, orid, -1, prestate: connector, preIdpro: edid);
@@ -1085,10 +1089,10 @@ public partial class Depository : Container
 
 	public override void Update(StructState state, StructData data)
 	{
-		Tick.Reg(_ =>
+		var c = state.container;
+		var procId = c.container.ChooseProChainIndex(state);
+		if (procId != -1)
 		{
-			var c = state.container;
-			var procId = c.container.ChooseProChainIndex(state);
 			var proc = state.chain.prochains[procId];
 
 			if(!ct.TryGetState(proc, out var st))
@@ -1096,15 +1100,20 @@ public partial class Depository : Container
 			var procs = st.container;
 
 			RemoveFirst(out SMType type);
+			procs.container.SetUnlock(type, true);
 			if (procs.AddItem(type, data.container.convenyor.transportAmount, out int _))
 			{
-				ct.bodies.Update(proc);
+				ct.bodies.Update(proc, data.container.convenyor.timeTicks);
 			}
 
-			var precId = c.container.ChoosePreChainIndex(state);
+		}
+
+		var precId = c.container.ChoosePreChainIndex(state);
+		if (precId != -1)
+		{
 			var prec = state.chain.prechains[precId];
-			ct.bodies.Update(prec);
-		},data.container.convenyor.timeTicks);
+			ct.bodies.Update(prec, data.container.convenyor.timeTicks);
+		}
 	}
 
 	public override void SetUnlock(SMType tyoe, bool unlocking)
@@ -1146,6 +1155,7 @@ public partial class Depository : Container
 		for (int i = 0; i < c.prechains.Length; i++)
 		{
 			var id = c.prechains[i];
+			if(id.IsNull()) continue;
 			var s = ct.GetState(id);
 			if(s.container.container.full) continue;
 			return i;

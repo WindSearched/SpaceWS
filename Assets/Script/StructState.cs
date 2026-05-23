@@ -597,27 +597,25 @@ public class CacheQueue : Container
 	public override bool IsFull(SMType _) => full;
 	public override void Update(StructState state, StructData data)
 	{
-		Tick.Reg(_ =>
-		{
-			var c = state.container;
-			var procId = c.container.ChooseProChainIndex(state);
-			var proc = state.chain.prochains[procId];
+		var c = state.container;
+		var procId = c.container.ChooseProChainIndex(state);
+		var proc = state.chain.prochains[procId];
 
-			if(!ct.TryGetState(proc, out var st))
-				return;
-			var pros = st.container;
+		if(!ct.TryGetState(proc, out var st))
+			return;
+		var pros = st.container;
 
-			if (pros.container.full) return;
-			RemoveFirst(out SMType type);
-			pros.AddItem(type, data.container.convenyor.transportAmount, out int _);
+		if (pros.container.full) return;
+		// only test
+		RemoveFirst(out SMType type);
+		pros.container.SetUnlock(type, true);
+		pros.AddItem(type, data.container.convenyor.transportAmount, out int _);
 
-			pros.Update(st, ct.GetData(st));
+		ct.bodies.Update(st._idPath, data.container.convenyor.timeTicks);
 
-			var precId = c.container.ChoosePreChainIndex(state);
-			var prec = state.chain.prechains[precId];
-			ct.bodies.Update(prec);
-		}, data.container.convenyor.timeTicks);
-
+		var precId = c.container.ChoosePreChainIndex(state);
+		var prec = state.chain.prechains[precId];
+		ct.bodies.Update(prec,data.container.convenyor.timeTicks);
 	}
 
 	private int procid, precid;
@@ -704,11 +702,11 @@ public partial class Container
 
 	public virtual int ChooseProChainIndex(StructState state)
 	{
-		return 0;
+		return -1;
 	}
 	public virtual int ChoosePreChainIndex(StructState state)
 	{
-		return 0;
+		return -1;
 	}
 }
 
@@ -728,7 +726,11 @@ public struct StructIdPath
 
 	public static bool operator ==(StructIdPath a, StructIdPath b)
 		=> a.bodyIndex == b.bodyIndex && a.structIndex == b.structIndex;
-
 	public static bool operator !=(StructIdPath a, StructIdPath b) => !(a == b);
 
+
+	public override string ToString()
+	{
+		return bodyIndex + "/" +  structIndex;
+	}
 }

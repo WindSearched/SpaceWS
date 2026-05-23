@@ -125,6 +125,7 @@ public class CenterSystem : MonoBehaviour
 		debugInfo.LeftAdd(() => fps.ToString(), "fps");//fps of game
 		debugInfo.LeftAdd(() => Tick.tickCount.ToString(), "tick");
 		debugInfo.LeftAdd(() => wheelV.ToString() , "mouseWheel");
+		debugInfo.LeftAdd(() => Tick.tickS.tickEventCount.ToString() , "tickEventCount");
 
 		inputRegistering:
 		modes.Register("esc", new Mode("esc",() => false, active =>
@@ -237,7 +238,6 @@ public class CenterSystem : MonoBehaviour
 				int fid = int.Parse(c.name); //face index
 				SLibrary lib = c.transform.parent.GetComponent<SLibrary>();
 				int bid = lib.ReadValue<int>("bodyIndex");
-				int sid = lib.ReadValue<int>("structIndex");
 				var state = new StructState(ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type"))
 				{
 					bodyIndex = bid,
@@ -247,7 +247,7 @@ public class CenterSystem : MonoBehaviour
 				var ids = ct.structsInfo.Get(state.type).connectorFaceIndexes;
 				var id = ct.buildPage.GetWheelIndex(ct.buildPage.wheel, ids.Length);
 
-				bodies.LoadStructOn(new(bid, sid),state,fid, ids[id]);
+				bodies.LoadStructOn(state,fid, ids[id]);
 			}
 			else if (pages.IsPage("main"))
 			{

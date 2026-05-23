@@ -10,6 +10,7 @@ public class Tick : MonoBehaviour
     public TimeWheel wheel;
     public static Tick tickS;
     public static int tickCount;
+    public int tickEventCount => wheel.eventsInTick;
     public int tps;
     public float t;
 
@@ -66,6 +67,7 @@ public class TimeWheel
     private readonly int _size;
     private int _current;
 
+    public int eventsInTick;
     public int getTick_ => _current;
 
     public TimeWheel(int size)
@@ -89,6 +91,7 @@ public class TimeWheel
         };
 
         Schedule(task, delay);
+        eventsInTick++;
     }
 
     private void Schedule(TimerTask task, int delay)
@@ -107,6 +110,7 @@ public class TimeWheel
     {
         var list = _wheel[_current];
 
+        int eventExecuted = 0;
         for (int i = 0; i < list.Count; i++)
         {
             var task = list[i];
@@ -128,6 +132,8 @@ public class TimeWheel
 
             if (task.loop == 0)
             {
+                eventExecuted++;
+
                 // 不再重复，直接结束
                 continue;
             }
@@ -140,6 +146,8 @@ public class TimeWheel
             // loop == -1 或 loop > 0 都会走到这里
             Schedule(task, task.interval);
         }
+
+        eventsInTick -= eventExecuted;
 
         _current = (_current + 1) % _size;
     }
