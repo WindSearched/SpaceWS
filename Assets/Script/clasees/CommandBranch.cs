@@ -111,3 +111,56 @@ public class CommandBranch
         }
     }
 }
+
+public class MethValues
+{
+    public char decider = '@';
+    public Dictionary<string, Func<object>> meths = new Dictionary<string, Func<object>>();
+
+    public string LoadString(string arg)
+    {
+        var o = Load(arg);
+        if(o is string s)
+        {
+            return s;
+        }
+        return null;
+    }
+
+    public int LoadInt(string arg)
+    {
+        var o = Load(arg);
+        if(o is int i)
+        {
+            return i;
+        }
+        return 0;
+    }
+    public float LoadFloat(string arg)
+    {
+        var o = Load(arg);
+        if(o is float f)
+        {
+            return f;
+        }
+        return 0;
+    }
+
+
+    public object Load(string arg)
+    {
+        if (arg.StartsWith(decider.ToString()))
+        {
+            var a = arg.TrimStart(decider);
+            if (meths.ContainsKey(a))
+            {
+                return meths[a]();
+            }
+            else
+            {
+                return null;
+            }
+        }
+        return arg;
+    }
+}
