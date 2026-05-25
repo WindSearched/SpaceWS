@@ -17,7 +17,8 @@ public static class ct
     public static Rule curWorldRule = new();
     public static Log log = new();
     public static Mod mod = new();
-    public static Command command = new();
+    public static CommandBranch CommandBranch = new("main");
+    public static MethValues methValues = new ();
     public static SDebug debugInfo;
     public static ChunkLoader chunkLoader;
     public static SAction action = new();

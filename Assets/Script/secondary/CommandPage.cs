@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
@@ -47,81 +49,113 @@ public class CommandPage : MonoBehaviour
 
         orMsg = Resources.Load<GameObject>("ui/logmessage");
 
-        ct.command.Add("debug", l =>
-        {
-            var s = l.Load();
-            Debug.Log(s);
-            Message(s);
-        });
-        ct.command.Add("load", l => // /load Smod/meteorite 0 0 0 0 0 0
-        {
-            var cu = ct.setting.chunkUnit;
+        CommandBranch command(string name) => new CommandBranch(name);
 
-            var t = l.Load();
-            if (!SMType.TryParse(t,  out var smt))
-            {
-                smt = ct.structsInfo.GetFirstKey(l.Load());
-            }
 
-            var pos = l.LoadV3();
-            var rot = l.LoadV3();
-            ct.bodies.LoadStruct(pos, rot, -1, smt);
-        });
-        ct.command.Add("exit", l => { ct.ExitGame(); });
-        ct.command.Add("modify", l =>// modify @indicated temperature 100
-        {
-            var id = l.Load();
-            Debug.Log(id);
-            int idx = int.Parse(id);
-            var state =ct.bodies.datas[idx].self;
-            var vt = l.Load();
-            FieldInfo fi = typeof(BodyState).GetField(vt);
-            if (fi == null)
-            {
-                Message($"The value type '{vt}' is not exist in bodystate");
-            }
-            else
-            {
-                fi.SetValue(state, l.Load());
-            }
-        });
-        ct.command.Add("addheat", l => // addheat @indicated 200
-        {
-            int id = int.Parse(l.Load());
-            ct.bodies.AddHeat(id, l.LoadFloat());
-        });
-        ct.command.Add("print", l =>// print @indicatedO mixture
-        {
-            object o = l.LoadObj();
+        ct.CommandBranch.AddBranch(
+            command("debug")
+                .AddArgument(new CommandBranch.Argument("text").SetSuggestion(() => new List<string>{"Wind_searched"}))
+                .Execute((arg, load) =>
+                {
+                    var s =load.LoadString(arg.Get("text"));
+                    Debug.Log(s);
+                    Message(s);
+                    return true;
+                }));
+        ct.CommandBranch.AddBranch(
+            command("load")
+                .AddArguments(
+                    new("smType"), new("position"), new ("rotation"))// 0;0;0
+                .Execute((arg, load) =>
+                {
+                    try
+                    {
+                        var t = arg.Get("smType");
+                        if (!SMType.TryParse(t,  out var smt))
+                        {
+                            smt = ct.structsInfo.GetFirstKey(t);
+                        }
 
-            string s = "";
+                        var pos = load.LoadV3("position");
+                        var rot = load.LoadV3("rotation");
+                        ct.bodies.LoadStruct(pos, rot, -1, smt);
 
-            if (o is GameObject g)//get struct state
-            {
-                int id = int.Parse(g.transform.parent.parent.name);
-                var ss = ct.bodies.datas[id].structs[int.Parse(g.name)];
-                string vt = l.Load();
-                s= STool.GetNestedToString(ss, vt);
-            }
-            else if(o == null)
-            {
-                return;
-            }
-            else
-            {
-                s = o.ToString();
-            }
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                })
+        );
 
-            if (s == "") return;
-            ct.log.Write("cmd.print", s);
-            Message(s);
-        });
+        ct.CommandBranch.AddBranch(command("exit")
+            .Execute((_, _) =>
+            {
+                ct.ExitGame();
+                return true;
+            }));
+        ct.CommandBranch.AddBranch(command("modify"))
+            .AddArguments(
+                new CommandBranch.Argument("indicate"),
+                new("param"),
+                new("value")
+            )
+            .Execute((arg, load) =>
+            {
+                var id = load.LoadString(arg.Get("indicate"));
+                int idx = int.Parse(id);
+                var state =ct.bodies.datas[idx].self;
+                var vt = arg.Get("param");
+                var val = load.LoadInt(arg.Get("value"));
+                FieldInfo fi = typeof(BodyState).GetField(vt);
+                if (fi == null)
+                {
+                    Message($"The value type '{vt}' is not exist in bodystate");
+                    return false;
+                }
+                else
+                {
+                    fi.SetValue(state, val);
+                    return true;
+                }
+            });
+        ct.CommandBranch.AddBranch(command("print"))
+            .AddArguments(new("indicate"), new("param"))
+            .Execute((arg, load) =>
+            {
+                object o = load.Load(arg.Get("indicate"));
+                var p = arg.Get("param");
 
-        ct.command.AddValueMethod("rand", () => //@rand
+                string s = "";
+
+                if (o is GameObject g)//get struct state
+                {
+                    int id = int.Parse(g.transform.parent.parent.name);
+                    var ss = ct.bodies.datas[id].structs[int.Parse(g.name)];
+                    string vt = p;
+                    s= STool.GetNestedToString(ss, vt);
+                }
+                else if(o == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    s = o.ToString();
+                }
+
+                if (s == "") return false;
+                ct.log.Write("cmd.print", s);
+                Message(s);
+                return true;
+            });
+
+        ct.methValues.Reg("rand", () => //@rand
             SMath.Random(int.MaxValue, int.MinValue));
-        ct.command.AddValueMethod("indicated", () => //@indicated
+        ct.methValues.Reg("indicated", () => //@indicated
             ct.mouseCasted ? ct.mouseCasted.transform.parent.parent.name : "0");
-        ct.command.AddValueMethod("indicatedO", () => ct.mouseCasted);
+        ct.methValues.Reg("indicatedObj", () => ct.mouseCasted);
     }
 
     private void ToCommand(InputAction.CallbackContext context)
@@ -131,8 +165,8 @@ public class CommandPage : MonoBehaviour
 
     private void ToCommand()
     {
-        var c = text.text;
-        ct.command.Load(c);
+        var c = text.text.TrimStart('\u200B');
+        ct.CommandBranch.Command(c);
         text.text = "";
     }
 

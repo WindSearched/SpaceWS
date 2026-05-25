@@ -5,7 +5,7 @@ using System.Linq;
 public class CommandBranch
 {
     public string name;
-    public Func<CommandArg, bool> execute;
+    public Func<CommandArg, MethValues, bool> execute;
     public Func<List<string>> suggestion;
     public List<CommandBranch> branches = new List<CommandBranch>();
     public List<Argument> arguments = new List<Argument>();
@@ -41,7 +41,7 @@ public class CommandBranch
     /// </summary>
     /// <param name="execute"></param>
     /// <returns></returns>
-    public CommandBranch Execute(Func<CommandArg, bool> execute)
+    public CommandBranch Execute(Func<CommandArg, MethValues, bool> execute)
     {
         this.execute = execute;
         return this;
@@ -53,7 +53,7 @@ public class CommandBranch
         return this;
     }
 
-    public CommandBranch Parse(List<string> splited, out List<string> args)
+    public CommandBranch Parse(List<string> splited, out CommandArg args)
     {
         var s = splited[0];//get the first value
         foreach (var branch in branches.Where(branch => branch.name == s))
@@ -62,8 +62,26 @@ public class CommandBranch
             return branch.Parse(splited, out args);
         }
 
-        args = splited;
+        if (splited.Count != arguments.Count)
+        {
+            args = null;
+            return this;
+        }
+
+        args = new CommandArg();
+        for (int i = 0; i < arguments.Count; i++)
+        {
+            var arg = arguments[i];
+            args.SetArg(arg.argument, splited[i]);
+        }
         return this;
+    }
+
+    public bool Command(string arg)
+    {
+        var list = arg.Split(' ').ToList();
+        var branch = Parse(list, out var args);
+        return branch.execute != null && branch.execute.Invoke(args, ct.methValues);
     }
 
     public delegate List<string> CMDSuggestion();
@@ -91,23 +109,21 @@ public class CommandBranch
     }
     public class CommandArg
     {
-        public Dictionary<string, object> args;
+        public Dictionary<string, string> args;
 
-        public object Get(string key) => args.ContainsKey(key) ? args[key] : null;
+        public string Get(string key) => args.ContainsKey(key) ? args[key] : null;
 
-        public object Get(int index)
+        public string Get(int index)
         {
             var a = args.Values.ToList();
             return a.Count > index ? a[index] : null;
         }
 
-        public void SetArg(string key, object value, bool overwrite = true)
+        public void SetArg(string key, string value, bool overwrite = true)
         {
-            if (!args.TryAdd(key, value))
-            {
-                if(overwrite)
-                    args[key] = value;
-            }
+            if (args.TryAdd(key, value)) return;
+            if(overwrite)
+                args[key] = value;
         }
     }
 }
@@ -146,9 +162,23 @@ public class MethValues
         return 0;
     }
 
+    public V3 LoadV3(string arg)
+    {
+        var o = Load(arg);
+        if(o is V3 f)
+        {
+            return f;
+        }
+        if (o is string s && V3.TryParse(s, out var v))
+        {
+            return v;
+        }
+        return V3.zero;
+    }
 
     public object Load(string arg)
     {
+        arg = arg.Replace("\u200B", "");
         if (arg.StartsWith(decider.ToString()))
         {
             var a = arg.TrimStart(decider);
@@ -162,5 +192,18 @@ public class MethValues
             }
         }
         return arg;
+    }
+
+    public void Reg(string name, Func<object> func, bool overwrite = true)
+    {
+        if (meths.ContainsKey(name))
+        {
+            if (overwrite)
+                meths[name] = func;
+        }
+        else
+        {
+            meths.Add(name, func);
+        }
     }
 }

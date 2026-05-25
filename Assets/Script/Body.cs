@@ -601,9 +601,35 @@ public partial struct V3
 
 	public override string ToString()
 	{
-		return $"({x},{y},{z})";
+		return $"({x};{y};{z})";
 	}
 
+	public static V3 Parse(string s)
+	{
+		s = s.TrimStart('(');
+		s = s.TrimEnd(')');
+
+		var ss = s.Split(";");
+		var a = float.Parse(ss[0]);
+		var b = float.Parse(ss[1]);
+		var c = float.Parse(ss[2]);
+
+		return new V3(a, b, c);
+	}
+
+	public static bool TryParse(string s, out V3 v)
+	{
+		try
+		{
+			v = Parse(s);
+			return true;
+		}
+		catch
+		{
+			v = default;
+			return false;
+		}
+	}
 	public static V3 operator +(V3 p, V3I ip)
 	{
 		return new(p.x + ip.x, p.y + ip.y, p.z + ip.z);
