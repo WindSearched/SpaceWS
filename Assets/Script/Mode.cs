@@ -53,19 +53,38 @@ public class ModeStm
 		}
 	}
 
-	/// <summary>
-	/// try active the mode if the condition meth returns true
-	/// </summary>
-	/// <param name="key"></param>
-	public bool TryActive(string key) =>
-		Get(key).Set();
+	public bool Active(string key)
+	{
+		var v =  Get(key);
+		if (v == null)
+		{
+			return false;
+		}
+		else
+		{
+			v.Set();
+			return true;
+		}
+	}
+
 	/// <summary>
 	/// active the mode
 	/// </summary>
 	/// <param name="key"></param>
 	/// <param name="active"></param>
-	public void Active(string key, bool active) =>
-		Get(key).Set(active);
+	public bool Active(string key, bool active)
+	{
+		var v =  Get(key);
+		if (v == null)
+		{
+			return false;
+		}
+		else
+		{
+			v.Set(active);
+			return true;
+		}
+	}
 
 	public Mode Get(string key) => modes.ContainsKey(key) ? modes[key] : null;
 
@@ -79,19 +98,22 @@ public class ModeStm
 	{
 		Register("main",new (null));
 
-		ct.command.Add("mode", (l) =>
-		{
-			var a1 = l.Load();
-			if (l.TryLoad(out string arg))
-			{
-				Active(a1,bool.Parse(arg));
-			}
-			else
-			{
-			 	TryActive(a1);
-				//be add somethings
-			}
-		});
-
+		ct.CommandBranch.AddBranch(
+			new CommandBranch("mode")
+				.AddArguments(new CommandBranch.Argument("name"), new ("bool"))
+				.Execute((args, load) =>
+				{
+					var a1 = args.Get("name");
+					var b = args.Get("bool");
+					if (b != null)
+					{
+						return Active(a1,bool.Parse(b));
+					}
+					else
+					{
+						return Active(a1);
+						//be add somethings
+					}
+				}));
 	}
 }

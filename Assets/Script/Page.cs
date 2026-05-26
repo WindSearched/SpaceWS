@@ -47,15 +47,18 @@ public class PageStm
     /// swap the current page
     /// </summary>
     /// <param name="key"></param>
-    public void Swap(string key)
+    public bool Swap(string key)
     {
         var cur = Get(current);
+        if(cur == null) return false;
+
         cur.OnEnd?.Invoke(cur);
 
         var n = Get(key);
         n.OnInit?.Invoke(n);
 
         current = key;
+        return true;
     }
     public Page Get(string key) => pages.ContainsKey(key) ? pages[key] : null;
 
@@ -70,7 +73,14 @@ public class PageStm
         current = "main";
         Register("main",new ());
 
-        ct.command.Add("page", (l) => Swap(l.Load()));
+        ct.CommandBranch.AddBranch(
+            new CommandBranch("page")
+                .AddArgument(new("name"))
+                .Execute((a, l) =>
+                {
+                    var v = a.Get(0);
+                    return Swap(v);
+                }));
     }
 }
 
