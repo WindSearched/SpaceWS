@@ -289,6 +289,24 @@ public partial class StructState : State
 			}
 			return true;
 		}
+		public bool AddItems(Statistic<SMType> statistic, out Statistic<SMType> remain)
+		{
+			remain = new();
+			bool ret = true;
+
+			foreach (var vp in statistic.dict)
+			{
+				var type =  vp.Key;
+				var quantity = vp.Value;
+				if (!AddItem(type, quantity, out var r))
+				{
+					remain.Add(type, r);
+					ret = false;
+				}
+
+			}
+			return ret;
+		}
 		public bool RemoveItem(SMType type, int quantity, out int remain) => container.Remove(type, quantity, out remain);
 
 		public bool AddStuff(SMType type, int quantity, out int remain)
@@ -586,6 +604,22 @@ public class CacheQueue : Container
 		return true;
 	}
 
+	public override bool Remove(int quantity, out int remain, out Statistic<SMType> statistic)
+	{
+		remain = quantity;
+		statistic = new();
+		while (remain-- > 0)
+		{
+			if (RemoveFirst(out var t))
+			{
+				statistic.Add(t);
+			}
+			else
+				return false;
+		}
+		return true;
+	}
+
 	public override bool RemoveFirst(out SMType type)
 	{
 		type = new();
@@ -606,12 +640,14 @@ public class CacheQueue : Container
 		var pros = st.container;
 
 		if (pros.container.full) return;
-		// only test
-		RemoveFirst(out SMType type);
-		pros.container.SetUnlock(type, true);
-		pros.AddItem(type, data.container.convenyor.transportAmount, out int _);
 
-		ct.bodies.Update(st._idPath, data.container.convenyor.timeTicks);
+		var ta = data.container.convenyor.transportAmount;
+		if (Remove(ta, out int remain, out var statist))
+		{
+			pros.container.SetUnlock(statist.GetKeys(), true);
+			pros.AddItems(statist, out _ );
+			ct.bodies.Update(st._idPath, data.container.convenyor.timeTicks);
+		}
 
 		var precId = c.container.ChoosePreChainIndex(state);
 		var prec = state.chain.prechains[precId];
@@ -663,6 +699,14 @@ public partial class Container
 		full = true;
 		return false;
 	}
+
+	public virtual bool Remove(int quantity, out int remain, out Statistic<SMType> list)
+	{
+		remain = quantity;
+		list = null;
+
+		return false;
+	}
 	public virtual bool Remove(SMType type, int quantity, out int remain)
 	{
 		full = true;
@@ -696,6 +740,10 @@ public partial class Container
 	}
 
 	public virtual void SetUnlock(SMType tyoe, bool unlocking)
+	{
+
+	}
+	public virtual void SetUnlock(List<SMType> types, bool unlocking)
 	{
 
 	}
@@ -733,4 +781,25 @@ public struct StructIdPath
 	{
 		return bodyIndex + "/" +  structIndex;
 	}
+}
+
+public class Statistic<T>
+{
+	public Dictionary<T, int> dict = new();
+
+	public void Add(T item, int quantity)
+	{
+		if (!dict.ContainsKey(item))
+		{
+			dict.Add(item, quantity);
+		}
+		else
+		{
+			dict[item] += quantity;
+		}
+
+	}
+	public void Add(T item) => Add(item, 1);
+
+	public List<T> GetKeys() => dict.Keys.ToList();
 }

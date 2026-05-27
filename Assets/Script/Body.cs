@@ -497,7 +497,7 @@ public class Bodies
 	/// <param name="state">state not load of loaded</param>
 	/// <param name="faceId">face to connect of connected</param>
 	/// <param name="ldFace">face to connect of loaded</param>
-	public void LoadStructOn(StructState state, int faceId, int ldFace)
+	public void LoadStructOn(StructState state, int faceId, StructState based, int ldFace)
 	{
 		if (state.type.IsNull())
 			return;
@@ -506,7 +506,8 @@ public class Bodies
 		ng.transform.SetPositionAndRotation(t.position, t.rotation);
 
 		var idp = state._idPath;
-		Concatenating(ct.GetState(idp), faceId, state, ldFace);
+		var b = Concatenating(based, faceId, state, ldFace);
+		Debug.Log(b);
 
 		// AdsorptionPostProcess(new(state, ldFace, ng),
 		// 	new(objects[idp.bodyIndex].structs[idp.structIndex], idp.bodyIndex, idp.structIndex, faceId));
@@ -524,10 +525,10 @@ public class Bodies
 				state.chain.prochains[idpro] = prostate._idPath;
 		}
 
-		if (prestate != null && prestate.isChain && preIdpro != -1 && preIdpro < state.chain.GetPreCount())
+		if (prestate != null && prestate.isChain && preIdpro != -1 && preIdpro <= state.chain.GetPreCount())
 			prestate.chain.prochains[preIdpro] = state._idPath;
 
-		if (prostate != null && prostate.isChain && proIdpre != -1 && proIdpre < state.chain.GetProCount())
+		if (prostate != null && prostate.isChain && proIdpre != -1 && proIdpre <= state.chain.GetProCount())
 			prostate.chain.prechains[proIdpre] = state._idPath;
 	}
 
@@ -536,23 +537,20 @@ public class Bodies
 		var connectorData = ct.GetData(connector);
 		var connectedData = ct.GetData(connected);
 
-		if (connectorData.isChain_ && connectedData.isChain_)
+		if (!connectorData.isChain_ || !connectedData.isChain_) return false;
+		int orid = connectorData.chainFaces.Parse(connectorFace, out var parsed);
+		int edid = connectedData.chainFaces.Parse(connectedFace, out var i);
+		if (parsed == 1)
 		{
-			int orid = connectorData.chainFaces.Parse(connectorFace, out var parsed);
-			int edid = connectedData.chainFaces.Parse(connectedFace, out var i);
-			if (parsed == 1)
-			{
-				if(i != -1) return true;
-				Concatenating(connector, -1, orid, prostate: connected, proIdpre: edid);
-			}
-			else if (parsed == -1)//face is pre
-			{
-				if(i != 1) return false;
-				Concatenating(connector, orid, -1, prestate: connector, preIdpro: edid);
-			}
-			return true;
+			if(i != -1) return false;
+			Concatenating(connector, -1, orid, prostate: connected, proIdpre: edid);
 		}
-		return false;
+		else if (parsed == -1)//face is pre
+		{
+			if(i != 1) return false;
+			Concatenating(connector, orid, -1, prestate: connector, preIdpro: edid);
+		}
+		return true;
 	}
 }
 
@@ -1072,6 +1070,43 @@ public partial class Depository : Container
 		}
 	}
 
+	public override bool Remove(int quantity, out int remain, out Statistic<SMType> stat)
+	{
+		stat = new Statistic<SMType>();
+		foreach (var unlock in unlocks)
+		{
+			var q = cells[unlock];
+			if(q > quantity)
+			{
+				stat.Add(unlock, quantity);
+				Remove(unlock, quantity, out _);
+				remain = q-quantity;
+				return false;
+			}
+			else
+			{
+				stat.Add(unlock, q);
+				quantity -= q;
+				Set(unlock, 0);
+				if (quantity == 0)
+				{
+					remain = 0;
+					return true;
+				}
+			}
+		}
+		remain = quantity;
+		return false;
+	}
+
+	private void Set(SMType type, int quantity)
+	{
+		if (cells.ContainsKey(type))
+		{
+			cells[type] = quantity;
+		}
+	}
+
 	public bool Contains(SMType type) => cells.ContainsKey(type);
 
 	public bool Contains(SMType type, int quantity) => Contains(type) && cells[type] >= quantity;
@@ -1105,7 +1140,7 @@ public partial class Depository : Container
 		type = new();
 		foreach (var unlock in unlocks)
 		{
-			if (!Contains(unlock)) continue;
+			if (!Contains(unlock, 1)) continue;
 			if (!Remove(unlock, 1, out _)) continue;
 			type = unlock;
 			return true;
@@ -1125,11 +1160,15 @@ public partial class Depository : Container
 				return;
 			var procs = st.container;
 
-			RemoveFirst(out SMType type);
-			procs.container.SetUnlock(type, true);
-			if (procs.AddItem(type, data.container.convenyor.transportAmount, out int _))
+			var ta = data.container.convenyor.transportAmount;
+			Remove(ta, out var remain, out var stat);
+			if (ta > remain)
 			{
-				ct.bodies.Update(proc, data.container.convenyor.timeTicks);
+				procs.container.SetUnlock(stat.GetKeys(), true);
+				if (procs.AddItems(stat, out _))
+				{
+					ct.bodies.Update(proc, data.container.convenyor.timeTicks);
+				}
 			}
 
 		}
@@ -1153,6 +1192,14 @@ public partial class Depository : Container
 		{
 			if(unlocking)
 				unlocks.Add(tyoe);
+		}
+	}
+
+	public override void SetUnlock(List<SMType> types, bool unlocking)
+	{
+		foreach (var t in types)
+		{
+			SetUnlock(t, unlocking);
 		}
 	}
 

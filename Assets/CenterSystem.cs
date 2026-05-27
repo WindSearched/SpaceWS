@@ -238,6 +238,8 @@ public class CenterSystem : MonoBehaviour
 				int fid = int.Parse(c.name); //face index
 				SLibrary lib = c.transform.parent.GetComponent<SLibrary>();
 				int bid = lib.ReadValue<int>("bodyIndex");
+				int sid = lib.ReadValue<int>("structIndex");
+				var based = ct.GetState(new(bid, sid));
 				var state = new StructState(ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type"))
 				{
 					bodyIndex = bid,
@@ -247,7 +249,7 @@ public class CenterSystem : MonoBehaviour
 				var ids = ct.structsInfo.Get(state.type).connectorFaceIndexes;
 				var id = ct.buildPage.GetWheelIndex(ct.buildPage.wheel, ids.Length);
 
-				bodies.LoadStructOn(state,fid, ids[id]);
+				bodies.LoadStructOn(state,fid,based, ids[id]);
 			}
 			else if (pages.IsPage("main"))
 			{
