@@ -48,6 +48,25 @@ public class ViewPage : MonoBehaviour
 				b.offset = new Vector2(ix, -iy) * size;
 				b.pivot = new(-1, 1);
 				b.text = am.ToString();
+				var i1 = i;
+				b.refresh = r =>
+				{
+					int ind = i1;
+					var list = con.container.GetList();;
+
+					var am = list[ind];
+					var iy = ind / linecount;
+					var ix = ind % linecount;
+
+					ViewElementBase b = new();
+					r.position = init;
+					r.textColor = Color.black;
+					r.backColor =  Color.white;
+					r.size = new Vector2(size, size);
+					r.offset = new Vector2(ix, -iy) * size;
+					r.pivot = new(-1, 1);
+					r.text = am.ToString();
+				};
 
 				lb.Add(b);
 			}
@@ -195,7 +214,7 @@ public class ViewPage : MonoBehaviour
 	}
 }
 
-public struct ViewElementBase
+public class ViewElementBase
 {
 	public Vector2 size;
 	public Vector2 position;
@@ -213,4 +232,18 @@ public struct ViewElementBase
 	public Action<ViewElement, GameObject> upInput;
 
 	public Action<ViewElement> update;
+
+	/// <summary>
+	/// refresh base data if it is not null
+	/// </summary>
+	public Action<ViewElementBase> refresh;
+
+	public bool TryRefresh()
+	{
+		if (refresh == null)
+			return false;
+
+		refresh(this);
+		return true;
+	}
 }

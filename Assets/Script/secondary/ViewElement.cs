@@ -35,6 +35,7 @@ public class ViewElement : MonoBehaviour
             Start();
 
         var b = _base;
+        b.TryRefresh();
 
         if (b.text != null)
         {
