@@ -37,8 +37,8 @@ public class MouseRaycast
 
         if (casted != excasted)
         {
-            InCast?.Invoke(casted);
             OutCast?.Invoke(excasted);
+            InCast?.Invoke(casted);
         }
     }
 }

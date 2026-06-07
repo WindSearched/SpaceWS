@@ -298,30 +298,57 @@ public class CenterSystem : MonoBehaviour
 		};
 		mousecast.InCast += o =>
 		{
-			List<string> list = new List<string>
-			{
-				"type","bodyIndex"
-			};
+			List<string> list = null;
 			if (!o) return;
-			if(!pages.IsPage("main") || !o.CompareTag("struct")) return;
 
+			if (pages.IsPage("main"))
+			{
+				if (o.CompareTag("struct"))
+				{
+					list = new List<string>
+					{
+						"type", "bodyIndex"
+					};
+					int bid = int.Parse(o.transform.parent.parent.name);
+					int sid = int.Parse(o.name);
+					var s = bodies.datas[bid].structs[sid];
+					var d = ct.structsInfo.Get(s.type).data;
 
-			int bid = int.Parse(o.transform.parent.parent.name);
-			int sid = int.Parse(o.name);
-			var s = bodies.datas[bid].structs[sid];
-			var d = ct.structsInfo.Get(s.type).data;
+					if(d.isFactory_)
+						list.Add("stuffList");
 
-			if(d.isFactory_)
-				list.Add("stuffList");
+					infoViewer.AddViews(s, list);
+				}
+			}
+			else if (pages.IsPage("build"))
+			{
+				if (o.CompareTag("structFace"))
+				{
+					infoViewer.AddView("faceIndex",o.name);
+				}
+			}
 
-			infoViewer.AddViews(s, list);
 			infoViewer.Updating();
 		};
 		mousecast.OutCast += o =>
 		{
 			if (!o) return;
-			if (!pages.IsPage("main") || !o.CompareTag("struct")) return;
-			infoViewer.Clear(true);
+			void clear() => infoViewer.Clear(true);
+
+			if (pages.IsPage("main"))
+			{
+				if (o.CompareTag("struct"))
+				{
+					clear();
+				}
+			}
+			else if (pages.IsPage("build"))
+			{
+				if (o.CompareTag("structFace"))
+				{
+					clear();
+				}
+			}
 		};
 
 		//load a time
