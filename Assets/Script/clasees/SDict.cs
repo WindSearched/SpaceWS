@@ -149,6 +149,7 @@ public class SDict<TKey, TVal>
 
         return false;
     }
+
 }
 
 public class SMTDict<TVal> : SDict<string, TVal>
@@ -171,4 +172,19 @@ public class SMTDict<TVal> : SDict<string, TVal>
     }
 
     public void Set(SMType smt, TVal value, bool overwrite = true) => Set(smt.type, smt.mod, value, overwrite);
+
+    public List<SMType> GetTypes()
+    {
+        List<SMType> l = new();
+        foreach (var key in dict.Keys)
+        {
+            var c = dict[key];
+            foreach (var ck in c.Keys)
+            {
+                l.Add(new(key, ck));
+            }
+        }
+
+        return l;
+    }
 }

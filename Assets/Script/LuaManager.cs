@@ -98,21 +98,9 @@ public class Mod
         foreach (var p in Directory.GetDirectories(path))
         {
             string name = Path.GetFileName(p);// mod name
-            env.DoString(File.ReadAllText(Path.Combine(p, name +".lua")));
-            Load(name, "OnLoad");
 
             string pp = "";
             string ppp = "";
-
-            pp = p + "/structs";
-            if (Data.DirectioryExists(pp))
-            {
-                foreach (var file in Directory.EnumerateFiles(pp, "*.obj"))
-                {
-                    var n = Path.GetFileNameWithoutExtension(file);
-                    AddStructFromOBJ(name, $"structs/{n}");
-                }
-            }
 
             //load data directory
             pp = p + "/data";
@@ -137,6 +125,17 @@ public class Mod
                     }
                 }
             }
+
+            pp = p + "/structs";
+            if (Data.DirectioryExists(pp))
+            {
+                foreach (var file in Directory.EnumerateFiles(pp, "*.obj"))
+                {
+                    var n = Path.GetFileNameWithoutExtension(file);
+                    AddStructFromOBJ(name, $"structs/{n}");
+                }
+            }
+
             ppp = pp + "/items";
             if (Data.DirectioryExists(ppp))
             {
@@ -167,7 +166,15 @@ public class Mod
                     if (SMath.Spr.TryLoadFromPNG(f, out Sprite spr, 256))
                     {
                         string fileName =  Data.GetFileName(ppp);
-                        ct.structIcons.Add(fileName, spr);
+                        SMType type = new(name, fileName);
+                        if (ct.structsInfo.TryGet(type, out var info))
+                        {
+                            info.icon = spr;
+                        }
+                        else
+                        {
+                            Debug.Log($"The type of icon {type} is not registered");
+                        }
                     }
                 }
             }
@@ -193,6 +200,8 @@ public class Mod
                     }
                 }
             }
+            env.DoString(File.ReadAllText(Path.Combine(p, name +".lua")));
+            Load(name, "OnLoad");
         }
 
         bool LoadJson<T>(string path, out List<T> list) where T : new()
@@ -251,8 +260,11 @@ public class Mod
             return;
 
         ct.structTypes.Add(name);
-        var t = SMesh.ObjTemp.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p), name);
+
         var i = ct.structsInfo.GetAbs(SMType.Parse(name), () => new StructInfo());
+        var d = i.data;
+        var t = SMesh.ObjTemp.CreateTemplate(p + ".obj", p + ".mtl", Path.GetDirectoryName(p), name,
+            d?.isBoxCollider ?? true);
         i.template = t.template;
         i.faces = t.faces;
         i.facesTamplate = t.facesTemp;

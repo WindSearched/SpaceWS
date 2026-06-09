@@ -82,7 +82,6 @@ public static class ct
     public static Bodies bodies = new();
     public static MouseRaycast mousecast;
 
-    public static Dictionary<string, Sprite> structIcons = new();
     public static SDict<string, ItemData> items = new();
     public static SMTDict<MaterialData> materials = new();
     public static SMTDict<StructInfo> structsInfo = new();
@@ -401,5 +400,5 @@ public class StructInfo
     public GameObject connectorTamplate;
     public StructData data;
     public Updater updater;
-    public Sprite sprite;
+    public Sprite icon;
 }

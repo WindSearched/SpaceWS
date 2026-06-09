@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -57,7 +58,9 @@ public class BuildPage : MonoBehaviour
 
         ct.LoadAfterInconsFinishLoading = () =>
         {
-            foreach (var sp in ct.structIcons.Values)
+            foreach (var sp in ct.structsInfo.dict.Values
+                         .SelectMany(innerDict => innerDict.Values)
+                         .Select(v => v.icon))
             {
                 buildScroll.Add(g =>
                 {

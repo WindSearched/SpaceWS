@@ -7,12 +7,12 @@ public class Late : MonoBehaviour
     {
         {// add structs icon if they have not external
             int offset = 0;
-            foreach (var type in ct.structTypes.Where(type => !ct.structIcons.ContainsKey(type)))
+            foreach (var type in ct.structsInfo.GetTypes())
             {
                 Tick.Reg(t =>
                 {
-                    var info = ct.structsInfo.Get(SMType.Parse(type));
-                    Tick.Cor(Projector.ProjectAsync(info.template, 256, 256, s => { ct.structIcons.Add(type, s); }));
+                    var info = ct.structsInfo.Get(type);
+                    Tick.Cor(Projector.ProjectAsync(info.template, 256, 256, s => info.icon = s));
                 }, offset++);
             }
             Tick.Reg(_ =>

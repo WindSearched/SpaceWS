@@ -340,7 +340,7 @@ public static class SMesh
 			new Vector3(ParseFloat(p[1]), ParseFloat(p[2]), ParseFloat(p[3]));
 
 		public static (GameObject template, GameObject facesTemp, RuntimeFace[] faces, int[] connectorIndexes, GameObject connectorsTemplate)
-			CreateTemplate(string objPath, string mtlPath, string textureRoot, string name)
+			CreateTemplate(string objPath, string mtlPath, string textureRoot, string name, bool useBoxCollider)
 		{
 			var data = Parse(objPath);
 			var fs = Face.BuildRuntimeFaces(data);
@@ -355,11 +355,21 @@ public static class SMesh
 			var mr = go.AddComponent<MeshRenderer>();
 			var mf = go.AddComponent<MeshFilter>();
 
-			// 添加 MeshCollider（模板也具备碰撞能力）
-			var mc = go.AddComponent<MeshCollider>();
-			mc.sharedMesh = mesh;
-			mc.convex = false; // 若需要 Rigidbody 请改为 true
+			if (useBoxCollider)
+			{
+				mesh.RecalculateBounds();
+				Bounds bounds = mesh.bounds;
 
+				var bc = go.AddComponent<BoxCollider>();
+				bc.center = bounds.center;
+				bc.size = bounds.size;
+			}
+			else
+			{
+				var mc = go.AddComponent<MeshCollider>();
+				mc.sharedMesh = mesh;
+				mc.convex = false;
+			}
 
 			Material[] ms = new Material[data.faces.Count];
 
@@ -403,12 +413,12 @@ public static class SMesh
 			cft.SetActive(false);
 
 
-			var cfs = new RuntimeFace[data.connectors.Count];
+			//var cfs = new RuntimeFace[data.connectors.Count];
 			for (int i = 0; i < data.connectors.Count; i++)
 			{
 				int j = data.connectors[i];
 				var f =  fs[j];
-				cfs[i] = f;
+				//cfs[i] = f;
 
 				Face.CreateFace(f,j.ToString(),ms[j], cft.transform);
 			}

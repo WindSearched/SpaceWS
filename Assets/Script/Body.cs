@@ -115,6 +115,7 @@ public class StructData
 	public Factory factory;
 	public Contain container;
 	public ChainFaces chainFaces;
+	public bool isBoxCollider = true;
 
 	[Serializable]
 	public class Factory
@@ -289,6 +290,7 @@ public class Bodies
 			strct._setMaterial = new(t.type, t.mod);
 		}
 
+		//unimportant part
 		var md = ct.materials.Get(strct.material.type, strct.material.mod);
 		bs._equilibrateTemperature = new(strct.mass, md.specificHeat, strct.temperature);
 		bs.structCount++;
@@ -299,6 +301,11 @@ public class Bodies
 		return strobj;
 	}
 
+	/// <summary>
+	/// register struct in list
+	/// </summary>
+	/// <param name="state"></param>
+	/// <param name="structObject"></param>
 	public void RegisterStruct(StructState state, GameObject structObject)
 	{
 		ct.bodies.objects[state.bodyIndex].structs.Add(structObject);

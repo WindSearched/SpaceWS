@@ -187,7 +187,7 @@ public class CenterSystem : MonoBehaviour
 				g.name = type.ToString();
 				g.SetActive(true);
 				g.transform.SetPositionAndRotation(c.transform.position, c.transform.rotation);
-				c.GetComponent<MeshCollider>().enabled = false;
+				c.GetComponent<Collider>().enabled = false;
 				ct.sCamera.ChangeTarget(g);
 
 				ct.buildPage.wheel = 0;
@@ -206,7 +206,7 @@ public class CenterSystem : MonoBehaviour
 			var str = s.storer.Get("str") as GameObject;
 			var faced = s.storer.Get("faced") as GameObject;
 
-			str.GetComponent<MeshCollider>().enabled = true;
+			str.GetComponent<Collider>().enabled = true;
 			faced.SetActive(false);
 			Destroy(faced);
 
@@ -240,7 +240,10 @@ public class CenterSystem : MonoBehaviour
 				int bid = lib.ReadValue<int>("bodyIndex");
 				int sid = lib.ReadValue<int>("structIndex");
 				var based = ct.GetState(new(bid, sid));
-				var state = new StructState(ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type"))
+
+				var t = ct.buildPage.buildObjectLibrary.ReadValue<SMType>("type");
+				if(t.IsNull()) return;
+				var state = new StructState(t)
 				{
 					bodyIndex = bid,
 					isStruct = true
