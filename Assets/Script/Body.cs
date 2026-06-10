@@ -122,7 +122,6 @@ public class StructData
 	{
 		public float heatRelease;
 		public List<Recipe> recipes = new();
-		public int size;
 
 		[Serializable]
 		public class Recipe
@@ -408,13 +407,13 @@ public class Bodies
 	/// void AdsorptionPostProcess((StructState state, int face, GameObject obj) adsorbed, (GameObject obj, int bid, int sid, int face) adsorber)
 	/// </summary>
 	/// <param name="adsorbed"></param>
-	/// <param name="adsorber"></param>
+	/// <param name="adsorber">based</param>
 	public void AdsorptionPostProcess((StructState state, int face, GameObject obj) adsorbed,
 		(GameObject obj, int bid, int sid, int face) adsorber)
 	{
-		adsorbed.state.bodyIndex = adsorber.bid; //transfer the struct to adsorber
-		adsorbed.obj.name = (adsorber.sid + 1).ToString();
-		adsorbed.obj.transform.SetParent(adsorber.obj.transform.parent);
+		// adsorbed.state.bodyIndex = adsorber.bid; //transfer the struct to adsorber
+		// adsorbed.obj.name = (adsorber.sid + 1).ToString();
+		// adsorbed.obj.transform.SetParent(adsorber.obj.transform.parent);
 
 		//equilibrating temperature
 		var edb = datas[adsorbed.state.bodyIndex].self;
@@ -430,27 +429,34 @@ public class Bodies
 
 		var erstate = datas[adsorber.bid].structs[adsorber.sid];
 		var erdata = ct.structsInfo.Get(erstate.type).data;
+		var edstate = adsorbed.state;
+		var eddata = ct.GetData(edstate);
 
 		if (erdata.isFactory_ && erdata.isContainer_)
 		{
-			erstate.container.AddStruct(adsorbed.state.type, new(adsorbed.state.bodyIndex, adsorbed.state.structIndex));
-			TryProduction(erstate, erdata);
+			erstate.container.AddStruct(edstate.type, edstate._idPath);
+			TryProduct(erstate, erdata);
+		}
+		else if(eddata.isFactory_ && eddata.isContainer_)
+		{
+			edstate.container.AddStruct(erstate.type, erstate._idPath);
+			TryProduct(edstate, eddata);
 		}
 	}
 
 	/// <summary>
 	/// try to product
 	/// </summary>
-	public void TryProduction(int bid, int sid)
+	public void TryProduct(int bid, int sid)
 	{
 		var state = datas[bid].structs[sid];
 		var data = ct.structsInfo.Get(state.type).data;
 
 		if (!data.isFactory_) return;
-		TryProduction(state, data);
+		TryProduct(state, data);
 	}
 
-	public void TryProduction(StructState state, StructData data) =>
+	public void TryProduct(StructState state, StructData data) =>
 		Tick.Reg(_ => Producing(state, data),
 			(int)(ct.setting.tickPerSecond * data.factory.recipes[state.choosedRecipeIndex].productionTime));
 
@@ -460,7 +466,7 @@ public class Bodies
 		if (state.container.stuffList.TryRemove(recipe))
 		{
 			if (state.container.AddItems(recipe.products, out var list))
-			{
+			{//try next product
 				Tick.Reg(_ => Producing(state, data), (int)(ct.setting.tickPerSecond * recipe.productionTime));
 			}
 		}
@@ -482,7 +488,7 @@ public class Bodies
 
 			if (d.isFactory_)
 			{
-
+				TryProduct(s, d);
 			}
 
 			if (d.isContainer_)
@@ -512,12 +518,12 @@ public class Bodies
 		var t = ct.buildPage.buildObject.transform;
 		ng.transform.SetPositionAndRotation(t.position, t.rotation);
 
-		var idp = state._idPath;
+		var idp = based._idPath;
 		var b = Concatenating(based, faceId, state, ldFace);
 		Debug.Log(b);
 
-		// AdsorptionPostProcess(new(state, ldFace, ng),
-		// 	new(objects[idp.bodyIndex].structs[idp.structIndex], idp.bodyIndex, idp.structIndex, faceId));
+		AdsorptionPostProcess(new(state, ldFace, ng),
+			new(objects[idp.bodyIndex].structs[idp.structIndex], idp.bodyIndex, idp.structIndex, faceId));
 	}
 
 	public void Concatenating(StructState state, int idpre, int idpro,
@@ -1122,6 +1128,7 @@ public partial class Depository : Container
 
 	public void UnlockAdapt(List<Amount> list)
 	{
+		if(list == null) return;
 		unlocks.Clear();
 		foreach (var m in list)
 		{

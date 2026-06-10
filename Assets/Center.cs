@@ -194,6 +194,19 @@ public static class ct
         return structsInfo.Get(state.type).data;
     }
 
+    public static bool TryGetObject(StructIdPath idp, out GameObject obj)
+    {
+        obj = null;
+        if (idp.IsNull())
+            return false;
+        obj = GetObject(idp);
+        return true;
+    }
+    public static GameObject GetObject(StructIdPath idp)
+    {
+        return bodies.objects[idp.bodyIndex].structs[idp.structIndex];
+    }
+
     public static void Log(object message)
     {
         log.Write(message.ToString());

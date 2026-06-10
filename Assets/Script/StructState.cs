@@ -179,10 +179,12 @@ public partial class StructState : State
 			return true;
 		}
 
-		public bool RemoveStructs(SMType type, int quantity)
+		public bool RemoveStructs(SMType type, int quantity, out List<StructIdPath> idps)
 		{
+			idps = null;
 			if (ContainStructs(type, quantity))
 			{
+				idps = containStructs[type].GetRange(0, quantity);
 				containStructs[type].RemoveRange(0, quantity);
 				return true;
 			}
@@ -220,7 +222,8 @@ public partial class StructState : State
 			if(!smn)
 				foreach (var m in recipe.structMaterials)
 				{
-					RemoveStructs(m.type, m.quantity);
+					RemoveStructs(m.type, m.quantity, out var idps);
+					ct.chunkLoader.RemoveStructs(idps);
 				}
 			return true;
 		}
@@ -258,8 +261,11 @@ public partial class StructState : State
 			switch (c.tag)
 			{
 				case Container.Tag.factory:
-					stuffList = new StuffList(data.factory.size);
-					container = new Depository(data.factory.size,data.factory.recipes[state.choosedRecipeIndex]);
+					stuffList = new StuffList(data.container.size);
+					container = new Depository(data.container.size,data.factory.recipes[state.choosedRecipeIndex])
+					{
+						unlockAll = true
+					};
 					break;
 				case Container.Tag.depository:
 					container = new Depository(data.container.size);
@@ -274,7 +280,9 @@ public partial class StructState : State
 
 		public bool AddItems(List<Amount> list, out List<Amount> remain)
 		{
-			remain = list;
+			remain = null;
+			if(list == null) return false;
+			remain = new(list);
 			foreach (var e in list)
 			{
 				var rs = remain.First();

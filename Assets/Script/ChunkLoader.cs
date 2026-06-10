@@ -7,6 +7,7 @@ public class ChunkLoader
 {
     public SPool<GameObject> structPool;
     public GameObject poolParent;
+
     /// <summary>
     /// info of loaded chunk
     /// </summary>
@@ -142,6 +143,20 @@ public class ChunkLoader
     public void AddGenerator(ChunkGenerator generator)
     {
         generators.Add(generator);
+    }
+
+    public void RemoveStruct(StructIdPath id)
+    {
+        if(!ct.TryGetObject(id, out GameObject obj)) return;
+        obj.SetActive(false);
+        structPool.Put(obj);
+        obj.transform.SetParent(poolParent.transform);
+    }
+
+    public void RemoveStructs(List<StructIdPath> ids)
+    {
+        foreach (var id in ids)
+            RemoveStruct(id);
     }
 }
 
